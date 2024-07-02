@@ -160,7 +160,7 @@ class Notebook_ModelView_Base():
         self.add_form_extra_fields['resource_gpu'] = StringField(
             _('gpu'),
             default='0',
-            description= _('gpu的资源使用限gpu的资源使用限制(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)'),
+            description= _('gpu的资源使用限gpu的资源使用限制(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)，<span style="color:red;">虚拟化占用和共享模式占用仅企业版支持</span>'),
             widget=BS3TextFieldWidget(),
             validators=[DataRequired()]
         )
