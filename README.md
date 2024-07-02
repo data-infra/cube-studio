@@ -9,7 +9,7 @@
 
 # 帮助文档
 
-https://github.com/tencentmusic/cube-studio/wiki
+https://github.com/data-infra/cube-studio/wiki
 
 # 开源共建
 
@@ -20,7 +20,7 @@ https://github.com/tencentmusic/cube-studio/wiki
 
 # 功能清单
 
-cube studio是 腾讯音乐 开源的一站式云原生机器学习平台，目前主要包含
+cube studio是 开源一站式云原生机器学习平台，目前主要包含
 
 |模块分组|功能模块|功能清单|
 |:-|:--|:--|

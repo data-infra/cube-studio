@@ -33,7 +33,7 @@ def replace_git(dir_path):
         file_path = os.path.join(dir_path,file_name)
         if os.path.isfile(file_path) and '.json' in file_name:
             content = open(file_path).read()
-            content = content.replace('https://github.com/tencentmusic/cube-studio/tree/master',conf.get('GIT_URL',''))
+            content = content.replace('https://github.com/data-infra/cube-studio/tree/master',conf.get('GIT_URL',''))
             file = open(file_path,mode='w')
             file.write(content)
             file.close()

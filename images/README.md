@@ -60,7 +60,7 @@
 
 # 常用GPU基础镜像
 
-[构建脚本](https://github.com/tencentmusic/cube-studio/blob/master/images/ubuntu-gpu/build.sh)
+[构建脚本](https://github.com/data-infra/cube-studio/blob/main/images/ubuntu-gpu/build.sh)
 
 ### ubuntu
 ```
