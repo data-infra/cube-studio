@@ -18,6 +18,11 @@ https://github.com/data-infra/cube-studio/wiki
  <img border="0" width="20%" src="https://user-images.githubusercontent.com/20157705/219829986-66384e34-7ae9-4511-af67-771c9bbe91ce.jpg" />
  
 
+# 公司
+
+![图片 1](https://user-images.githubusercontent.com/20157705/223387901-1b922d96-0a79-4542-b53b-e70938404b2e.png)
+
+
 # 功能清单
 
 cube studio是 开源一站式云原生机器学习平台，目前主要包含
@@ -134,10 +139,6 @@ cube studio是 开源一站式云原生机器学习平台，目前主要包含
 | 大模型    | baichuan2             | 单机多卡 | job-template/job/baichuan2/README.md
 | 大模型    | qwen2                 | 单机多卡 | job-template/job/qwen2/README.md
 | 大模型    | llama-factory         | 单机多卡 | job-template/job/llama_factory/README.md
-
-# 公司
-
-![图片 1](https://user-images.githubusercontent.com/20157705/223387901-1b922d96-0a79-4542-b53b-e70938404b2e.png)
 
 # 平台简介
 
