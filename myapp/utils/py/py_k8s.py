@@ -36,7 +36,7 @@ class K8s():
         self.v1.api_client.configuration.verify_ssl = False  # 只能设置 /usr/local/lib/python3.9/dist-packages/kubernetes/client/configuration.py:   self.verify_ssl= True ---> False
         self.gpu_resource=conf.get('GPU_RESOURCE',{})
         self.vgpu_resource = conf.get('VGPU_RESOURCE', {})
-        self.vgpu_drive_type = conf.get("VGPU_DRIVE_TYPE", "mgpu")
+        self.vgpu_drive_type = conf.get("VGPU_DRIVE_TYPE", "vgpu")
 
         self.get_gpu = core.get_gpu
 
@@ -118,6 +118,8 @@ class K8s():
                 # gpu = [int(container.resources.requests.get('nvidia.com/gpu', '0')) for container in containers if container.resources and container.resources.requests]
                 vgpu = [float(container.resources.requests.get('tencent.com/vcuda-core', '0'))/100 for container in containers if container.resources and container.resources.requests]
                 vgpu += [float(container.resources.requests.get('tke.cloud.tencent.com/qgpu-core', '0'))/100 for container in containers if container.resources and container.resources.requests]
+                vgpu += [float(container.resources.requests.get('nvidia.com/vgpu', '0')) / 10 for container in containers if container.resources and container.resources.requests]
+
                 # 获取gpu异构资源占用
                 ai_resource={}
                 for name in self.gpu_resource:
@@ -151,6 +153,10 @@ class K8s():
                         username = pod.metadata.labels.get('user', '')
                     if not username:
                         username = pod.metadata.labels.get('rtx-user', '')
+                    if not username:
+                        username = pod.metadata.labels.get('run-username', '')
+                    if not username:
+                        username = pod.metadata.labels.get('username', '')
 
                 temp = {
                     'name': metadata.name,
@@ -169,8 +175,6 @@ class K8s():
                     "node_selector": node_selector
                 }
                 temp.update(ai_resource)
-
-
 
                 back_pods.append(temp)
             # print(back_pods)
@@ -254,6 +258,8 @@ class K8s():
                 # gpu = [int(container.resources.requests.get('nvidia.com/gpu', '0')) for container in containers if container.resources and container.resources.requests]
                 vgpu = [float(container.resources.requests.get('tencent.com/vcuda-core', '0')) / 100 for container in containers if container.resources and container.resources.requests]
                 vgpu += [float(container.resources.requests.get('tke.cloud.tencent.com/qgpu-core', '0')) / 100 for container in containers if container.resources and container.resources.requests]
+                vgpu += [float(container.resources.requests.get('nvidia.com/vgpu', '0')) / 10 for container in containers if container.resources and container.resources.requests]
+
                 node_name = pod.spec.node_name
                 if node_name not in nodes_resource:
                     nodes_resource[node_name] = {
@@ -937,8 +943,6 @@ class K8s():
                        resource_gpu, image_pull_policy, image, env, privileged=False, username='', ports=None,
                        health=None,hostPort=[],resource_rdma=0):
 
-
-
         k8s_volumes, k8s_volume_mounts = self.get_volume_mounts(volume_mount, username)
 
         # 添加env
@@ -985,6 +989,10 @@ class K8s():
                 resources_requests[resource_name] = str(int(gpu_num))
                 resources_limits[resource_name] = str(int(gpu_num))
 
+        if 0==gpu_num:
+            # 没要gpu的容器，就要加上可视gpu为空，不然gpu镜像能看到和使用所有gpu
+            for gpu_alias in conf.get('GPU_NONE',{}):
+                env_list.append(client.V1EnvVar(name=conf.get('GPU_NONE',{})[gpu_alias][0], value=conf.get('GPU_NONE',{})[gpu_alias][1]))
         DEFAULT_POD_RESOURCES = conf.get('DEFAULT_POD_RESOURCES',{})
         for resource_name in DEFAULT_POD_RESOURCES:
             if resource_name not in resources_limits:
