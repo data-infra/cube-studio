@@ -172,9 +172,8 @@
     "knowledge": {
     },
     "prompt": "{{query}}",
-    "service_type": "AIGC",
+    "service_type": "aihub",
     "service_config": {
-        "aigc_url": "/aihub/openjourney/api/model/openjourney/version/v20221001/",
         "stream": "true"
     },
     "owner": "admin,*",
