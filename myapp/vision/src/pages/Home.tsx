@@ -20,7 +20,6 @@ import {
 } from '@fluentui/react';
 import api from '@src/api';
 import Section from '@src/components/Home/Section';
-import { videoDemo } from '@src/static/home';
 import { useAppDispatch, useAppSelector } from '@src/models/hooks';
 import { getPipelineList, selectPipelineList, selectAll, getAllList } from '@src/models/pipeline';
 import { useTranslation } from 'react-i18next';
