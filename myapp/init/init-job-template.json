@@ -530,7 +530,7 @@
   "datax-import": {
     "project_name": "数据导入导出",
     "image_name": "ccr.ccs.tencentyun.com/cube-studio/datax:20240501",
-    "gitpath": "https://github.com/data-infra/cube-studio/tree/master/job-template/job/datax",
+    "gitpath": "https://github.com/data-infra/cube-studio/tree/main/job-template/job/datax",
     "image_describe": "datax mysql postgresql 数据导入",
     "job_template_name": "datax-import",
     "job_template_describe": "datax mysql postgresql 数据导入",
@@ -541,7 +541,7 @@
     "job_template_expand": {
       "index": 1,
       "rec_job_template": "自定义镜像",
-      "help_url": "https://github.com/data-infra/cube-studio/tree/master/job-template/job/datax"
+      "help_url": "https://github.com/data-infra/cube-studio/tree/main/job-template/job/datax"
     },
     "job_template_args": {
       "数据导入": {
