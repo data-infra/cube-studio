@@ -3,6 +3,8 @@ build
 src/cubestudio.egg-info
 deep-learning/*/cubestudio-2022.10.1-py3-none-any.whl
 deep-learning/*/result
+deep-learning/*/dataset
+deep-learning/*/model
 
 /src/cubestudio/aihub/web/static/example/
 /deep-learning/test.py
@@ -17,3 +19,6 @@ deep-learning/*/result
 /modelscope/*/.mp3
 /modelscope/*/result
 /modelscope/*/upload
+/modelscope/*/dataset
+/modelscope/*/model
+
