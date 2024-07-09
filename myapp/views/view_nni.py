@@ -293,9 +293,10 @@ class NNI_ModelView_Base():
             _('任务启动命令'),
             default='python xx.py',
             description= _('工作节点启动命令'),
-            widget=MyBS3TextAreaFieldWidget(),
+            widget=BS3TextFieldWidget(),
             validators=[DataRequired()]
         )
+
 
         self.edit_columns = ['project', 'name', 'describe', 'parallel_trial_count', 'max_trial_count',
                              'objective_type', 'objective_goal', 'objective_metric_name',
@@ -332,6 +333,8 @@ class NNI_ModelView_Base():
         # from flask_appbuilder.forms import DynamicForm
         if 'parameters_demo' in form._fields:
             del form._fields['parameters_demo']  # 不处理这个字段
+
+
 
     # @pysnooper.snoop()
     def make_nnijob(self,k8s_client,namespace,nni):
@@ -429,8 +432,7 @@ class NNI_ModelView_Base():
 
         # 创建service
         labels = {
-            "type": "nni",
-            "component":"nni",
+            "pod-type":"nni",
             "role":"master",
             "app":nni.name,
             "username":nni.created_by.username
@@ -498,6 +500,16 @@ class NNI_ModelView_Base():
         k8s_client.delete_istio_ingress(namespace=namespace, name=nni.name)
 
         k8s_client.create_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],namespace=namespace, body=vs_json)
+
+        # 删除network NetworkPolicy
+        try:
+            # time.sleep(2)
+            k8s_client.NetworkingV1Api.delete_namespaced_network_policy(namespace=namespace,name=nni.name)
+        except ApiException as api_e:
+            if api_e.status != 404:
+                print(api_e)
+        except Exception as e:
+            pass
 
     # 生成实验
     # @pysnooper.snoop()
@@ -601,7 +613,7 @@ trainingService:
 
         item.job_json = {
             "job_worker_image": item.job_worker_image,
-            "job_worker_command": item.job_worker_command,
+            "job_worker_command": item.job_worker_command
         }
 
         item.job_json = json.dumps(item.job_json, indent=4, ensure_ascii=False)
