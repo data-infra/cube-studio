@@ -862,7 +862,7 @@ def init():
                         job_type=nni.get('job_type','Job'),name=nni.get('name','test'+uuid.uuid4().hex[:4]),namespace=nni.get('namespace','automl'),
                         describe=nni.get('describe', ''),parallel_trial_count=nni.get('parallel_trial_count', 3),max_trial_count=nni.get('max_trial_count', 12),
                         objective_type=nni.get('objective_type', 'maximize'),objective_goal=nni.get('objective_goal', 0.99),objective_metric_name=nni.get('objective_metric_name', 'accuracy'),
-                        algorithm_name=nni.get('algorithm_name','Random'), parameters=json.dumps(nni.get('parameters',{}),indent=4,ensure_ascii=False),
+                        algorithm_name=nni.get('algorithm_name','Random'), parameters=nni.get('parameters','{}'),
                         job_json=json.dumps(nni.get('job_json',{}),indent=4,ensure_ascii=False),
                         job_worker_image = nni.get('job_worker_image', conf.get('NNI_IMAGES','')),
                         working_dir=nni.get('working_dir', '/mnt/admin/nni/demo/'),
@@ -908,3 +908,10 @@ def init():
     except Exception as e:
         print(e)
         # traceback.print_exc()
+    # 初始化示例所需要的测试数据
+    try:
+        import subprocess
+        process = subprocess.Popen('python /home/myapp/myapp/example/pipeline/ml/init.py', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+    except Exception as e:
+        print(e)

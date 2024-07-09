@@ -11,10 +11,7 @@
     "objective_goal": 0.99,
     "objective_metric_name": "accuracy",
     "algorithm_name": "Random",
-    "parameters": {
-        "batch_size": {"_type":"choice", "_value": [16, 32, 64, 128]},
-        "momentum":{"_type":"uniform","_value":[0, 1]}
-    },
+    "parameters": "{\n    \"batch_size\": {\n        \"_type\": \"choice\",\n        \"_value\": [16,32,64,128]\n    },\n    \"momentum\": {\n        \"_type\": \"uniform\",\n        \"_value\": [0,1]\n    }\n}",
     "job_json": {
 
     },
