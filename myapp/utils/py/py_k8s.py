@@ -1875,12 +1875,14 @@ class K8s():
     # @pysnooper.snoop()
     def to_memory_GB(self, memory):
         if 'K' in memory:
-            return round(float(memory.replace('Ki', '').replace('K', '')) / 1000 / 1000,2)
+            return round(float(memory.replace('Ki', '').replace('K', '')) / 1024 / 1024,2)
         if 'M' in memory:
-            return round(float(memory.replace('Mi', '').replace('M', '')) / 1000,2)
+            return round(float(memory.replace('Mi', '').replace('M', '')) / 1024,2)
         if 'G' in memory:
             return round(float(memory.replace('Gi', '').replace('G', '')),2)
-        return 0
+        if 'T' in memory:
+            return round(float(memory.replace('Ti', '').replace('T', ''))*1024,2)
+        return round(float(memory)/1024/1024/1024,2)
 
     def to_cpu(self, cpu):
         if 'm' in cpu:
@@ -2009,6 +2011,10 @@ class K8s():
                     user = pod.metadata.labels.get('user', '')
                 if not user:
                     user = pod.metadata.labels.get('rtx-user', '')
+                if not user:
+                    user = pod.metadata.labels.get('run-username', '')
+                if not user:
+                    user = pod.metadata.labels.get('username', '')
 
             containers = pod.spec.containers
 
