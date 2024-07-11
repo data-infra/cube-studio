@@ -123,6 +123,7 @@ class Job_Template_ModelView_Base():
             description= _('镜像的入口命令，直接写成单行字符串，例如python xx.py，无需添加[]'),
             default='',
             widget=BS3TextFieldWidget(),  # 传给widget函数的是外层的field对象，以及widget函数的参数
+            validators=[DataRequired()]
         ),
         "job_args_definition": StringField(
             _('参数定义'),
