@@ -328,3 +328,4 @@ rancher使用**全部容器化**的形式来部署k8s集群，能大幅度降低
 k8s集群(包括etcd)的增删节点动作是由rancher server节点控制，由rancher agent来执行的。在新节点上通过运行rancher agent容器，来访问rancher server 获取要执行的部署命令,部署对应的k8s组件容器（包含kubelet，api-server，scheduler，controller等）。
 
 rancher本身并不改变k8s的基础组件和工作原理，k8s的架构依然不变，只不过多了一个认证代理（auth proxy），也就是前面说的config文件中的rancher server中的接口。
+
