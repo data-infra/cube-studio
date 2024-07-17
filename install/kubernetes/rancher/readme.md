@@ -85,7 +85,8 @@ cd cube-studio/install/kubernetes/rancher/
 sh reset_docker.sh
 
 # 提前拉取需要的镜像
-sh pull_rancher_images.sh 
+sh pull_rancher_images.sh
+echo "127.0.0.1 localhost" >> /etc/hosts
 # 部署rancher server
 export RANCHER_CONTAINER_TAG=v2.8.5
 
