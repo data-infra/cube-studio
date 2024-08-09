@@ -27,6 +27,7 @@
 ```
 docker run -p 3306:3306 --restart always --name mysql -e MYSQL_ROOT_PASSWORD=admin -e MYSQL_ALLOW_EMPTY_PASSWORD=true -v $PWD/docker-add-file/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf -d mysql:8.0.32
 ```
+
 进入mysql，创建kubeflow数据库
 ```
 mysql> CREATE DATABASE IF NOT EXISTS kubeflow DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
@@ -102,6 +103,10 @@ docker-compose -f docker-compose.yml  up
 需要先在k8s开发集群部署一遍cube-studio，然后才能在本地连接并调度
 
 ![k8s配置](https://img-blog.csdnimg.cn/direct/fa582b82e228432188d8db1b942238ce.png)
+
+3) 修改minio地址
+
+将远端k8s上的kubeflow命名空间下的minio服务改为nodeport类型，然后修改install/docker/config.py中的MINIO_HOST为minio服务的ip:nodeport
 
 #### 前端页面本机开发和构建
 
@@ -184,6 +189,7 @@ yarn config set registry https://registry.npmmirror.com
 ```
 
 3）windows 系统下执行pip3 install -r requirements.txt 失败
+
 Power Shell 单独安装失败的部分，但要确保安装的版本号与requirements.txt保持一致，安装成功后再重新执行pip3 install -r requirements.txt
 
 4）windows 环境，执行docker-compose报UnicodeDecodeError: 'gbk' codec问题
