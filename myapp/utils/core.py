@@ -1806,6 +1806,7 @@ def hive_create_sql_demo():
     return sql
 
 
+
 import subprocess
 
 
