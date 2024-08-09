@@ -132,7 +132,6 @@ class MyappModelBase():
         "deploy_time": _("部署时间"),
         "host": _("域名"),
         "host_url": _("域名"),
-        "inference_host_url": _("域名：测试(test.xx)/调试(debug.xx)"),
         "deploy": _("部署"),
         "test_deploy": _("测试部署"),
         "prod_deploy": _("生产部署"),

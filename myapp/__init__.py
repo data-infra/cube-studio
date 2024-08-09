@@ -25,11 +25,14 @@ wtforms_json.init()
 
 # 在这个文件里面只创建app，不要做view层面的事情。
 APP_DIR = os.path.dirname(__file__)
-CONFIG_MODULE = os.environ.get("MYAPP_CONFIG", "myapp.config")
+
 
 # app = Flask(__name__,static_url_path='/static',static_folder='static',template_folder='templates')
 app = Flask(__name__)  # ,static_folder='/mnt',static_url_path='/mnt'
+app.json.sort_keys=False    # 返回字典乱序问题
+app.json.ensure_ascii = False   # 返回 中文乱码问题
 
+CONFIG_MODULE = os.environ.get("MYAPP_CONFIG", "myapp.config")
 app.config.from_object(CONFIG_MODULE)
 conf = app.config
 

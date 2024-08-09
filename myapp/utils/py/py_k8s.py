@@ -52,6 +52,22 @@ class K8s():
             pod = self.v1.read_namespaced_pod(name=pod_name_temp, namespace=namespace)
             all_pods.append(pod)
 
+    def exist_hold_resource(self,pod):
+        try:
+            exist_hold_resource=False
+            if pod['status'] == 'Running' or pod['status_more'].get('phase', '') == 'Running':
+                exist_hold_resource = True
+            if pod['status'] == 'Pending':
+                for condition in pod['status_more']['conditions']:
+                    if condition['type'] == 'PodScheduled' and str(condition['status']).lower() == 'true':
+                        exist_hold_resource = True
+                        break
+        except Exception as e:
+            print(e)
+            exist_hold_resource=True
+
+        return exist_hold_resource
+
     # @pysnooper.snoop()
     def get_pods(self, namespace=None, service_name=None, pod_name=None, labels={},status=None):
         # print(namespace)
@@ -106,6 +122,8 @@ class K8s():
                 # print(pod)
                 metadata = pod.metadata
                 status = pod.status.phase if pod and hasattr(pod, 'status') and hasattr(pod.status, 'phase') else ''
+                # Pending Running Succeeded Failed Unknown
+                # 辅助状态 ContainerCreating CrashLoopBackOff ImagePullBackOff ErrImagePull  Terminating
                 # 如果是running 也分为重启运行中
                 if status.lower()=='running':
                     status = 'Running' if [x.status for x in pod.status.conditions if x.type == 'Ready' and x.status == 'True'] else 'CrashLoopBackOff'

@@ -116,7 +116,7 @@ class InferenceService_ModelView_base():
         images += item
     service_type_choices = ['serving', 'tfserving', 'torch-server', 'onnxruntime', 'triton-server', 'ml-server（企业版）','llm-server（企业版）',]
     spec_label_columns = {
-        # "host": __("域名：测试环境test.xx，调试环境 debug.xx"),
+        "inference_host_url": _("域名:需要泛域名支持，测试(test.xx)/调试(debug.xx)"),
     }
     service_type_choices = [x.replace('_','-') for x in service_type_choices]
     host_rule=",<br>".join([cluster+"cluster:*."+conf.get('CLUSTERS')[cluster].get("SERVICE_DOMAIN",conf.get('SERVICE_DOMAIN','')) for cluster in conf.get('CLUSTERS') if conf.get('CLUSTERS')[cluster].get("SERVICE_DOMAIN",conf.get('SERVICE_DOMAIN',''))])

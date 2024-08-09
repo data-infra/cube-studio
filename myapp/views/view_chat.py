@@ -287,7 +287,7 @@ aihub接口类型
             description= _('svg格式图标，图标宽高设置为50*50，<a target="_blank" href="https://www.iconfont.cn/">iconfont</a>'),
             widget=BS3TextFieldWidget(),
             # choices=[[str(x),Markup(icon_choices[x])] for x in range(len(icon_choices))],
-            validators=[DataRequired()]
+            validators=[DataRequired(),Regexp("^<svg.*")]
         ),
         "owner": StringField(
             label= _('责任人'),

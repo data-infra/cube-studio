@@ -198,7 +198,7 @@ def pod_resource():
                         org = pod['node_selector'].get("org", 'public')
                         if org not in all_tasks_json[cluster_name][namespace]:
                             all_tasks_json[cluster_name][namespace][org] = {}
-                        if pod['status'] == 'Running' or pod['status_more'].get('phase','')=='Running':
+                        if k8s_client.exist_hold_resource(pod):
                             user = pod['labels'].get('user', pod['labels'].get('username', pod['labels'].get('run-rtx',pod['labels'].get('rtx-user','admin'))))
                             if user:
                                 request_gpu = 0
