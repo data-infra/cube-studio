@@ -28,13 +28,13 @@ http:
   # private_key: /your/private/key/path
 data_volume: /data  #这个路径是宿主机的路径，根据实际情况修改成空间大的地方
 ```
+默认密码 Harbor12345
 
 # 执行安装程序，只安装harbor
 
 安装harbor前需要先安装docker和docker-compose，并且启动docker和docker-compose。
 ```bash
-apt install -y docker
-apt install -y docker-compose
+apt install -y docker-ce docker-compose
 ./install.sh
 ```
 

@@ -376,12 +376,6 @@ export MLP_WORKER_0_PORT=$MASTER_PORT
 ![image](https://github.com/tencentmusic/cube-studio/assets/20157705/a9a0b399-8d02-4d19-8198-4e3681074f2f)
 
 
-### 实时训练
-
-tmeps支持tf框架实时训练，秒级上线，能应对embedding稀疏大模型推荐场景
-
-![image](https://user-images.githubusercontent.com/20157705/167534836-418855cf-daef-45a5-85c9-3bb1b7135f4f.png)
-
 # 三种方式部署
 
 针对企业需求，根据不同场景对计算实时性的不同需求，可以提供三种建设模式

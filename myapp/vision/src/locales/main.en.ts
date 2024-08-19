@@ -215,8 +215,8 @@ const translation = {
   "智能推荐下游节点":"Intelligent recommendation of downstream nodes",
   "请先选择推荐节点":"Please select the recommended node first.",
   "保存中":"saving",
-  "设置":"set"
-
+  "设置":"set",
+  "自定义任务模板":"custom task template"
 }
 
 export default translation

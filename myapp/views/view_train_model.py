@@ -92,13 +92,13 @@ triton-server：框架:地址。onnx:模型文件地址model.onnx，pytorch:torc
 llm-server: 不同镜像提供不同的推理架构，默认为vllm提供gpu推理加速和openai流式接口
 '''.strip())
 
-    service_type_choices = [x.replace('_', '-') for x in ['serving','tfserving', 'torch-server', 'onnxruntime', 'triton-server','aihub']]
+    service_type_choices = [x.replace('_', '-') for x in ['serving','ml-server','tfserving', 'torch-server', 'onnxruntime', 'triton-server','llm-server','aihub']]
 
     add_form_extra_fields = {
         "path": StringField(
             _('模型文件地址'),
             default='/mnt/admin/xx/saved_model/',
-            description='模型文件的容器地址或下载地址，格式参考详情',
+            description=_('模型文件的容器地址或下载地址，格式参考详情'),
             validators=[DataRequired()],
             widget=MyBS3TextFieldWidget(tips=Markup('<pre><code>' + path_describe + "</code></pre>"))
         ),

@@ -256,7 +256,7 @@ def pod_resource():
                         "pod_info":f"{cluster_name}:{namespace}:{org}:{pod_name}",
                         "label":pod['label'],
                         "username":pod['username'],
-                        "node":Markup('<a target="blank" href="%s">%s</a>' % (node_grafana_url + pod["host_ip"], pod["host_ip"])),
+                        "node":Markup('<a target="blank" href="%s">%s</a>' % (node_grafana_url + pod.get("host_ip",""), pod.get("host_ip",""))),
                         "cpu":"%s/%s" % (math.ceil(int(pod.get('used_cpu', '0')) / 1000), int(pod.get('request_cpu', '0'))),
                         "memory":"%s/%s" % (int(pod.get('used_memory', '0')), int(pod.get('request_memory', '0'))),
                         "gpu":"%s" % str(round(float(pod.get('request_gpu', '0')),2)),
@@ -310,7 +310,7 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
     page_size = 1000
     enable_echart = True
     base_permissions = ['can_list']
-    list_columns = ['cluster', 'resource_group', 'namespace', 'pod', 'username', 'node', 'cpu', 'memory', 'gpu']
+    list_columns = ['cluster','project', 'resource_group', 'namespace', 'pod', 'username', 'node', 'cpu', 'memory', 'gpu']
 
     alert_config = {
         conf.get('MODEL_URLS', {}).get('total_resource', ''): node_traffic
@@ -451,6 +451,13 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
                         k8s_client.delete_deployment(namespace=namespace, name=service_name)
                         k8s_client.delete_service(namespace=namespace, name=service_name)
                         k8s_client.delete_istio_ingress(namespace=namespace, name=service_name)
+                    from myapp.models.model_aihub import Aihub
+                    aihub = db.session.query(Aihub).filter_by(name=service_name).first()
+                    if aihub:
+                        expand = json.loads(aihub.expand) if aihub.expand else {}
+                        expand['status'] = 'offline'
+                        aihub.expand = json.dumps(expand)
+                        db.session.commit()
                 # 如果是pipeline命名空间，按照run-id进行删除，这里先只删除pod，也会造成任务停止
                 if namespace == 'pipeline':
                     k8s_client.delete_pods(namespace=namespace, pod_name=pod_name)

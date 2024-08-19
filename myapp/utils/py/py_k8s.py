@@ -29,7 +29,6 @@ class K8s():
         else:
             config.load_incluster_config()
         self.v1 = client.CoreV1Api()
-        self.v1beta1 = client.ExtensionsV1beta1Api()
         self.AppsV1Api = client.AppsV1Api()
         self.NetworkingV1Api = client.NetworkingV1Api()
         self.CustomObjectsApi = client.CustomObjectsApi()
@@ -1505,32 +1504,6 @@ class K8s():
             service = self.v1.create_namespaced_service(namespace, service)
         except Exception as e:
             print(e)
-
-    # 创建pod
-    # @pysnooper.snoop()
-    def create_ingress(self, namespace, name, host, username, port):
-        self.v1beta1 = client.ExtensionsV1beta1Api()
-        ingress_metadata = v1_object_meta.V1ObjectMeta(name=name, namespace=namespace, labels={"app":name,'user':username},annotations={"nginx.ingress.kubernetes.io/proxy-connect-timeout":"3000","nginx.ingress.kubernetes.io/proxy-send-timeout":"3000","nginx.ingress.kubernetes.io/proxy-read-timeout":"3000","nginx.ingress.kubernetes.io/proxy-body-size":"1G"})
-        backend = client.ExtensionsV1beta1IngressBackend(service_name=name,service_port=port)
-        path = client.ExtensionsV1beta1HTTPIngressPath(backend=backend,path='/')
-        http = client.ExtensionsV1beta1HTTPIngressRuleValue(paths=[path])
-        rule = client.ExtensionsV1beta1IngressRule(host=host, http=http)
-        ingress_spec = client.ExtensionsV1beta1IngressSpec(rules=[rule])
-        ingress = client.ExtensionsV1beta1Ingress(api_version='extensions/v1beta1', kind='Ingress', metadata=ingress_metadata, spec=ingress_spec)
-        # print(ingress.to_dict())
-        try:
-            self.v1beta1.delete_namespaced_ingress(name=name, namespace=namespace)
-        except ApiException as api_e:
-            if api_e.status != 404:
-                print(api_e)
-        except Exception as e:
-            print(e)
-
-        try:
-            ingress = self.v1beta1.create_namespaced_ingress(namespace=namespace, body=ingress)
-        except Exception as e:
-            print(e)
-
     #
     def delete_istio_ingress(self, namespace, name):
         crd_info = {

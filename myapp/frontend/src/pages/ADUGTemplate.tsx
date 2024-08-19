@@ -16,6 +16,7 @@ import MixSearch, { IMixSearchParamItem } from '../components/MixSearch/MixSearc
 import DynamicForm, { calculateId, IDynamicFormConfigItem, IDynamicFormGroupConfigItem, ILinkageConfig } from '../components/DynamicForm/DynamicForm';
 import ChartOptionTempalte from './ChartOptionTempalte';
 import { useTranslation } from 'react-i18next';
+import './ADUGTemplate.less';
 
 interface fatchDataParams {
     pageConf: TablePaginationConfig

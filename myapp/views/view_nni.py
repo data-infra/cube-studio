@@ -514,31 +514,6 @@ class NNI_ModelView_Base():
     def run(self, nni_id):
         nni = db.session.query(NNI).filter(NNI.id == nni_id).first()
 
-        # 限制配额
-        if conf.get('ENABLE_TASK_QUOTA', False):
-            from myapp.utils.core import meet_quota
-            meet,message = meet_quota(
-                    req_user=g.user,
-                    req_cluster_name=nni.project.cluster['NAME'],
-                    req_org=nni.project.org,
-                    req_project=nni.project,
-                    req_namespace=conf.get('AUTOML_NAMESPACE', 'automl'),
-                    exclude_pod={
-                        "app": nni.name,
-                        "pod-type": "nni",
-                    },
-                    req_resource={
-                        "cpu": nni.resource_cpu,
-                        'memory': nni.resource_memory,
-                        'gpu': nni.resource_gpu
-                    },
-                    replicas=nni.parallel_trial_count+1
-            )
-            if not meet:
-                flash(__('达到管理员设定的资源限制，请申请开通新的资源块: ')+message, category='warning')
-                return redirect(conf.get('MODEL_URLS', {}).get('nni', '/frontend/'))
-                # raise Exception('达到管理员设定的资源限制，请申请开通新的资源块')
-
         import yaml
         search_yaml = yaml.dump(json.loads(nni.parameters), allow_unicode=True).replace('\n','\n  ')
 
@@ -696,15 +671,8 @@ trainingService:
         core.validate_json(item.parameters)
         item.parameters = self.validate_parameters(item.parameters, item.algorithm_name)
 
-        item.resource_memory, item.resource_cpu, item.resource_gpu = core.check_resource(
-            resource_memory=item.resource_memory,
-            src_resource_memory=self.src_item_json.get('resource_memory', None),
-            resource_cpu=item.resource_cpu,
-            src_resource_cpu=self.src_item_json.get('resource_cpu', None),
-            resource_gpu=item.resource_gpu,
-            src_resource_gpu=self.src_item_json.get('resource_gpu', None)
-        )
-
+        item.resource_memory=core.check_resource_memory(item.resource_memory,self.src_item_json.get('resource_memory',None) if self.src_item_json else None)
+        item.resource_cpu = core.check_resource_cpu(item.resource_cpu,self.src_item_json.get('resource_cpu',None) if self.src_item_json else None)
         self.merge_trial_spec(item)
         # self.make_experiment(item)
 

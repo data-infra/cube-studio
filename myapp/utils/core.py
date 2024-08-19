@@ -2239,3 +2239,41 @@ def table_html(csv_path,features=None,zip_file=None):  # zip_file 用来表示�
         return df.style.set_table_styles(style).set_properties(**properties).to_html(bold_headers=True)
     else:
         return df.to_html(escape=False,bold_rows=False,border=1)
+
+
+def notebook_cascade_demo():
+    options = [
+        {
+            "id": "zhejiang",
+            "value": "Zhejiang",
+            "children": [
+                {
+                    "value": "hangzhou",
+                    "label": "Hangzhou",
+                    "children": [
+                        {
+                            "value": "xihu",
+                            "label": "West Lake",
+                        },
+                    ],
+                },
+            ],
+        },
+        {
+            "id": "jiangsu",
+            "value": "Jiangsu",
+            "children": [
+                {
+                    "value": "nanjing",
+                    "label": "Nanjing",
+                    "children": [
+                        {
+                            "value": "zhonghuamen",
+                            "label": "Zhong Hua Men",
+                        },
+                    ],
+                },
+            ],
+        },
+    ]
+    return options
