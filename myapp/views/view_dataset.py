@@ -117,7 +117,7 @@ class Dataset_ModelView_base():
         "ops_html": {"type": "ellip1", "width": 200},
     }
     features_demo = '''
-填写规则
+填写规则：
 {
   "column1": {
     # feature type
@@ -251,13 +251,13 @@ class Dataset_ModelView_base():
         ),
         "path": StringField(
             label= _('本地路径'),
-            description='本地文件通过notebook上传到平台内，处理后，压缩成单个压缩文件，每行一个压缩文件地址',
+            description=_('本地文件通过notebook上传到平台内，处理后，压缩成单个压缩文件，每行一个压缩文件地址'),
             widget=MyBS3TextAreaFieldWidget(rows=3),
             default=''
         ),
         "download_url": StringField(
             label= _('下载地址'),
-            description='可以直接下载的链接地址，每行一个url',
+            description=_('可以直接下载的链接地址，每行一个url'),
             widget=MyBS3TextAreaFieldWidget(rows=3),
             default=''
         ),

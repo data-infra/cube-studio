@@ -233,7 +233,7 @@ llm-server: 不同镜像提供不同的推理架构，默认为vllm提供gpu推�
         'model_path': StringField(
             _('模型地址'),
             default='',
-            description= '模型文件的容器地址或下载地址，格式参考详情',
+            description= _('模型文件的容器地址或下载地址，格式参考详情'),
             widget=MyBS3TextFieldWidget(tips=model_path_describe),
             validators=[]
         ),
