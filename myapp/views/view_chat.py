@@ -1150,14 +1150,14 @@ AI:
             headers['Accept'] = 'application/json'
 
         if not url:
-            llm_url = conf.get('CHATGPT_CHAT_URL', 'https://api.openai.com/v1/chat/completions')
+            llm_url = conf.get('CHATGPT_CHAT_URL', 'https://api.openai.com/v1')
             if llm_url:
                 if type(llm_url) == list:
                     llm_url = random.choice(llm_url)
                 else:
                     llm_url = llm_url
                 url=llm_url
-
+        url = url.strip('/')+"/chat/completions"
         llm_tokens = json.loads(chat.service_config).get("llm_tokens", [])
         llm_token = ''
         if llm_tokens:
