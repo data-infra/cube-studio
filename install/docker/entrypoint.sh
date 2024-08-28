@@ -2,14 +2,13 @@
 
 set -ex
 
-rm -f /home/myapp/myapp/static/assets
-ln -s /home/myapp/myapp/assets /home/myapp/myapp/static/
 rm -f /home/myapp/myapp/static/mnt
 mkdir -p /data/k8s/kubeflow/pipeline/workspace
 ln -s /data/k8s/kubeflow/pipeline/workspace /home/myapp/myapp/static/mnt
 rm -f /home/myapp/myapp/static/dataset
 mkdir -p /data/k8s/kubeflow/dataset
 ln -s /data/k8s/kubeflow/dataset /home/myapp/myapp/static/
+
 rm -f /home/myapp/myapp/static/aihub
 ln -s /cube-studio/aihub /home/myapp/myapp/static/
 

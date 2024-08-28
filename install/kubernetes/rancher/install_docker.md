@@ -1,7 +1,7 @@
 
-# ubuntu 安装docker
+# 1. ubuntu 安装docker
 
-##  卸载旧版本docker
+##  1.1 卸载旧版本docker
 ```bash
 sudo systemctl stop docker
 apt-get --purge remove -y *docker*  
@@ -9,7 +9,7 @@ sudo apt-get autoremove -y
 dpkg -l | grep docker
 ```
 
-## 安装docker
+## 1.2 安装docker
 
 ```bash
 ### 设置docker存储库
@@ -33,17 +33,17 @@ sudo apt-get update
 
 # 搜索可用版本
 apt-cache madison docker-ce
-# 安装指定版本，使用安装指定版本
+
+# 安装最新版docker，但不建议直接使用新版本
+# sudo apt install -y docker-ce
+
+# 建议不要像上面一样直接安装最新版，而是安装指定版本，使用安装指定版本示例如下
 apt install -y docker-ce=5:27.0.3-1~ubuntu.20.04~focal      # ubuntu 2020
 apt install -y docker-ce=5:27.0.3-1~ubuntu.22.04~jammy      # ubuntu 2022
 apt install -y docker-ce=5:27.0.3-1~ubuntu.24.04~noble      # ubuntu 2024
-
-# 安装最新版(最好使用指定版本)
-# sudo apt install -y docker-ce docker-compose
-apt install -y docker-compose
 ```
 
-# ubuntu 安装 k8s客户端
+# 2. ubuntu 安装 k8s客户端
 
 ```bash
 apt-get update && apt-get install -y apt-transport-https
@@ -67,9 +67,9 @@ apt install -y bash-completion
 source <(kubectl completion bash)
 ```
 
-# centos安装docker
+# 3. centos安装docker
 
-## 安装docker
+## 3.1 安装docker
 ```bash
 # 先卸载原有docker
 service docker stop
@@ -94,7 +94,23 @@ systemctl start docker
 
 ```
 
-# 配置docker
+## 3.2 yum安装k8s的源
+```bash
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+EOF
+setenforce 0
+yum install -y kubectl-1.24.0 
+source <(kubectl completion bash)
+```
+
+# 4. 配置docker
 
 ```bash
 vi /etc/docker/daemon.json
@@ -113,7 +129,7 @@ systemctl daemon-reload
 systemctl start docker
 ```
 
-# 切换docker根目录
+# 5. 切换docker根目录
 
 ```bash
 mkdir -p /data/docker/
@@ -127,21 +143,7 @@ cp -R /var/lib/docker/* /data/docker/
 rm -rf /var/lib/docker
 ```
 
-## yum安装k8s的源
-```bash
-cat <<EOF > /etc/yum.repos.d/kubernetes.repo
-[kubernetes]
-name=Kubernetes
-baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
-EOF
-setenforce 0
-yum install -y kubectl-1.24.0 
-source <(kubectl completion bash)
-```
+
 
 
 

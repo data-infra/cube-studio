@@ -477,6 +477,29 @@ class Dataset_ModelView_base():
         return jsonify(info)
 
 
+
+    # 划分数据历史版本
+    def pre_list_res(self,res):
+        data=res['data']
+        import itertools
+        all_data={item['id']:item for item in data}
+        all_last_data_id=[]
+        # 按name分组，最新数据下包含其他更老的数据作为历史集合
+        data = sorted(data, key=lambda x: x['name'])
+        for name, group in itertools.groupby(data, key=lambda x: x['name']):
+            group=list(group)
+            max_id = max([x['id'] for x in group])
+            all_last_data_id.append(max_id)
+            for item in group:
+                if item['id']!=max_id:
+                    if 'children' not in all_data[max_id]:
+                        all_data[max_id]['children']=[all_data[item['id']]]
+                    else:
+                        all_data[max_id]['children'].append(all_data[item['id']])
+        # 顶层只保留最新的数据
+        res['data'] = [all_data[id] for id in all_data if id in all_last_data_id]
+        return res
+
 class Dataset_ModelView_Api(Dataset_ModelView_base, MyappModelRestApi):
     datamodel = SQLAInterface(Dataset)
     route_base = '/dataset_modelview/api'

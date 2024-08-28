@@ -1313,6 +1313,29 @@ output %s
         # file.close()
         return option
 
+    # 划分数据历史版本
+    # @pysnooper.snoop()
+    def pre_list_res(self,res):
+        data=res['data']
+        import itertools
+        all_data={item['id']:item for item in data}
+        all_last_data_id=[]
+        # 按name分组，最新数据下包含其他更老的数据作为历史集合
+        data = sorted(data, key=lambda x: re.search(r'>(.*?)</a>',x['model_name_url']).group(1))
+        for name, group in itertools.groupby(data, key=lambda x: re.search(r'>(.*?)</a>',x['model_name_url']).group(1)):
+            group=list(group)
+            online_id = [x['id'] for x in group if x.get("model_status","offline")=='online']
+            max_id = max([x['id'] for x in group]) if not online_id else online_id[0]
+            all_last_data_id.append(max_id)
+            for item in group:
+                if item['id']!=max_id:
+                    if 'children' not in all_data[max_id]:
+                        all_data[max_id]['children']=[all_data[item['id']]]
+                    else:
+                        all_data[max_id]['children'].append(all_data[item['id']])
+        # 顶层只保留最新的数据
+        res['data'] = [all_data[id] for id in all_data if id in all_last_data_id]
+        return res
 
 class InferenceService_ModelView(InferenceService_ModelView_base, MyappModelView):
     datamodel = SQLAInterface(InferenceService)
