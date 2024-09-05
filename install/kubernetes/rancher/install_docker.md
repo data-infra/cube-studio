@@ -87,8 +87,8 @@ yum update -y
 yum list docker-ce --showduplicates
 # 安装指定版本，使用安装指定版本
 yum install -y docker-ce
-#yum install -y docker-ce-3:26.1.3-1.el8
-#yum install -y docker-ce-3:26.1.3-1.el9
+#yum install -y docker-ce-26.1.3-1.el8
+#yum install -y docker-ce-26.1.3-1.el9
 
 systemctl start docker
 
@@ -118,7 +118,7 @@ vi /etc/docker/daemon.json
 添加如下配置
 
 {
-    "registry-mirrors": ["https://docker.anyhub.us.kg"],
+    "registry-mirrors": ["https://docker.1panel.live", "https://hub.rat.dev/", "https://docker.chenby.cn", "https://docker.m.daocloud.io"],
     "dns": ["114.114.114.114","8.8.8.8"],
     "data-root": "/data/docker",
     "insecure-registries":["docker.oa.com:8080"]
@@ -143,6 +143,15 @@ cp -R /var/lib/docker/* /data/docker/
 rm -rf /var/lib/docker
 ```
 
+
+# 注意
+
+1、如果镜像源没有生效，那在拉取dockerhub镜像的前面加上 `registry.cn-hangzhou.aliyuncs.com/`
+
+例如
+拉取 docker pull rancher/rancher:v2.8.5
+替换为 
+docker pull registry.cn-hangzhou.aliyuncs.com/rancher/rancher:v2.8.5
 
 
 

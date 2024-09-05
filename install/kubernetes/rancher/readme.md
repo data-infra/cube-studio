@@ -4,7 +4,16 @@
 
 clone项目，git clone https://github.com/data-infra/cube-studio.git
 
-如果访问github，有障碍，可以直接git clone https://githubfast.com/data-infra/cube-studio.git，通过国内代理拉取。
+centos中如果没有git，可以先yum install git安装git
+
+## 1.1 git clone遇到问题“GnuTLS recv error (-110): The TLS connection was non-properly terminated.”
+
+解决方案为依次执行以下命令：
+apt-get install gnutls-bin
+git config --global http.sslVerify false
+git config --global http.postBuffer 1048576000
+
+再执行git clone即可，如果还是不行，直接git clone https://githubfast.com/data-infra/cube-studio.git，通过国内代理拉取。
 
 # 2. 建设前准备
 
@@ -131,7 +140,7 @@ docker logs  myrancher  2>&1 | grep "Bootstrap Password:"
 
 选择“Set a specific password to use”来配置rancher的密码，不选择"Allow collection of anonymous statistics ......"，选择"I agree to the terms and conditions ......"。
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/direct/bf9eb26c1ee14ef4b18b02fbf3c17f7a.png)
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/ecda7c7b8861482091848e3b7fe22688.png)
 
 之后选择添加集群->选择自定义集群->填写集群名称，集群名称英文小写
 ![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/ec25233e26a749d5bcb62a339e222163.jpeg)
