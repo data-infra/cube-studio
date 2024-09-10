@@ -317,7 +317,7 @@ class Dimension_table_ModelView_Api(MyappModelRestApi):
         data['columns'] = columns_list
 
     # 添加或者更新前将前端columns list转化为字段存储
-    def pre_add_req(self, req_json=None):
+    def pre_add_req(self, req_json=None, *args, **kwargs):
         if req_json and 'columns' in req_json:
             columns = {}
             for col in req_json.get('columns', []):
@@ -907,7 +907,7 @@ class Dimension_remote_table_ModelView_Api(MyappModelRestApi):
                         req_json = item.to_json()
                         if 'id' in req_json:
                             del req_json["id"]
-                        json_data = self.pre_add_req(req_json)
+                        json_data = self.pre_add_req(req_json=req_json)
                         new_item = self.add_model_schema.load(json_data)
                         self.pre_add(new_item.data)
                         self.datamodel.add(new_item.data, raise_exception=True)

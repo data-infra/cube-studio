@@ -233,7 +233,7 @@ class K8s():
         try:
             all_pods = self.get_pods(namespace=namespace, service_name=service_name)
             all_pod_ip = []
-            if (all_pods):
+            if all_pods:
                 for pod in all_pods:
                     all_pod_ip.append(pod['pod_ip'])
                 # print(all_pod_ip)
@@ -378,21 +378,21 @@ class K8s():
             for node in all_node:
                 # print(node)
                 adresses = node.status.addresses
-                Hostname = ''
-                InternalIP = ''
+                hostname = ''
+                internalIP = ''
                 for address in adresses:
                     if address.type == 'Hostname':
-                        Hostname = address.address
+                        hostname = address.address
                     if address.type == 'InternalIP':
-                        InternalIP = address.address
+                        internalIP = address.address
 
-                if InternalIP in ips:
+                if internalIP in ips:
                     body = {
                         "metadata": {
                             "labels": labels
                         }
                     }
-                    self.v1.patch_node(Hostname, body)
+                    self.v1.patch_node(hostname, body)
 
             return all_node_ip
         except Exception as e:
@@ -1750,7 +1750,7 @@ class K8s():
 
     def delete_hpa(self, namespace, name):
         try:
-            client.AutoscalingV2beta1Api().delete_namespaced_horizontal_pod_autoscaler(name=name,namespace=namespace,grace_period_seconds=0)
+            client.AutoscalingV2beta2Api().delete_namespaced_horizontal_pod_autoscaler(name=name,namespace=namespace,grace_period_seconds=0)
         except ApiException as api_e:
             if api_e.status != 404:
                 print(api_e)
@@ -1770,7 +1770,7 @@ class K8s():
         hpa = re.split(',|;', hpa)
 
         hpa_json = {
-            "apiVersion": "autoscaling/v2beta1",  # 需要所使用的k8s集群启动了这个版本的hpa，可以通过 kubectl api-resources  查看使用的版本
+            "apiVersion": "autoscaling/v2beta2",  # 需要所使用的k8s集群启动了这个版本的hpa，可以通过 kubectl api-resources  查看使用的版本
             "kind": "HorizontalPodAutoscaler",
             "metadata": {
                 "name": name,
@@ -1853,9 +1853,9 @@ class K8s():
         #     ),
         #     status=status
         # )
-        print(json.dumps(hpa_json, indent=4, ensure_ascii=4))
+        print(json.dumps(hpa_json, indent=4, ensure_ascii=False))
         try:
-            client.AutoscalingV2beta1Api().create_namespaced_horizontal_pod_autoscaler(namespace=namespace, body=hpa_json, pretty=True)
+            client.AutoscalingV2beta2Api().create_namespaced_horizontal_pod_autoscaler(namespace=namespace, body=hpa_json, pretty=True)
         except ValueError as e:
             if str(e) == 'Invalid value for `conditions`, must not be `None`':
                 print(e)
