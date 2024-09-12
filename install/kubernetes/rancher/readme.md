@@ -22,7 +22,7 @@ git config --global http.postBuffer 1048576000
 2、如果内网是无法连接外网的，需要我们在机器上提前拉好镜像。 修改install/kubernetes/rancher/all_image.py中内网仓库地址，运行导出推送和拉取脚本。联网机器上运行 pull_rancher_images.sh将镜像推送到内网仓库 或 rancher_image_save.sh将镜像压缩成文件再导入到内网机器。 不能联网机器上运行，每台机器运行 pull_rancher_harbor.sh 从内网仓库中拉取镜像 或 rancher_image_load.sh 从压缩文件中导入镜像 。
 
 
-# 3. centos8/centos8 stream/OpenCloudOS Server 8 系统初始化
+# 3. centos8/centos8 stream/OpenCloudOS Server 8/Redhat 9 系统初始化
 
 ```bash
 #修改/etc/firewalld/firewalld.conf

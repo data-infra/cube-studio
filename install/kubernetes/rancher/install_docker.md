@@ -22,6 +22,10 @@ sudo mkdir -p /etc/apt/keyrings
 rm -rf /etc/apt/keyrings/docker.gpg
 rm -rf /etc/apt/sources.list.d/docker.list
 
+### 使用docker 官方源
+#curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+#echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
 ### 国内使用阿里源
 curl -fsSL http://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | apt-key add -
 sudo add-apt-repository "deb [arch=amd64] http://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
@@ -41,6 +45,9 @@ apt-cache madison docker-ce
 apt install -y docker-ce=5:27.0.3-1~ubuntu.20.04~focal      # ubuntu 2020
 apt install -y docker-ce=5:27.0.3-1~ubuntu.22.04~jammy      # ubuntu 2022
 apt install -y docker-ce=5:27.0.3-1~ubuntu.24.04~noble      # ubuntu 2024
+
+# 安装docker-compose
+apt install -y docker-compose
 ```
 
 # 2. ubuntu 安装 k8s客户端
@@ -110,7 +117,20 @@ yum install -y kubectl-1.24.0
 source <(kubectl completion bash)
 ```
 
-# 4. 配置docker
+# 4 redhat安装docker
+
+## 4.1 安装docker
+
+```bash
+dnf update -y
+dnf install -y yum-utils device-mapper-persistent-data lvm2
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+dnf install -y docker-ce docker-ce-cli containerd.io
+systemctl start docker
+systemctl enable docker
+```
+
+# 5. 配置docker
 
 ```bash
 vi /etc/docker/daemon.json
@@ -129,7 +149,7 @@ systemctl daemon-reload
 systemctl start docker
 ```
 
-# 5. 切换docker根目录
+# 6. 切换docker根目录
 
 ```bash
 mkdir -p /data/docker/

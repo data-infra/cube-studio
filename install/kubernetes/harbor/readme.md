@@ -1,11 +1,9 @@
 # 离线下载包
 ```bash
 github地址
-wget https://github.com/goharbor/harbor/releases/download/v2.3.4/harbor-offline-installer-v2.3.4.tgz
-国内网络打包下载地址
-wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/harbor/harbor-offline-installer-v2.3.4.tgz
+wget https://githubfast.com/goharbor/harbor/releases/download/v2.11.1/harbor-offline-installer-v2.11.1.tgz
 解压
-tar xf harbor-offline-installer-v2.3.4.tgz -C /usr/local/
+tar xf harbor-offline-installer-v2.11.1.tgz -C /usr/local/
 cd /usr/local/harbor
 
 cp harbor.yml.tmpl harbor.yml
@@ -13,7 +11,9 @@ cp harbor.yml.tmpl harbor.yml
 
 # 修改hostname、harbor登录密码、关闭https。
 
-vim harbor.yml
+`vim harbor.yml`
+
+修改内容如下，主要涉及 hostname改为ip，http端口可以换掉，https块去掉
 ```bash
 hostname: xx.xx.xx.xx
 harbor_admin_password: admin
@@ -33,8 +33,10 @@ data_volume: /data  #这个路径是宿主机的路径，根据实际情况修�
 # 执行安装程序，只安装harbor
 
 安装harbor前需要先安装docker和docker-compose，并且启动docker和docker-compose。
+
+安装docker 参开 install/kubernetes/rancher/install_docker.md
+
 ```bash
-apt install -y docker-ce docker-compose
 ./install.sh
 ```
 
