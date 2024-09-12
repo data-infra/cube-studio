@@ -178,7 +178,7 @@ class K8s():
                 temp = {
                     'name': metadata.name,
                     "username": username,
-                    'host_ip': pod.status.host_ip,
+                    'host_ip': pod.status.host_ip if pod.status.host_ip else '',
                     'pod_ip': pod.status.pod_ip,
                     'status': status,  # 每个容器都正常才算正常
                     'status_more': pod.status.to_dict(),  # 无法json序列化

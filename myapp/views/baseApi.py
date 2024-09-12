@@ -1341,7 +1341,8 @@ class MyappModelRestApi(ModelRestApi):
 
             data = self._merge_update_item(item, json_data)
             data = {key: data[key] for key in data if key in self.edit_columns}
-            item = self.edit_model_schema.load(data, instance=item)
+            item = self.edit_model_schema.load(data, instance=item)   # 执行到这一句就会在数据库中更新了，后面的只是做修改
+
         except Exception as err:
             return self.response_error(422, message=str(err))
             # return self.response_error(422, message=err.messages)
