@@ -34,15 +34,11 @@ data_volume: /data  #这个路径是宿主机的路径，根据实际情况修�
 
 安装harbor前需要先安装docker和docker-compose，并且启动docker和docker-compose。
 
-安装docker 参开 install/kubernetes/rancher/install_docker.md
+安装docker 参考 install/kubernetes/rancher/install_docker.md
 
 ```bash
+cd /usr/local/harbor
 ./install.sh
-```
-
-# 除了安装harbor外，还可以安装公正服务 notary 以及漏洞扫描器 trivy，
-```bash
-./install.sh --with-notary --with-trivy --with-chartmuseum
 ```
 
 # 用docker-compose查看Harbor容器的运行状态
@@ -52,20 +48,21 @@ docker-compose ps
 
 # 使用http仓库服务
 
-vi /etc/docker/daemon.json
+`vi /etc/docker/daemon.json`
 添加配置
 ```bash
 {
     "insecure-registries":["xx.xx.xx.xx:88"]
 }
 ```
+重启生效
+```bash
 systemctl stop docker
 systemctl daemon-reload
 systemctl start docker
+```
 
-
-
-# 配置证书使用https仓库服务
+# 配置证书使用https仓库服务(可忽略)
 
 在 部署好的 Harbor 中添加 HTTPS 证书配置
 
