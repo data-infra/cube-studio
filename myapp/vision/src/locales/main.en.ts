@@ -218,7 +218,9 @@ const translation = {
   "设置":"set",
   "自定义任务模板":"custom task template",
   "打开目录":"open",
-  "调试镜像":"debug"
+  "调试镜像":"debug",
+  "确认":"confirm",
+  "编辑":"edit"
 }
 
 export default translation

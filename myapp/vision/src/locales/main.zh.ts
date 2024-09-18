@@ -215,7 +215,9 @@ const translation = {
     "设置":"设置",
     "自定义任务模板":"自定义任务模板",
     "打开目录":"打开目录",
-    "调试镜像":"调试镜像"
+    "调试镜像":"调试镜像",
+    "确认":"confirm",
+    "编辑":"edit"
 }
 
 export default translation

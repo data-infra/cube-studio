@@ -863,6 +863,10 @@ class Pipeline_ModelView_Base():
             if parameter.get("demo", 'false').lower() == 'true':
                 raise MyappException(__("示例pipeline，不允许修改，请复制后编辑"))
 
+        core.validate_json(req_json.get('expand','{}'))
+
+    pre_add_req = pre_update_req
+
     # @pysnooper.snoop()
     def pre_update(self, item):
         if item.expand:

@@ -121,6 +121,7 @@ class NNI_ModelView_Base():
         description= _('可并行的计算实例数目'),
         widget=BS3TextFieldWidget(),
         validators=[DataRequired()]
+        validators=[DataRequired()]
     )
     edit_form_extra_fields['max_trial_count'] = IntegerField(
         _('最大任务数'),
@@ -340,6 +341,9 @@ class NNI_ModelView_Base():
                     "role": "master",
                     "app": nni.name,
                     "username": nni.created_by.username
+                },
+                "annotations":{
+                    "project":nni.project.name
                 }
             },
             "spec": {
@@ -657,6 +661,12 @@ trainingService:
             k8s_client.delete_istio_ingress(namespace=namespace,name=nni.name)
         except Exception as e:
             print(e)
+
+
+    def pre_update_req(self,req_json, *args, **kwargs):
+        core.validate_json(req_json.get('parameters','{}'))
+
+    pre_add_req = pre_update_req
 
     # @pysnooper.snoop()
     def pre_add(self, item):

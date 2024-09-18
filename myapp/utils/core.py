@@ -587,8 +587,8 @@ default_args = {
 }
 
 # @pysnooper.snoop()
-def validate_job_args(job_template):
-    validate_json(job_template.args)
+def validate_job_args(args):
+    validate_json(args)
     validate_job_args_type = ['int', 'bool', 'str', 'text', 'enum', 'float', 'multiple', 'dict', 'list', 'file', 'json']
 
     # 校验x修复参数
@@ -630,7 +630,7 @@ def validate_job_args(job_template):
 
         return attr
 
-    args = json.dumps(json.loads(job_template.args), indent=4, ensure_ascii=False)
+    args = json.dumps(json.loads(args), indent=4, ensure_ascii=False)
     job_args = json.loads(args)
 
     for group in job_args:

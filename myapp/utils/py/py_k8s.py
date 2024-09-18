@@ -48,7 +48,7 @@ class K8s():
         addresses = subsets[0].addresses  # 只取第一个子网
         for address in addresses:
             pod_name_temp = address.target_ref.name
-            pod = self.v1.read_namespaced_pod(name=pod_name_temp, namespace=namespace)
+            pod = self.v1.read_namespaced_pod(name=pod_name_temp, namespace=namespace,_request_timeout=5)
             all_pods.append(pod)
 
     def exist_hold_resource(self,pod):
@@ -75,19 +75,19 @@ class K8s():
             all_pods = []
             # 如果只有命名空间
             if (namespace and not service_name and not pod_name and not labels):
-                all_pods = self.v1.list_namespaced_pod(namespace).items
+                all_pods = self.v1.list_namespaced_pod(namespace=namespace).items
             # 如果有命名空间和pod名，就直接查询pod
             elif (namespace and pod_name):
-                pod = self.v1.read_namespaced_pod(name=pod_name, namespace=namespace)
+                pod = self.v1.read_namespaced_pod(name=pod_name, namespace=namespace,_request_timeout=5)
                 all_pods.append(pod)
             # 如果只有命名空间和服务名，就查服务下绑定的pod
             elif (namespace and service_name):  # 如果有命名空间和服务名
-                all_endpoints = self.v1.read_namespaced_endpoints(service_name, namespace)  # 先查询入口点，
+                all_endpoints = self.v1.read_namespaced_endpoints(service_name, namespace,_request_timeout=5)  # 先查询入口点，
                 subsets = all_endpoints.subsets
                 addresses = subsets[0].addresses  # 只取第一个子网
                 for address in addresses:
                     pod_name_temp = address.target_ref.name
-                    pod = self.v1.read_namespaced_pod(name=pod_name_temp, namespace=namespace)
+                    pod = self.v1.read_namespaced_pod(name=pod_name_temp, namespace=namespace, _request_timeout=5)
                     all_pods.append(pod)
             elif (namespace and status):
                 if status.lower()=='running':
@@ -96,7 +96,7 @@ class K8s():
                     addresses = subsets[0].addresses  # 只取第一个子网
                     for address in addresses:
                         pod_name_temp = address.target_ref.name
-                        pod = self.v1.read_namespaced_pod(name=pod_name_temp, namespace=namespace)
+                        pod = self.v1.read_namespaced_pod(name=pod_name_temp, namespace=namespace, _request_timeout=5)
                         all_pods.append(pod)
                 else:
                     src_pods = self.v1.list_namespaced_pod(namespace).items
@@ -215,7 +215,7 @@ class K8s():
     # 获取 指定服务，指定命名空间的下面的endpoint
     def get_pod_humanized(self, namespace, pod_name):
         try:
-            pod = self.v1.read_namespaced_pod(namespace=namespace, name=pod_name)
+            pod = self.v1.read_namespaced_pod(namespace=namespace, name=pod_name,_request_timeout=5)
             if pod:
                 from kubernetes.client import ApiClient
                 pod = ApiClient().sanitize_for_serialization(pod)
@@ -1211,7 +1211,7 @@ class K8s():
     # @pysnooper.snoop()
     def apply_hubsecret(self, namespace, name, user, password, server):
         try:
-            hubsecrest = self.v1.read_namespaced_secret(name=name, namespace=namespace)
+            hubsecrest = self.v1.read_namespaced_secret(name=name, namespace=namespace,_request_timeout=5)
             if hubsecrest:
                 self.v1.delete_namespaced_secret(name, namespace=namespace)
         except ApiException as api_e:
@@ -1478,7 +1478,7 @@ class K8s():
         #     print(e)
 
         try:
-            self.v1.read_namespaced_service(name=name, namespace=namespace)
+            self.v1.read_namespaced_service(name=name, namespace=namespace,_request_timeout=5)
             self.v1.replace_namespaced_service(name=name, namespace=namespace, body=service)
         except ApiException as e:
             if e.status == 404:
@@ -1930,7 +1930,7 @@ class K8s():
     # @pysnooper.snoop()
     def exec_command(self, name, namespace, command):
         try:
-            self.v1.read_namespaced_pod(name=name, namespace=namespace)
+            self.v1.read_namespaced_pod(name=name, namespace=namespace,_request_timeout=5)
         except ApiException as e:
             if e.status != 404:
                 print("Unknown error: %s" % e)
@@ -2078,7 +2078,7 @@ class K8s():
     # 读取pvc
     def get_pvc(self,name,namespace):
         try:
-            pvc = self.v1.read_namespaced_persistent_volume_claim(name,namespace)
+            pvc = self.v1.read_namespaced_persistent_volume_claim(name=name,namespace=namespace,_request_timeout=5)
             pvc = {
                 "status":pvc.status.phase if pvc.status and pvc.status.phase else 'unknown'
             }

@@ -65,7 +65,7 @@ class Notebook_ModelView_Base():
     search_columns = ['created_by', 'name']
     add_columns = ['project', 'name', 'describe', 'images', 'working_dir', 'volume_mount', 'resource_memory','resource_cpu', 'resource_gpu']
     list_columns = ['project', 'ide_type_html', 'name_url', 'status', 'describe','reset', 'resource', 'renew', 'save']
-	show_columns = ['project', 'name', 'namespace', 'describe', 'images', 'working_dir', 'env', 'volume_mount','resource_memory', 'resource_cpu', 'resource_gpu', 'expand']
+    show_columns = ['project', 'name', 'namespace', 'describe', 'images', 'working_dir', 'env', 'volume_mount','resource_memory', 'resource_cpu', 'resource_gpu', 'expand']
     cols_width = {
         "project": {"type": "ellip2", "width": 150},
         "ide_type_html": {"type": "ellip2", "width": 200},
