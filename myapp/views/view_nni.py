@@ -121,7 +121,6 @@ class NNI_ModelView_Base():
         description= _('可并行的计算实例数目'),
         widget=BS3TextFieldWidget(),
         validators=[DataRequired()]
-        validators=[DataRequired()]
     )
     edit_form_extra_fields['max_trial_count'] = IntegerField(
         _('最大任务数'),
