@@ -3,7 +3,6 @@ docker pull ccr.ccs.tencentyun.com/cube-studio/model_download:20221001 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/deploy-service:20211001 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/llama-factory:20240410 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-deeplearning &
-docker pull ccr.ccs.tencentyun.com/cube-studio/torchserve:0.5.3-cpu &
 docker pull ccr.ccs.tencentyun.com/cube-studio/prometheus-adapter:v0.9.1 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:vscode-ubuntu-cpu-base &
 docker pull ccr.ccs.tencentyun.com/cube-studio/ml-server:20240601 &
@@ -26,6 +25,7 @@ docker pull ccr.ccs.tencentyun.com/cube-studio/model_register:20230501 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/python:strong &
 docker pull ccr.ccs.tencentyun.com/cube-studio/nni:20230601 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/ray:gpu-20230801 &
+docker pull ccr.ccs.tencentyun.com/cube-studio/torchserve:0.7.1-cpu &
 docker pull ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/offline-predict:20230801 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/neo4j:4.4 &
