@@ -559,7 +559,8 @@ output %s
                 else:
                     tar_command = 'cp -rf %s /models/' % (model_path)
             if not item.id or not item.command:
-                item.command=download_command+'cp /config/* /models/ && '+tar_command+' && torchserve --start --model-store /models --models %s=%s.mar --foreground --ts-config=/config/config.properties'%(item.model_name,item.model_name)
+
+                item.command=download_command+'cp /config/* /models/ && '+tar_command+' && torchserve --start --model-store /models --models %s=%s --foreground --ts-config=/config/config.properties'%(item.model_name,model_file)
 
             expand['config.properties'] = expand['config.properties'] if expand.get('config.properties','') else self.torch_config()
             expand['log4j2.xml'] = expand['log4j2.xml'] if expand.get('log4j2.xml','') else self.torch_log()
@@ -825,6 +826,14 @@ output %s
     # @pysnooper.snoop()
     def deploy(self, service_id, env='prod'):
         service = db.session.query(InferenceService).filter_by(id=service_id).first()
+        if service.model_status!='offline' and service.model_status!=env:
+            if env=='prod' and service.model_status=='online':
+                pass
+            else:
+                flash(f'检测到推理服务状态{service.model_status}，请先清理再部署',category='warning')
+                return redirect(conf.get('MODEL_URLS',{}).get('inferenceservice','/frontend/service/inferenceservice/inferenceservice_manager'))
+
+
         namespace = conf.get('SERVICE_NAMESPACE', 'service')
         name = service.name
         command = service.command
