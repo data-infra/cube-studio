@@ -6,7 +6,6 @@ kubeflow = [
     'bitnami/redis:6.2.12',  # 缓存
     "busybox:1.36.0",
     "kubeflow/training-operator:v1-8a066f9",  # 分布式训练
-    'ccr.ccs.tencentyun.com/cube-studio/spark-operator:1.3.8-3.1.1',  # spark serverless
     'alpine:3.10',
 ]
 
@@ -44,9 +43,6 @@ volcano = [
     'volcanosh/vc-webhook-manager:v1.7.0'  # 拦截器
 ]
 
-nni = [
-
-]
 pipeline = [
     'minio/minio:RELEASE.2023-04-20T17-56-55Z',
     'argoproj/argoexec:v3.4.3',
@@ -104,7 +100,7 @@ cube_studio = [
     # 'ccr.ccs.tencentyun.com/cube-studio/torchserve:0.8.2-gpu',
     # 'ccr.ccs.tencentyun.com/cube-studio/torchserve:0.8.2-cpu',
     # 'ccr.ccs.tencentyun.com/cube-studio/torchserve:0.7.1-gpu',
-    'ccr.ccs.tencentyun.com/cube-studio/pytorch/torchserve:0.7.1-cpu'
+    'ccr.ccs.tencentyun.com/cube-studio/torchserve:0.7.1-cpu'
     # 'ccr.ccs.tencentyun.com/cube-studio/onnxruntime:latest',
     # 'ccr.ccs.tencentyun.com/cube-studio/onnxruntime:latest-cuda',
 ]
@@ -134,7 +130,7 @@ for file in os.listdir('../../myapp/init/'):
         if match not in example_images:
             example_images.append(match.strip())
 
-images = kubeflow + kubernetes_dashboard + new_gpu + new_prometheus + istio + volcano + pipeline + cube_studio + nni + user_image + job_template_images + example_images
+images = kubeflow + kubernetes_dashboard + new_gpu + new_prometheus + istio + volcano + pipeline + cube_studio + user_image + job_template_images + example_images
 images = list(set(images))
 init_images = kubeflow + kubernetes_dashboard + new_gpu + new_prometheus + istio + volcano + pipeline
 
