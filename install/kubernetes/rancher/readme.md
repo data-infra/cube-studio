@@ -121,7 +121,7 @@ docker logs  myrancher  2>&1 | grep "Bootstrap Password:"
 
 - 3 机器docker 存储目录要>100G，内存>8G
 
-- 4 要提前拉取镜像sh pull_rancher_images.sh  不然会因为拉取时间过长造成失败。如果拉取不了，可配置docker镜像源 	"registry-mirrors":  [ "https://hub.uuuadc.top", "https://docker.anyhub.us.kg", "https://dockerhub.jobcher.com", "https://dockerhub.icu", "https://docker.ckyl.me", "https://docker.awsl9527.cn" ],
+- 4 要提前拉取镜像sh pull_rancher_images.sh  不然会因为拉取时间过长造成失败。如果拉取不了，可配置docker加速器，参考install/kubernetes/rancher/install_docker.md,
 
 - 5、permission denied类型的报错，mount 查看所属盘是否有noexec 限制
 
