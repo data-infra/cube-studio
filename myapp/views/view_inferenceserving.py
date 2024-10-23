@@ -340,6 +340,17 @@ llm-server: 不同镜像提供不同的推理架构，默认为vllm提供gpu推�
     edit_columns = add_columns
 
     edit_fieldsets = add_fieldsets
+    # 检测是否具有编辑权限，只有creator和admin可以编辑
+    def check_edit_permission(self, item):
+        if g.user and g.user.is_admin():
+            return True
+        if g.user and g.user.username and hasattr(item, 'created_by'):
+            if g.user.username == item.created_by.username:
+                return True
+        # flash('just creator can edit/delete ', 'warning')
+        return False
+
+    check_delete_permission = check_edit_permission
 
     def pre_add_web(self):
         self.default_filter = {

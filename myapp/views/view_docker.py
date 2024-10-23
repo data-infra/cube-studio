@@ -43,7 +43,7 @@ class Docker_Filter(MyappFilter):
 
 class Docker_ModelView_Base():
     datamodel = SQLAInterface(Docker)
-    label_title = 'docker'
+    label_title = '容器'
     check_redirect_list_url = conf.get('MODEL_URLS', {}).get('docker')
 
     crd_name = 'docker'
