@@ -142,7 +142,6 @@ class Crd_ModelView_Base():
         self.base_muldelete([crd])
         flash(__('清理完成'), 'success')
         return redirect(request.referrer)
-        return redirect(request.referrer)
 
     @action("stop_all", "停止", "停止所有选中的workflow?", "fa-trash", single=False)
     def stop_all(self, items):
