@@ -9,7 +9,7 @@
 2. 安装 Power Shell
 之后的脚本需要在Power Shell 中执行
 
-3. 安装python > 3.9.16
+3. 安装python = 3.9.16
 
 4. git 要配置一下不要进行换行符修改
 
