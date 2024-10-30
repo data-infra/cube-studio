@@ -319,7 +319,7 @@ llm-server: 不同镜像提供不同的推理架构，默认为vllm提供gpu推�
     model_columns = ['service_type', 'project', 'label', 'model_name', 'model_version', 'images', 'model_path']
     service_columns = ['resource_memory', 'resource_cpu', 'resource_gpu', 'min_replicas', 'max_replicas', 'hpa',
                        'priority', 'canary', 'shadow', 'host', 'volume_mount', 'sidecar']
-    admin_columns = ['inference_config', 'working_dir', 'command', 'env', 'ports', 'metrics', 'health', 'expand']
+    admin_columns = ['inference_config', 'working_dir', 'command', 'env', 'ports', 'metrics', 'health']
 
     add_fieldsets = [
         (

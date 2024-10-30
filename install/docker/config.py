@@ -617,13 +617,6 @@ CRD_INFO={
         "plural": "xgboostjobs",
         "timeout": 60*60*24*2
     },
-    "experiment":{
-        "group": "kubeflow.org",
-        "version": 'v1alpha3',  # "v1alpha3",
-        "plural": "experiments",
-        'kind':'Experiment',
-        "timeout": 60 * 60 * 24 * 2
-    },
     "pytorchjob": {
         "group": "kubeflow.org",
         "version": "v1",
