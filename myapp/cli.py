@@ -140,7 +140,7 @@ def init():
                 images.changed_by_fk = 1
                 images.project_id = project.id
                 images.repository_id = repository_id
-                images.gitpath = gitpath
+                images.gitpath = gitpath.replace("https://github.com/data-infra/cube-studio/tree/main/".strip('/'),conf.get('GIT_URL','').strip('/'))
                 db.session.add(images)
                 db.session.commit()
                 print('add images %s' % image_name)
@@ -631,6 +631,8 @@ def init():
                 service.volume_mount = volume_mount
                 service.metrics = metrics
                 service.health = health
+                if "help_url" in expand:
+                    expand["help_url"]=expand["help_url"].replace("https://github.com/data-infra/cube-studio/tree/main".strip('/'),conf.get('GIT_URL','').strip('/'))
                 service.expand = json.dumps(expand, indent=4, ensure_ascii=False)
 
                 from myapp.views.view_inferenceserving import InferenceService_ModelView_base
@@ -682,7 +684,7 @@ def init():
                         aihub = db.session.query(Aihub).filter_by(uuid=uuid).first()
                         if not aihub:
                             aihub = Aihub()
-                        aihub.doc = data.get('doc', '')
+                        aihub.doc = data.get('doc', '').replace("https://github.com/data-infra/cube-studio/tree/main",conf.get('GIT_URL','').strip('/'))
                         aihub.name = name
                         aihub.label = label
                         aihub.describe = describe
