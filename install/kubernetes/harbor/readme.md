@@ -28,7 +28,7 @@ http:
   # private_key: /your/private/key/path
 data_volume: /data  #这个路径是宿主机的路径，根据实际情况修改成空间大的地方
 ```
-默认密码 Harbor12345
+admin默认密码 Harbor12345
 
 # 执行安装程序，只安装harbor
 

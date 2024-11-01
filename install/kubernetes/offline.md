@@ -134,7 +134,7 @@ wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/inference/resnet50.mar
 wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/inference/tf-mnist.tar.gz
 
 # 训练,标注数据集
-wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/pipeline/coco_data_sample.zip
+wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/pipeline/coco.zip
 wget https://docker-76009.sz.gfp.tencent-cloud.com/github/cube-studio/aihub/deeplearning/cv-tinynas-object-detection-damoyolo/dataset/coco2014.zip
 
 ````
@@ -193,7 +193,7 @@ cp -r offline /data/k8s/kubeflow/pipeline/workspace/admin/
 在install/kubernetes目录下执行 替换成内网镜像
 
 ```python3
-cube_repo = '<内网镜像仓库ip>:<内网镜像仓库端口>/cube-studio/'
+cube_repo='<内网镜像仓库ip>:<内网镜像仓库端口>/cube-studio/'
 import os
 def fix_file(file_path):
     if os.path.isdir(file_path):
@@ -205,7 +205,7 @@ def fix_file(file_path):
         content = ''.join(open(file_path, mode='r').readlines())
         content = content.replace('ccr.ccs.tencentyun.com/cube-studio/', cube_repo)  # 替换自产镜像
         content = content.replace('docker:23.0.4', cube_repo + 'docker:23.0.4')  # 替换docker
-        content = content.replace('python:', cube_repo + 'python:')  # 替换docker
+        # content = content.replace('python:', cube_repo + 'python:')  # 替换docker
         file = open(file_path, mode='w')
         file.write(content)
         file.close()
@@ -217,12 +217,13 @@ fix_file('../../myapp/init-en')
 
 项目根路径下
 ```bash
+cube_repo='<内网镜像仓库ip>:<内网镜像仓库端口>/cube-studio/'
 构建前端
-docker build --network=host -t 192.168.3.7:88/cube-studio/kubeflow-dashboard-frontend:offline -f install/docker/dockerFrontend/Dockerfile .
-docker push 192.168.3.7:88/cube-studio/kubeflow-dashboard-frontend-enterprise:offline
+docker build --network=host -t ${cube_repo}kubeflow-dashboard-frontend:offline -f install/docker/dockerFrontend/Dockerfile .
+docker push ${cube_repo}kubeflow-dashboard-frontend:offline
 构建后端
-docker build --network=host -t 192.168.3.7:88/cube-studio/kubeflow-dashboard:offline --build-arg TARGETARCH=amd64 -f install/docker/Dockerfile .
-docker push 192.168.3.7:88/cube-studio/kubeflow-dashboard-enterprise:offline
+docker build --network=host -t ${cube_repo}kubeflow-dashboard:offline --build-arg TARGETARCH=amd64 -f install/docker/Dockerfile .
+docker push ${cube_repo}kubeflow-dashboard:offline
 ```
 
 ## 内网部署cube-studio
@@ -251,7 +252,7 @@ vi cube/overlays/kustomization.yml
 
 1、web界面hubsecret改为内部仓库的账号密码
 
-2、自带的目标识别pipeline中，第一个数据拉取任务启动命令改为，`cp offline/coco_data_sample.zip ./ && ...`
+2、自带的目标识别pipeline中，第一个数据拉取任务启动命令改为，`cp offline/coco.zip ./ && ...`
 
 3、自带的推理服务启动命令 由`wget https://xxxx/xx/.zip` 部分改为 `cp /mnt/admin/offline/xx.zip ./`
 

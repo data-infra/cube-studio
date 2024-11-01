@@ -176,6 +176,7 @@ class Project_ModelView_Base():
     }
 
     add_columns = ['name', 'describe', 'expand'] # 'cluster','volume_mount','service_external_ip',
+    search_columns=["name"]
     edit_columns = add_columns
     project_type = 'org'
 
@@ -339,6 +340,13 @@ class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
         )
         self.add_form_extra_fields = self.edit_form_extra_fields
 
+    # add project user
+    def post_add(self, item):
+        if not item.type:
+            item.type = self.project_type
+        creator = Project_User(role='creator', user=g.user, project=item)
+        db.session.add(creator)
+        db.session.commit()
 
 
 appbuilder.add_api(Project_ModelView_org_Api)

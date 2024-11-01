@@ -251,6 +251,7 @@ def dag_to_pipeline(pipeline, dbsession, workflow_label=None, **kwargs):
         container_envs.append(("KFJ_TASK_PROJECT_NAME", str(pipeline.project.name)))
         container_envs.append(("GPU_RESOURCE_NAME", gpu_resource_name))
         container_envs.append(("USERNAME", pipeline.created_by.username))
+        container_envs.append(("IMAGE_PULL_POLICY", conf.get('IMAGE_PULL_POLICY','Always')))
         if hubsecret_list:
             container_envs.append(("HUBSECRET", ','.join(hubsecret_list)))
 

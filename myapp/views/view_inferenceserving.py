@@ -893,7 +893,7 @@ output %s
         pod_env += '\nKUBEFLOW_AREA=' + json.loads(service.project.expand).get('area', 'guangzhou')
         pod_env += "\nRESOURCE_CPU=" + service.resource_cpu
         pod_env += "\nRESOURCE_MEMORY=" + service.resource_memory
-        pod_env += "\nRESOURCE_GPU=" + str(int(gpu_num))
+        pod_env += "\nRESOURCE_GPU=" + (str(gpu_num) if ',' not in str(gpu_num) else str(gpu_num).split(',')[1])
         pod_env += "\nMODEL_PATH=" + service.model_path
         pod_env = pod_env.strip(',')
 
@@ -1095,8 +1095,12 @@ output %s
 
         if env == 'prod':
             hpas = re.split(',|;', service.hpa)
-            regex = re.compile(r"\(.*\)")
-            if float(regex.sub('', service.resource_gpu)) < 1:
+            gpu_num, gpu_type, resource_name = core.get_gpu(service.resource_gpu)
+            # 虚拟化gpu占用，不进行弹性伸缩设置
+            if (type(gpu_num)==str and ',' in gpu_num):
+                gpu_num = float(gpu_num.split(',')[1])
+
+            if 0<float(gpu_num)<1:
                 for hpa in copy.deepcopy(hpas):
                     if 'gpu' in hpa:
                         hpas.remove(hpa)

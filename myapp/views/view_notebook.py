@@ -373,7 +373,7 @@ class Notebook_ModelView_Base():
         if notebook_env:
             env.update(notebook_env)
         if SERVICE_EXTERNAL_IP:
-            env["SERVICE_EXTERNAL_IP"] = SERVICE_EXTERNAL_IP[0]
+            env["SERVICE_EXTERNAL_IP"] = SERVICE_EXTERNAL_IP[0].split('|')[-1]
 
 
         annotations={
