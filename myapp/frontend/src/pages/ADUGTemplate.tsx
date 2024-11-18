@@ -936,7 +936,20 @@ export default function TaskListManager(props?: IAppMenuItem) {
                         return { ...pre, [next.key]: value }
                     }
                     if ((updateColumnsMap[next.key] || {})['ui-type'] === 'select2') {
-                        return { ...pre, [next.key]: (next.value || '').split(',') }
+                        let processedValue;
+                        if(Array.isArray(next.value)){
+                            processedValue = next.value.map((item: any) => {
+                                    if (typeof item === 'object' && item !== null && 'id' in item) {
+                                        return item.id;
+                                    } else {
+                                        return item;
+                                    }
+                                }
+                            )
+                        } else {
+                            processedValue = (next.value || '').split(',');
+                          }
+                        return { ...pre, [next.key]: processedValue }
                     }
 
                     if ((updateColumnsMap[next.key] || {})['ui-type'] === 'datePicker') {

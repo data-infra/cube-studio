@@ -86,7 +86,6 @@ const Model: React.FC<ModelProps> = props => {
       api.task_modelview_clear(props.model.id).then((res: any) => {
         setMessage('cleared');
       })
-      // window.open(`${window.location.origin}/task_modelview/api/${type}/${props.model.id}`);
     }
   };
   // 配置变化事件
