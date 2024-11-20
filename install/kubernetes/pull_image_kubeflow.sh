@@ -51,7 +51,6 @@ docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:vscode-ubuntu-gpu-base &
 docker pull ccr.ccs.tencentyun.com/cube-studio/deploy-service:20240601 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/tf:20230801 &
 docker pull argoproj/argocli:v3.4.3 &
-docker pull ccr.ccs.tencentyun.com/cube-studio/win:11 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/tritonserver:22.07-py3 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-machinelearning &
 docker pull ccr.ccs.tencentyun.com/cube-studio/yolov7:2024.01 &
