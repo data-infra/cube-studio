@@ -2,7 +2,7 @@
 
 参考install/rancher/install_docker.md部署docker
 
-clone项目，git clone https://github.com/data-infra/cube-studio.git
+clone项目，git clone --depth=1 https://github.com/data-infra/cube-studio.git
 
 centos中如果没有git，可以先yum install git安装git
 
@@ -13,7 +13,7 @@ apt-get install gnutls-bin
 git config --global http.sslVerify false
 git config --global http.postBuffer 1048576000
 
-再执行git clone即可，如果还是不行，直接git clone https://githubfast.com/data-infra/cube-studio.git，通过国内代理拉取。
+再执行git clone即可，如果还是不行，直接git clone --depth=1 https://githubfast.com/data-infra/cube-studio.git，通过国内代理拉取。
 
 # 2. 建设前准备
 
@@ -108,11 +108,10 @@ echo "127.0.0.1 localhost" >> /etc/hosts
 
 # 部署rancher server
 export RANCHER_CONTAINER_TAG=v2.8.5
-
-sudo docker run -d --privileged --restart=unless-stopped -p 443:443 --name=myrancher -e AUDIT_LEVEL=3 rancher/rancher:$RANCHER_CONTAINER_TAG
+export PASSWORD=cube-studio
+sudo docker run -d --privileged --restart=unless-stopped -p 443:443 --name=myrancher -e AUDIT_LEVEL=3 -e CATTLE_SYSTEM_DEFAULT_REGISTRY=registry.cn-hangzhou.aliyuncs.com -e CATTLE_BOOTSTRAP_PASSWORD=$PASSWORD -v /data/rancher:/var/lib/rancher registry.cn-hangzhou.aliyuncs.com/rancher/rancher:$RANCHER_CONTAINER_TAG
 # 打开 https://xx.xx.xx.xx:443/ 等待web界面可以打开。预计要1~10分钟
-# 在主机上执行一下命令 查看登陆密码
-docker logs  myrancher  2>&1 | grep "Bootstrap Password:"
+# 输入密码cube-studio
 ```
 
 ## 4.1 rancher server 启动可能问题
