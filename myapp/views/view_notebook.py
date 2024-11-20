@@ -55,7 +55,6 @@ class Notebook_Filter(MyappFilter):
 class Notebook_ModelView_Base():
     datamodel = SQLAInterface(Notebook)
     label_title = _('notebook')
-    check_redirect_list_url = conf.get('MODEL_URLS', {}).get('notebook', '')
     crd_name = 'notebook'
     conv = GeneralModelConverter(datamodel)
     base_permissions = ['can_add', 'can_delete', 'can_edit', 'can_list', 'can_show']
@@ -63,6 +62,9 @@ class Notebook_ModelView_Base():
     base_filters = [["id", Notebook_Filter, lambda: []]]
     order_columns = ['id']
     search_columns = ['created_by', 'name']
+
+
+
     add_columns = ['project', 'name', 'describe', 'images', 'working_dir', 'volume_mount', 'resource_memory','resource_cpu', 'resource_gpu']
     list_columns = ['project', 'ide_type_html', 'name_url', 'status', 'describe','reset', 'resource', 'renew', 'save']
     show_columns = ['project', 'name', 'namespace', 'describe', 'images', 'working_dir', 'env', 'volume_mount','resource_memory', 'resource_cpu', 'resource_gpu', 'expand']
@@ -74,7 +76,7 @@ class Notebook_ModelView_Base():
         "resource": {"type": "ellip2", "width": 300},
         "status": {"type": "ellip2", "width": 100},
         "renew": {"type": "ellip2", "width": 200},
-        "save": {"type": "ellip2", "width": 200}
+        "save": {"type": "ellip2", "width": 100}
     }
     add_form_query_rel_fields = {
         "project": [["name", Project_Join_Filter, 'org']]
@@ -326,6 +328,7 @@ class Notebook_ModelView_Base():
         meet_ports = core.get_not_black_port(10000 + 10 * notebook.id)
         env = {
             "NO_AUTH": "true",
+            "DISPLAY": ":10.0",   # 屏幕投屏时使用
             "USERNAME": notebook.created_by.username,
             "NODE_OPTIONS": "--max-old-space-size=%s" % str(int(notebook.resource_memory.replace("G", '')) * 1024),
             "SSH_PORT": str(meet_ports[1]),
@@ -574,14 +577,6 @@ class Notebook_ModelView_Base():
     @action("muldelete", "删除", "确定删除所选记录?", "fa-trash", single=False)
     def muldelete(self, items):
         return self._muldelete(items)
-
-class Notebook_ModelView(Notebook_ModelView_Base, MyappModelView, DeleteMixin):
-    datamodel = SQLAInterface(Notebook)
-
-
-# 添加视图和菜单
-appbuilder.add_view_no_menu(Notebook_ModelView)
-
 
 # 添加api
 class Notebook_ModelView_Api(Notebook_ModelView_Base, MyappModelRestApi):

@@ -58,7 +58,6 @@ class Job_Tempalte_Filter(MyappFilter):
 class Job_Template_ModelView_Base():
     datamodel = SQLAInterface(Job_Template)
     label_title = _('任务模板')
-    check_redirect_list_url = conf.get('MODEL_URLS', {}).get('job_template', '')
 
     list_columns = ['project', 'name_title', 'version', 'creator', 'modified']
     spec_label_columns = {
@@ -70,8 +69,6 @@ class Job_Template_ModelView_Base():
         "version": {"type": "ellip2", "width": 100},
         "modified": {"type": "ellip2", "width": 200},
     }
-    show_columns = ['project', 'name', 'version', 'describe', 'images_url', 'workdir', 'entrypoint', 'args_html',
-                    'demo_html', 'env', 'hostAliases', 'privileged', 'expand_html']
     add_columns = ['project', 'images', 'name', 'version', 'describe', 'workdir', 'entrypoint', 'volume_mount',
                    'job_args_definition', 'args', 'env', 'hostAliases', 'privileged', 'accounts', 'demo', 'expand']
     edit_columns = add_columns

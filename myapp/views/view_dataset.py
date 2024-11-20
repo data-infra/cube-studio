@@ -10,7 +10,7 @@ from wtforms import StringField, SelectField
 from flask_appbuilder.fieldwidgets import BS3TextFieldWidget, Select2Widget, Select2ManyWidget
 from myapp.forms import MyBS3TextAreaFieldWidget, MySelect2Widget, MyCommaSeparatedListField, MySelect2ManyWidget, \
     MySelectMultipleField
-from flask import jsonify, Markup, make_response
+from flask import jsonify, Markup, make_response, flash
 from .baseApi import MyappModelRestApi
 from flask import g, request, redirect
 import json, os, sys
@@ -114,7 +114,7 @@ class Dataset_ModelView_base():
         "usage": {"type": "ellip1", "width": 200},
         "research": {"type": "ellip2", "width": 100},
         "icon_html": {"type": "ellip1", "width": 100},
-        "ops_html": {"type": "ellip1", "width": 200},
+        "ops_html": {"type": "ellip1", "width": 100},
     }
     features_demo = '''
 填写规则：
@@ -280,6 +280,7 @@ class Dataset_ModelView_base():
     import_data = True
     download_data = True
 
+    # @pysnooper.snoop()
     def pre_add(self, item):
         if not item.owner:
             item.owner = g.user.username + ",*"
@@ -291,6 +292,19 @@ class Dataset_ModelView_base():
         if not item.subdataset:
             item.subdataset = item.name
         item.features = json.dumps(json.loads(item.features),indent=4,ensure_ascii=False) if item.features else "{}"
+        # 判断文件是否存在
+        if item.path:
+            new_paths = []
+            paths = item.path.split("\n")
+            for path in paths:
+                local_path = os.path.join('/home/myapp/myapp/static/', path.lstrip('/'))
+                if os.path.exists(local_path):
+                    new_paths.append(path)
+                else:
+                    flash(path+"，文件不存在，保存时以去除", "error")
+            item.path = '\n'.join(new_paths)
+
+
     def pre_update(self, item):
         self.pre_add(item)
 
@@ -305,6 +319,9 @@ class Dataset_ModelView_base():
     @action("save_store", "备份", "备份数据到当前集群?", "fa-trash", single=True, multiple=False)
     # @pysnooper.snoop()
     def save_store(self, dataset):
+        if not self.check_edit_permission(dataset):
+            flash('no permission','warning')
+            return
         from myapp.tasks.async_task import update_dataset
         kwargs = {
             "dataset_id": dataset.id,
@@ -499,6 +516,15 @@ class Dataset_ModelView_base():
         # 顶层只保留最新的数据
         res['data'] = [all_data[id] for id in all_data if id in all_last_data_id]
         return res
+
+    # 删除，把备份的数据也删除了
+    def post_delete(self,dataset):
+        remote_dir = f'dataset/{dataset.name}/{dataset.version if dataset.version else "latest"}/'
+        remote_dir = os.path.join('/data/k8s/kubeflow/global/', remote_dir)
+        if os.path.exists(remote_dir):
+            # 先清理干净，因为有可能存在旧的不对的数据
+            shutil.rmtree(remote_dir, ignore_errors=True)
+
 
 class Dataset_ModelView_Api(Dataset_ModelView_base, MyappModelRestApi):
     datamodel = SQLAInterface(Dataset)

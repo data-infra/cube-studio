@@ -39,7 +39,7 @@
         if (event.data.type) {
             switch (event.data.type) {
                 case 'link':
-                    location.pathname = '/pipeline_modelview/web/' + event.data.message.pipelineId;
+                    location.pathname = '/pipeline_modelview/api/web/' + event.data.message.pipelineId;
                     break;
                 default:
                     break;
