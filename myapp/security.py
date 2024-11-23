@@ -425,8 +425,8 @@ class MyappSecurityManager(SecurityManager):
             self.auth_view = self.authdbview()
 
         elif self.auth_type == AUTH_LDAP:
-            self.user_view = self.userldapmodelview
-            self.auth_view = self.authldapview()
+            self.user_view = self.userdbmodelview
+            self.auth_view = self.authdbview()
         elif self.auth_type == AUTH_OAUTH:
             self.user_view = self.useroauthmodelview
             self.auth_view = self.authoauthview()

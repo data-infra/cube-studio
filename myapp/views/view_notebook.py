@@ -281,7 +281,6 @@ class Notebook_ModelView_Base():
     pre_update_web = set_column
     pre_add_web = set_column
 
-
     # @pysnooper.snoop(watch_explode=('notebook'))
     def reset_notebook(self, notebook):
         notebook.changed_on = datetime.datetime.now()
