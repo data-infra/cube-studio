@@ -21,7 +21,7 @@ import { selectElements, updateElements } from '@src/models/element';
 import { useAppDispatch, useAppSelector } from '@src/models/hooks';
 import { updateTaskList, updateTaskId, selectTaskId } from '@src/models/task';
 import style from './style';
-import { Switch } from 'antd';
+import { Switch, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 interface ModelProps {
@@ -370,7 +370,16 @@ const Model: React.FC<ModelProps> = props => {
                         disabled={args.editable !== 1}
                         showValue
                       />
-                      <div className={style.argsDescription} dangerouslySetInnerHTML={{ __html: args.describe }}></div>
+                      <div className={style.argsDescription}>
+                        <span dangerouslySetInnerHTML={{ __html: args.describe }}></span>
+                        {args.tip ? <Tooltip
+                            className="mr8"
+                            placement="bottom"
+                            title={<span dangerouslySetInnerHTML={{ __html: args.tip }}></span>}
+                        >
+                            <span style={{ fontWeight: 'bold', color: '#0078d4', fontSize:'14px' }}>{t('详情')}</span>
+                        </Tooltip> : null}
+                      </div>
                     </>
                   }
                   </React.Fragment>
@@ -411,8 +420,16 @@ const Model: React.FC<ModelProps> = props => {
                           value={keyValue}
                           disabled={args.editable !== 1}
                         />
-                        <div className={style.argsDescription} dangerouslySetInnerHTML={{ __html: args.describe }}></div>
-
+                        <div className={style.argsDescription}>
+                          <span dangerouslySetInnerHTML={{ __html: args.describe }}></span>
+                          {args.tip ? <Tooltip
+                          className="mr8"
+                          placement="bottom"
+                          title={<span dangerouslySetInnerHTML={{ __html: args.tip }}></span>}
+                          >
+                              <span style={{ fontWeight: 'bold', color: '#0078d4', fontSize:'14px' }}>{t('详情')}</span>
+                          </Tooltip> : null}
+                        </div>
                     </div>
 
                   }
@@ -434,7 +451,16 @@ const Model: React.FC<ModelProps> = props => {
                         disabled={args.editable !== 1}
 
                       />
-                      <div className={style.argsDescription} dangerouslySetInnerHTML={{ __html: args.describe }}></div>
+                      <div className={style.argsDescription}>
+                        <span dangerouslySetInnerHTML={{ __html: args.describe }}></span>
+                        {args.tip ? <Tooltip
+                            className="mr8"
+                            placement="bottom"
+                            title={<span dangerouslySetInnerHTML={{ __html: args.tip }}></span>}
+                        >
+                            <span style={{ fontWeight: 'bold', color: '#0078d4', fontSize:'14px' }}>{t('详情')}</span>
+                        </Tooltip> : null}
+                      </div>
                     </>
                   }
                   </React.Fragment>
@@ -471,7 +497,16 @@ const Model: React.FC<ModelProps> = props => {
                         disabled={args.editable !== 1}
                         multiSelect
                       />
-                      <div className={style.argsDescription} dangerouslySetInnerHTML={{ __html: args.describe }}></div>
+                      <div className={style.argsDescription}>
+                        <span dangerouslySetInnerHTML={{ __html: args.describe }}></span>
+                        {args.tip ? <Tooltip
+                          className="mr8"
+                          placement="bottom"
+                          title={<span dangerouslySetInnerHTML={{ __html: args.tip }}></span>}
+                      >
+                          <span style={{ fontWeight: 'bold', color: '#0078d4', fontSize:'14px' }}>{t('详情')}</span>
+                      </Tooltip> : null}
+                      </div>
                     </>
                   }
                   </React.Fragment>
@@ -492,7 +527,16 @@ const Model: React.FC<ModelProps> = props => {
                         required={args.require === 1}
                         disabled={args.editable !== 1}
                       />
-                      <div className={style.argsDescription} dangerouslySetInnerHTML={{ __html: args.describe }}></div>
+                      <div className={style.argsDescription}>
+                        <span dangerouslySetInnerHTML={{ __html: args.describe }}></span>
+                        {args.tip ? <Tooltip
+                          className="mr8"
+                          placement="bottom"
+                          title={<span dangerouslySetInnerHTML={{ __html: args.tip }}></span>}
+                        >
+                          <span style={{ fontWeight: 'bold', color: '#0078d4', fontSize:'14px' }}>{t('详情')}</span>
+                      </Tooltip> : null}
+                      </div>
                     </>
                   ) : (
                       <TextField
@@ -534,10 +578,16 @@ const Model: React.FC<ModelProps> = props => {
                         }}
                         onRenderDescription={() => {
                           return (
-                            <div
-                              className={style.argsDescription}
-                              dangerouslySetInnerHTML={{ __html: args.describe }}
-                            ></div>
+                            <div className={style.argsDescription}>
+                              <span dangerouslySetInnerHTML={{ __html: args.describe }}></span>
+                              {args.tip ? <Tooltip
+                                className="mr8"
+                                placement="bottom"
+                                title={<span dangerouslySetInnerHTML={{ __html: args.tip }}></span>}
+                            >
+                                <span style={{ fontWeight: 'bold', color: '#0078d4', fontSize:'14px' }}>{t('详情')}</span>
+                            </Tooltip> : null}
+                            </div>
                           );
                         }}
                         multiline={args.type === 'json' || args.type === 'text'}
