@@ -245,19 +245,19 @@ class Dataset_ModelView_base():
         ),
         "url": StringField(
             label= _('相关网址'),
-            description='',
+            description='关于数据集介绍或者手动下载的网址，每行一个网址',
             widget=MyBS3TextAreaFieldWidget(rows=3),
             default=''
         ),
         "path": StringField(
-            label= _('本地路径'),
-            description=_('本地文件通过notebook上传到平台内，处理后，压缩成单个压缩文件，每行一个压缩文件地址'),
+            label= _('容器内路径'),
+            description=_('本地文件通过notebook上传到平台内，处理后，压缩成单个压缩文件，每行一个压缩文件地址。'),
             widget=MyBS3TextAreaFieldWidget(rows=3),
             default=''
         ),
         "download_url": StringField(
             label= _('下载地址'),
-            description=_('可以直接下载的链接地址，每行一个url'),
+            description=_('如何数据集存储在外部，此处提供可以直接下载的链接地址，每行一个url'),
             widget=MyBS3TextAreaFieldWidget(rows=3),
             default=''
         ),
