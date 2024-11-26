@@ -11,17 +11,21 @@ interface IProps extends ReactCodeMirrorProps {
 export default function JsonEditor(props: IProps) {
   const { t, i18n } = useTranslation();
   const [isValidJson, setIsValidJson] = useState(true);
-  const [jsonContent, setJsonContent] = useState(props.value);
 
   // 格式化 JSON 内容
   const formatJson = (code: string) => {
-    const parsed = JSON.parse(code);
-    const formattedJson =  JSON.stringify(parsed, null, 2);
-    return formattedJson
+    try {
+      const parsed = JSON.parse(code);
+      const formattedJson =  JSON.stringify(parsed, null, 2);
+      return formattedJson;
+    } catch (e) {
+      return code;
+    }
   };
   const handleEditorChange = (value: string) => {
     try {
-      const formattedJson = formatJson(value);
+      const parsed = JSON.parse(value);
+      const formattedJson =  JSON.stringify(parsed, null, 2);
       if (props.onChange) {
         props.onChange(formattedJson);
       }
@@ -37,10 +41,10 @@ export default function JsonEditor(props: IProps) {
   return (
     <div>
       <CodeMirror
-        value={formatJson(jsonContent || '{}')}
+        value={formatJson(props.value || '{}')}
         onChange={(value) => handleEditorChange(value)}  // 处理内容变化
         readOnly={props.readOnly}  // 控制只读模式
-        height="300px"
+        maxHeight="300px"
         extensions={[
           json(),               // 启用 JSON 语法高亮
           EditorView.lineWrapping, // 启用自动换行
