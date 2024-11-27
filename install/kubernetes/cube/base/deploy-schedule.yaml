@@ -38,6 +38,8 @@ spec:
                 path: entrypoint.sh
               - key: config.py
                 path: config.py
+              - key: project.py
+                path: project.py
       serviceAccountName: kubeflow-dashboard
       imagePullSecrets:
         - name: hubsecret
