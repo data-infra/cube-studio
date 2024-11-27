@@ -257,7 +257,7 @@ class Project_ModelView_job_template_Api(Project_ModelView_Base, MyappModelRestA
         'expand': StringField(
             _('扩展'),
             description= _('扩展参数。示例参数：<br>"index": 0   表示在pipeline编排中的模板列表的排序位置'),
-            widget=MyBS3TextAreaFieldWidget(),
+            widget=MyBS3TextAreaFieldWidget(is_json=True),
             default='{}',
         )
     }
