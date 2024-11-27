@@ -261,7 +261,7 @@ class NNI_ModelView_Base():
             _('超参数'),
             default=self.datamodel.obj.parameters.default.arg,
             description=(__("搜索参数，注意：所有整型、浮点型都写成字符串型,示例：") + '\n' + "<pre><code>%s</code></pre>" % core.nni_parameters_demo().replace('\n', '<br>')),
-            widget=MyBS3TextAreaFieldWidget(rows=10),
+            widget=MyBS3TextAreaFieldWidget(rows=10,is_json=True),
             validators=[DataRequired()]
         )
 
