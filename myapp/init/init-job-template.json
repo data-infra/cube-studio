@@ -739,7 +739,7 @@
     "job_template_command": "python3 launcher.py",
     "job_template_volume": "",
     "job_template_account": "",
-    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com\nexport HF_HUB_ENABLE_HF_TRANSFER=1",
+    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com\nHF_HUB_ENABLE_HF_TRANSFER=1",
     "job_template_expand": {
       "index": 4,
       "help_url": "https://github.com/data-infra/cube-studio/tree/main/job-template/job/model_download"
