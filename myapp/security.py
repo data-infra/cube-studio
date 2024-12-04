@@ -161,8 +161,8 @@ class MyUserRemoteUserModelView_Base():
 
     list_columns = ["username", "active", "roles"]
 
-    edit_columns = ["username",'password', "active", "email", "roles", 'org', 'quota' ]
-    add_columns = ["username",'password', "email", "roles", 'org', 'quota']
+    edit_columns = ["username",'password', "active", "email", "roles", 'org']
+    add_columns = ["username",'password', "email", "roles", 'org']
     show_columns = ["username", "active",'email','org','password', "roles",'secret']
     describe_columns={
         "org":"组织架构，自行填写",
@@ -200,7 +200,7 @@ class MyUserRemoteUserModelView_Base():
     user_show_fieldsets = [
         (
             _("用户信息"),
-            {"fields": ["username", "active", "roles", "email",'secret','org','quota']},
+            {"fields": ["username", "active", "roles", "email",'secret','org']},
         )
     ]
     show_fieldsets = user_show_fieldsets
