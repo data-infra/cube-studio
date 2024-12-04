@@ -13,6 +13,9 @@ spec:
   - match:
     - uri:
         prefix: /k8s/dashboard/cluster/
+      headers:
+        cookie:
+          regex: ".*myapp_username=.*"
     rewrite:
       uri: /
     route:
@@ -36,6 +39,9 @@ spec:
   - match:
     - uri:
         prefix: /k8s/dashboard/user1/
+      headers:
+        cookie:
+          regex: ".*myapp_username=.*"
     rewrite:
       uri: /
     route:
@@ -58,6 +64,9 @@ spec:
   - match:
     - uri:
         prefix: /labelstudio/
+      headers:
+        cookie:
+          regex: ".*myapp_username=.*"
     rewrite:
       uri: /labelstudio/
     route:
@@ -80,6 +89,9 @@ spec:
   - match:
     - uri:
         prefix: /grafana/
+      headers:
+        cookie:
+          regex: ".*myapp_username=.*"
     rewrite:
       uri: /
     route:
