@@ -6,7 +6,7 @@ import TableBox from '../components/TableBox/TableBox';
 import moment from "moment";
 import { InfoCircleOutlined, CopyOutlined, DownOutlined, ExclamationCircleOutlined, ExportOutlined, PlusOutlined, QuestionCircleOutlined, RollbackOutlined, UploadOutlined } from '@ant-design/icons'
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getParam, getTableScroll } from '../util';
+import { getParam, getTableScroll, isJsonString } from '../util';
 import ModalForm from '../components/ModalForm/ModalForm';
 import cookies from 'js-cookie';
 import { IADUGTemplateActionItem, IAppMenuItem } from '../api/interface/kubeflowInterface';
@@ -17,6 +17,7 @@ import DynamicForm, { calculateId, IDynamicFormConfigItem, IDynamicFormGroupConf
 import ChartOptionTempalte from './ChartOptionTempalte';
 import { useTranslation } from 'react-i18next';
 import './ADUGTemplate.less';
+import TabsModal from '../components/TabsModal/TabsModal';
 
 interface fatchDataParams {
     pageConf: TablePaginationConfig
@@ -41,6 +42,8 @@ export default function TaskListManager(props?: IAppMenuItem) {
     const [visableAdd, setVisableAdd] = useState((getParam('isVisableAdd') === 'true') || false)
     const [loadingUpdate, setLoadingUpdate] = useState(false)
     const [visableUpdate, setVisableUpdate] = useState(false)
+    const [visibleTabsModal, setVisibleTabsModal] = useState(false)
+    const [enhancedDetailsUrl, setEnhancedDetailsUrl] = useState('')
     const [loadingDetail, setLoadingDetail] = useState(false)
     const [visableDetail, setVisableDetail] = useState(false)
     const [selectedRowKeys, setSelectedRowKeys] = useState<ReactText[]>([])
@@ -260,6 +263,18 @@ export default function TaskListManager(props?: IAppMenuItem) {
                     render: (text: any, record: any) => {
                         if (text === undefined || text === '') {
                             return '-'
+                        }
+                        if (isJsonString(text)) {
+                            const celInfo = JSON.parse(text)
+                            if (celInfo.type === 'tips'){
+                                return <Tooltip title={<span className="tips-content" dangerouslySetInnerHTML={{ __html: celInfo.addedValue }}></span>} placement="topLeft">
+                                    <div className={cols_width[column].type || 'ellip2'} dangerouslySetInnerHTML={{ __html: celInfo.value }}>
+                                    </div>
+                                </Tooltip>
+                            }
+                            if (celInfo.type === 'enhancedDetails') {
+                                return <div onClick={()=>{setVisibleTabsModal(true);setEnhancedDetailsUrl(celInfo.addedValue)}} dangerouslySetInnerHTML={{ __html: celInfo.value }}></div>
+                            }
                         }
                         if (cols_width[column] && cols_width[column].type?.indexOf('ellip') !== -1) {
                             return <Tooltip title={<span className="tips-content" dangerouslySetInnerHTML={{ __html: text }}></span>} placement="topLeft">
@@ -1088,7 +1103,8 @@ export default function TaskListManager(props?: IAppMenuItem) {
                     </div>
                 </Spin>
             </Modal>
-
+            {/* tabs详情 */}
+            <TabsModal visible={visibleTabsModal} url={enhancedDetailsUrl} onVisibilityChange={setVisibleTabsModal}/>
             <TitleHeader title={<>
                 {
                     (props?.isSubRoute) ? <Button className="mr16" onClick={() => {
