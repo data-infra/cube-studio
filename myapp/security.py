@@ -92,9 +92,9 @@ from sqlalchemy import Column, String
 from myapp.models.base import MyappModelBase
 class MyUser(User,MyappModelBase):
     __tablename__ = 'ab_user'
-    active = Column(Boolean,default=True)
     org = Column(String(200))   # Organization
     quota = Column(String(2000))  # 资源配额
+    active = Column(Boolean, default=True)
 
 
     def get_full_name(self):
@@ -159,14 +159,15 @@ class MyUserRemoteUserModelView_Base():
 
     base_permissions = ['can_list', 'can_edit', 'can_add', 'can_show','can_userinfo']
 
-    list_columns = ["username", "active", "roles" ]
+    list_columns = ["username", "active", "roles"]
 
-    edit_columns = ["username",'password', "active", "email", "roles", 'org', 'quota' ]
-    add_columns = ["username",'password', "active", "email", "roles", 'org', 'quota']
+    edit_columns = ["username",'password', "active", "email", "roles", 'org']
+    add_columns = ["username",'password', "email", "roles", 'org']
     show_columns = ["username", "active",'email','org','password', "roles",'secret']
     describe_columns={
         "org":"组织架构，自行填写",
-        "quota": '资源限额，额度填写方式 $集群名,$资源组名,$命名空间,$资源类型,$限制类型,$限制值，其中$命名空间包含all,jupyter,pipeline,service,automl,aihub,$资源类型包含cpu,memory,gpu,$限制类型包含single,concurrent,total'
+        "quota": '资源限额，额度填写方式 $集群名,$资源组名,$命名空间,$资源类型,$限制类型,$限制值，其中$命名空间包含all,jupyter,pipeline,service,automl,aihub,$资源类型包含cpu,memory,gpu,$限制类型包含single,concurrent,total',
+        "roles": "Admin角色拥有管理员权限，Gamma为普通用户角色"
     }
     list_widget = MyappSecurityListWidget
     label_columns = {
@@ -194,12 +195,12 @@ class MyUserRemoteUserModelView_Base():
 
     order_columns=['id']
     search_columns = ["username", 'org']
-
+    base_order = ('id', 'desc')
     # 个人查看详情额展示的信息
     user_show_fieldsets = [
         (
             _("用户信息"),
-            {"fields": ["username", "active", "roles", "email",'secret','org','quota']},
+            {"fields": ["username", "active", "roles", "email",'secret','org']},
         )
     ]
     show_fieldsets = user_show_fieldsets
@@ -214,6 +215,11 @@ class MyUserRemoteUserModelView_Base():
         "password": StringField(
             _("密码"),
             validators=[DataRequired()],
+            widget=BS3TextFieldWidget()
+        ),
+        "email": StringField(
+            _("邮箱"),
+            validators=[DataRequired(), Regexp(".*@.*.com")],
             widget=BS3TextFieldWidget()
         ),
         "org": StringField(
@@ -251,6 +257,7 @@ class MyUserRemoteUserModelView_Base():
         gamma_role = security_manager.find_role('Gamma')
         if gamma_role not in user.roles and not user.roles:
             user.roles.append(gamma_role)
+            user.avtice=True
             db.session.commit()
 
         # 添加到public项目组
@@ -274,7 +281,11 @@ class MyUserRemoteUserModelView_Base():
     def pre_add(self,user):
         user.first_name = user.username
         user.last_name = ''
+        user.avtice=True
 
+    def pre_update(self,user):
+        user.first_name = user.username
+        user.last_name = ''
 
 class MyUserRemoteUserModelView(MyUserRemoteUserModelView_Base,UserModelView):
     datamodel = SQLAInterface(MyUser)
@@ -327,7 +338,6 @@ class UserInfoEditView(SimpleFormView):
         form.populate_obj(item)
         self.appbuilder.sm.update_user(item)
         flash(as_unicode(self.message), "info")
-
 
 
 from myapp.project import MyCustomRemoteUserView
@@ -544,13 +554,10 @@ class MyappSecurityManager(SecurityManager):
             self.get_session.rollback()
             return False
 
-        # 添加public项目组
-
-
 
     # 添加注册远程用户
     # @pysnooper.snoop()
-    def auth_user_remote_org_user(self, username,org_name='',password='',email='',first_name='',last_name=''):
+    def auth_user_remote_org_user(self, username,org_name='',password='',hashed_password='',email='',first_name='',last_name=''):
         if not username:
             return None
         # 查找用户
@@ -565,6 +572,7 @@ class MyappSecurityManager(SecurityManager):
                 first_name=first_name if first_name else username,
                 last_name=last_name if last_name else username,
                 password=password,
+                hashed_password=hashed_password,
                 org=org_name,               # 添加组织架构
                 email=username + f"@{conf.get('APP_NAME','cube-studio').replace(' ','').lower()}.com" if not email else email,
                 roles=[self.find_role(self.auth_user_registration_role)] if self.find_role(self.auth_user_registration_role) else []  #  org_role   添加gamma默认角色,    组织架构角色先不自动添加

@@ -598,7 +598,9 @@ class MyappModelRestApi(ModelRestApi):
                 # 处理时间类型
                 if hasattr(column_field_kwargs['widget'], 'is_date_range') and column_field_kwargs['widget'].is_date_range:
                     col_info['ui-type'] = 'rangePicker'
-
+                # 处理json类型
+                if hasattr(column_field_kwargs['widget'], 'is_json') and column_field_kwargs['widget'].is_json:
+                    col_info['ui-type'] = 'json'
             col_info = self.make_ui_info(col_info)
             ret.append(col_info)
         return ret
@@ -680,7 +682,7 @@ class MyappModelRestApi(ModelRestApi):
         for column in edit_columns:
             if column.get('retry_info', False):
                 column['disable'] = True
-        edit_columns = self.merge_expand_field_info(edit_columns)
+        edit_columns = self.merge_expand_field_info(edit_columns)   # 扩展字段的信息展开成独立字段
         response[API_EDIT_COLUMNS_RES_KEY] = edit_columns
 
     # @pysnooper.snoop(watch_explode=('edit_columns'))
@@ -1846,6 +1848,7 @@ class MyappModelRestApi(ModelRestApi):
 
         return ret
 
+
     def make_ui_info(self, ret_src):
         ret = copy.deepcopy(ret_src)
         # 可序列化处理
@@ -1909,12 +1912,16 @@ class MyappModelRestApi(ModelRestApi):
                     ret['ui-type'] = 'select'
 
         # 字符串
-        if ret.get('ui-type', '') not in ['list', 'datePicker']:  # list,datePicker 类型，保持原样
+        if ret.get('ui-type', '') not in ['list', 'datePicker','json']:  # list,datePicker,json 类型，保持原样
             if ret.get('type', '') in ['String', ]:
                 if ret.get('widget', 'BS3Text') == 'BS3Text':
                     ret['ui-type'] = 'input'
                 else:
                     ret['ui-type'] = 'textArea'
+
+        # # json类型
+        # if ret.get('ui-type', '')=='json':
+        #     ret['type']='json'
 
         # 长文本输入
         if 'text' in ret.get('type', '').lower():
@@ -1977,9 +1984,20 @@ class MyappModelRestApi(ModelRestApi):
             # 处理时间类型
             if hasattr(column_field_kwargs['widget'], 'is_date') and column_field_kwargs['widget'].is_date:
                 ret['ui-type'] = 'datePicker'
+
             # 处理时间类型
             if hasattr(column_field_kwargs['widget'], 'is_date_range') and column_field_kwargs['widget'].is_date_range:
                 ret['ui-type'] = 'rangePicker'
+
+            # 处理json类型
+            if hasattr(column_field_kwargs['widget'], 'is_json') and column_field_kwargs['widget'].is_json:
+                ret['ui-type'] = 'json'
+
+            # 处理行数
+            if hasattr(column_field_kwargs['widget'], 'rows') and column_field_kwargs['widget'].rows:
+                if 'style' not in ret:
+                    ret['style']={}
+                ret['style']['rows']=column_field_kwargs['widget'].rows
 
             # 处理扩展字段，一个字段存储一个list的值
             if hasattr(column_field_kwargs['widget'], 'expand_filed') and column_field_kwargs['widget'].expand_filed:
@@ -2098,6 +2116,7 @@ class MyappModelRestApi(ModelRestApi):
                 ret['validators'] = [validators.DataRequired()]
 
         # print(ret)
+        # 获取前端ui显示的dom类型
         ret = self.make_ui_info(ret)
 
         return ret

@@ -61,7 +61,7 @@ export interface IDynamicFormConfigItem {
     data: Record<string, any>
 }
 
-export type TDynamicFormType = 'input' | 'textArea' | 'select' | 'datePicker' | 'rangePicker' | 'radio' | 'checkout' | 'match-input' | 'input-select' | 'fileUpload' | 'cascader'| 'json'
+export type TDynamicFormType = 'input' | 'textArea' | 'select' | 'datePicker' | 'rangePicker' | 'radio' | 'checkout' | 'match-input' | 'input-select' | 'fileUpload' | 'cascader' | 'json'
 
 export function calculateId(strList: string[]): number {
     const str2Num = (str: string) => {

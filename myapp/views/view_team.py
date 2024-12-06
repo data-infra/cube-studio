@@ -257,7 +257,7 @@ class Project_ModelView_job_template_Api(Project_ModelView_Base, MyappModelRestA
         'expand': StringField(
             _('扩展'),
             description= _('扩展参数。示例参数：<br>"index": 0   表示在pipeline编排中的模板列表的排序位置'),
-            widget=MyBS3TextAreaFieldWidget(),
+            widget=MyBS3TextAreaFieldWidget(is_json=True),
             default='{}',
         )
     }
@@ -334,6 +334,13 @@ class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
         )
         self.add_form_extra_fields = self.edit_form_extra_fields
 
+    # add project user
+    def post_add(self, item):
+        if not item.type:
+            item.type = self.project_type
+        creator = Project_User(role='creator', user=g.user, project=item)
+        db.session.add(creator)
+        db.session.commit()
 
 
 appbuilder.add_api(Project_ModelView_org_Api)
