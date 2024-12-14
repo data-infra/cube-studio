@@ -92,7 +92,7 @@ export const actionADUGTemplateCancelFavorite = (url?: string, params?: {}): Axi
     return axios.delete(url || '', { params })
 }
 
-export const actionTabsModalInfo = (url: string): AxiosResFormat<ITabsModalData> => {
+export const actionTabsModalInfo = (url: string): Promise<AxiosResponse<ITabsModalData>> => {
     return axios.get(url)
 }
 

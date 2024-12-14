@@ -113,7 +113,7 @@ export default function TabsDetail(props: IProps) {
                                 </div>
                                 <div className="tabsdetail-tool">
                                     {
-                                        tab.bottomButton.map(button => {
+                                        tab.bottomButton?.map(button => {
                                             return <Button className="mr12 icon-tool-wrapper" onClick={() => {
                                                 window.open(button.url, 'blank')
                                             }}>

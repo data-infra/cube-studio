@@ -21,8 +21,8 @@ export default function TabsModal(props: IProps) {
             setLoading(true);
             actionTabsModalInfo(url)
                 .then((res) => {
-                    if (res?.data?.result?.content && Array.isArray(res.data.result.content)) {
-                        setData(res.data.result);
+                    if (res.data) {
+                        setData(res.data);
                     } else {
                         console.error('Invalid data format:', res.data);
                         setData(undefined);
