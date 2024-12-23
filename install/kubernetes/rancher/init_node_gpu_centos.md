@@ -1,27 +1,22 @@
 
-service docker stop
-rpm -qa | grep docker | xargs yum remove -y
-rpm -qa | grep docker
-
 swapoff -a
-rm -rf /data/docker && mkdir -p /data/docker/
-
 # 拷贝源
+```bash
 cp nvidia-docker.repo /etc/yum.repo.d/
-
 yum update -y
+```
 
+# 安装
+```bash
 yum install docker-ce -y
 yum list nvidia-docker2 --showduplicate
 yum install -y nvidia-docker2
 yum install -y htop docker-compose
 yum install -y wireshark
+```
 
-systemctl stop docker
-
-cp -r /var/lib/docker/* /data/docker/
-rm -rf /etc/docker/ && mkdir -p /etc/docker/
-
+# 配置
+```bash
 (
 cat << EOF
 {
@@ -43,5 +38,5 @@ EOF
 service docker stop
 systemctl daemon-reload
 systemctl start docker
+```
 
-rm -rf /var/lib/docker

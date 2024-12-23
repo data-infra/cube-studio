@@ -17,7 +17,7 @@ ln -s /data/k8s/kubeflow/global /home/myapp/myapp/static/
 
 export FLASK_APP=myapp:app
 python myapp/create_db.py
-# myapp db init    # 生成migrations文件夹
+# myapp db init    # 生成migrations文件夹，不再需要操作
 # myapp db migrate   # 生成对应版本数据库表的升级文件到versions文件夹下，需要你的数据库是已经upgrade的
 myapp db upgrade     # 数据库表同步更新到mysql
 # 创建admin相关的用户，权限，角色，视图
