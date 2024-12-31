@@ -45,6 +45,19 @@ def upgrade():
     with op.batch_alter_table('pipeline', schema=None) as batch_op:
         batch_op.add_column(sa.Column('priority', sa.String(length=100), nullable=True, comment='优先级'))
 
+    try:
+        with op.batch_alter_table('ab_user', schema=None) as batch_op:
+            batch_op.add_column(sa.Column('wechat', sa.String(length=200), nullable=True, comment='微信'))
+            batch_op.add_column(sa.Column('phone', sa.String(length=200), nullable=True, comment='电话'))
+            batch_op.add_column(sa.Column('balance', sa.Text(length=65536), nullable=True, comment='余额'))
+            batch_op.add_column(sa.Column('coupon', sa.Text(length=65536), nullable=True, comment='优惠券'))
+            batch_op.add_column(sa.Column('voucher', sa.Text(length=65536), nullable=True, comment='代金券'))
+            batch_op.add_column(sa.Column('bill', sa.Text(length=65536), nullable=True, comment='发票'))
+            batch_op.add_column(sa.Column('real_name_authentication', sa.Text(length=65536), nullable=True, comment='实名认证'))
+            batch_op.add_column(sa.Column('subaccount', sa.Text(length=65536), nullable=True, comment='子用户'))
+    except Exception as e:
+        pass
+
     # ### end Alembic commands ###
 
 
