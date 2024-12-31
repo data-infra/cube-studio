@@ -129,9 +129,9 @@ sudo docker run -d --privileged --restart=unless-stopped -p 443:443 --name=myran
 - 7 查看k3s的日志报错，在容器刚重启后，执行 `docker exec -it myrancher cat k3s.log > k3s.log` 将报错日志保存到本地，在日志中搜索error相关内容。
 
     如果是k3s启动失败，docker exec -it myrancher cat k3s.log > k3s.log  查看k3s的日志  
-    如果k3s日志报错 iptable的问题，那就按照上面的centos8或者ubuntu22.04配置iptable，  
+    如果k3s日志报错 iptable的问题，那就按照上面的centos8配置iptable，  
     如果k3s日志报错 containerd的问题，那就 docker exec -it myrancher mv /var/lib/rancher/k3s/agent/containerd /varllib/rancher/k3slagent/_containerd  
-    如果k3s日志报错系统内容中没有xx模块，那就降低linux系统内容
+    如果k3s日志报错系统内容中没有xx模块，那就降低linux系统版本
 
 # 5. 部署k8s集群
 

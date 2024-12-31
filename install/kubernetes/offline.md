@@ -132,6 +132,7 @@ wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/inference/resnet50.onnx
 wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/inference/resnet50-torchscript.pt
 wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/inference/resnet50.mar
 wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/inference/tf-mnist.tar.gz
+wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/inference/decisionTree_model.pkl
 
 # 训练,标注数据集
 wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/pipeline/coco.zip

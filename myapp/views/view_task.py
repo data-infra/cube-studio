@@ -138,7 +138,7 @@ class Task_ModelView_Base():
             default=Task.resource_memory.default.arg,
             description= _('内存的资源使用限制，示例1G，10G， 最大100G，如需更多联系管理员'),
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
+            validators=[DataRequired(), Regexp("^.*G$")]
         ),
         'resource_cpu': StringField(
             label= _('cpu'),
@@ -204,6 +204,7 @@ class Task_ModelView_Base():
             raise MyappException('volume_mount is not valid, must contain : or null')
 
     # @pysnooper.snoop(watch_explode=('item'))
+    # 多级子参数的合并，目前不需要
     def merge_args(self, item, action):
 
         logging.info(item)
@@ -288,6 +289,8 @@ class Task_ModelView_Base():
 
     # @pysnooper.snoop(watch_explode=('item'))
     def pre_add(self, item):
+
+
         parameter = json.loads(item.pipeline.parameter)
         if parameter.get("demo", 'false').lower() == 'true':
             raise MyappException(__("示例pipeline，不允许修改，请复制后编辑"))
@@ -295,6 +298,10 @@ class Task_ModelView_Base():
         if item.job_template is None:
             raise MyappException(__("Job Template 为必选"))
 
+        item.resource_memory=item.resource_memory.upper()
+        item.resource_gpu = item.resource_gpu.upper()
+        if 'G' not in item.resource_memory and 'M' not in item.resource_memory:
+            item.resource_memory = item.resource_memory+"G"
         item.volume_mount = item.pipeline.project.volume_mount  # 默认使用项目的配置
 
         if item.job_template.volume_mount and item.job_template.volume_mount not in item.volume_mount:
@@ -326,6 +333,10 @@ class Task_ModelView_Base():
         item.name = item.name.replace('_', '-')[0:54].lower()
         if item.resource_gpu:
             item.resource_gpu = str(item.resource_gpu).upper()
+        item.resource_memory=item.resource_memory.upper()
+        item.resource_gpu = item.resource_gpu.upper()
+        if 'G' not in item.resource_memory and 'M' not in item.resource_memory:
+            item.resource_memory = item.resource_memory+"G"
         if item.job_template is None:
             raise MyappException(__("Job Template 为必选"))
 

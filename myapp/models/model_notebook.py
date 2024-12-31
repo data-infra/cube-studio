@@ -52,7 +52,7 @@ class Notebook(Model,AuditMixinNullable,MyappModelBase):
     def name_url(self):
         SERVICE_EXTERNAL_IP = json.loads(self.project.expand).get('SERVICE_EXTERNAL_IP',None) if self.project.expand else None
 
-        host = "//" + self.project.cluster.get('HOST', request.host)
+        host = "//" + self.project.cluster.get('HOST', request.host).split('|')[-1]
 
         expand = json.loads(self.expand) if self.expand else {}
         root = expand.get('root','')

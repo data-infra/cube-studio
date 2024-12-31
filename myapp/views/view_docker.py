@@ -2,7 +2,7 @@ from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 from flask_appbuilder.forms import GeneralModelConverter
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, Regexp
 from myapp.models.model_job import Repository
 from myapp import app, appbuilder, db
 from myapp.models.model_job import Repository
@@ -43,7 +43,7 @@ class Docker_Filter(MyappFilter):
 
 class Docker_ModelView_Base():
     datamodel = SQLAInterface(Docker)
-    label_title = '容器'
+    label_title = _("容器")
 
     crd_name = 'docker'
 
@@ -57,10 +57,10 @@ class Docker_ModelView_Base():
     search_columns = ['created_by', 'project']
     list_columns = ['project', 'describe', 'consecutive_build', 'image_history', 'debug']
     cols_width = {
-        "project": {"type": "ellip2", "width": 200},
+        "project": {"type": "ellip2", "width": 150},
         "describe": {"type": "ellip2", "width": 200},
-        "image_history": {"type": "ellip3", "width": 700},
-        "debug": {"type": "ellip2", "width": 300}
+        "image_history": {"type": "ellip3", "width": 600},
+        "debug": {"type": "ellip2", "width": 150}
     }
 
     add_form_query_rel_fields = {
@@ -84,23 +84,23 @@ class Docker_ModelView_Base():
             'resource_memory': StringField(
                 label= _('内存'),
                 default='8G',
-                description= _('限制的内存大小'),
+                description= _('内存的资源使用限制，示例：1G，20G'),
                 widget=BS3TextFieldWidget(),
-                validators=[]
+                validators=[DataRequired(), Regexp("^.*G$")]
             ),
             'resource_cpu': StringField(
                 label= _('cpu'),
                 default='4',
-                description= _('限制的cpu大小'),
+                description= _('cpu的资源使用限制(单位：核)，示例：2'),
                 widget=BS3TextFieldWidget(),
-                validators=[]
+                validators=[DataRequired()]
             ),
             'resource_gpu': StringField(
                 label= _('gpu'),
                 default='0',
-                description= _('限制的gpu大小'),
+                description= _('gpu的资源使用限gpu的资源使用限制(单位卡)，示例:1，2，训练任务每个容器独占整卡。-1为共享占用方式，小数(0.1)为vgpu方式，申请具体的卡型号，可以类似 1(V100)'),
                 widget=BS3TextFieldWidget(),
-                validators=[]
+                validators=[DataRequired()]
             )
         }
     }
@@ -127,7 +127,7 @@ class Docker_ModelView_Base():
     def pre_add_web(self, docker=None):
         self.add_form_extra_fields['target_image'] = StringField(
             _('目标镜像'),
-            default=conf.get('REPOSITORY_ORG')+g.user.username+":"+datetime.datetime.now().strftime('%Y.%m.%d'+".1"),
+            default=conf.get('PUSH_REPOSITORY_ORG','ccr.ccs.tencentyun.com/cube-studio/')+g.user.username+":"+datetime.datetime.now().strftime('%Y.%m.%d'+".1"),
             description= _("目标镜像名，将直接推送到目标仓库，需在镜像仓库中配置了相应仓库的账号密码"),
             widget=BS3TextFieldWidget(),
             validators=[DataRequired(), ]

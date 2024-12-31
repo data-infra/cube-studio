@@ -83,7 +83,7 @@ class Service_ModelView_base():
         "working_dir": StringField(_('工作目录'),description= _('工作目录，容器启动的初始所在目录，不填默认使用Dockerfile内定义的工作目录'),widget=BS3TextFieldWidget()),
         "command":StringField(_('启动命令'), description= _('启动命令，支持多行命令'),widget=MyBS3TextAreaFieldWidget(rows=3)),
         "node_selector":StringField(_('机器选择'), description= _('运行当前服务所在的机器'),widget=BS3TextFieldWidget(),default='cpu=true,serving=true'),
-        "resource_memory":StringField(_('memory'),default=Service.resource_memory.default.arg,description= _('内存的资源使用限制，示例1G，10G， 最大100G，如需更多联系管路员'),widget=BS3TextFieldWidget(),validators=[DataRequired()]),
+        "resource_memory":StringField(_('memory'),default=Service.resource_memory.default.arg,description= _('内存的资源使用限制，示例1G，10G， 最大100G，如需更多联系管路员'),widget=BS3TextFieldWidget(),validators=[DataRequired(), Regexp("^.*G$")]),
         "resource_cpu":StringField(_('cpu'), default=Service.resource_cpu.default.arg,description= _('cpu的资源使用限制(单位核)，示例 0.4，10，最大50核，如需更多联系管路员'),widget=BS3TextFieldWidget(), validators=[DataRequired()]),
         "resource_gpu": StringField(_('gpu'), default='0',description= _('gpu的资源使用限制(单位卡)，示例:1，2，训练任务每个容器独占整卡'), widget=BS3TextFieldWidget(), validators=[DataRequired()]),
         "replicas": StringField(_('副本数'), default=Service.replicas.default.arg,description= _('pod副本数，用来配置高可用'),widget=BS3TextFieldWidget(), validators=[DataRequired()]),
@@ -143,6 +143,10 @@ class Service_ModelView_base():
     def clear(self, service_id):
         service = db.session.query(Service).filter_by(id=service_id).first()
         self.delete_old_service(service.name, service.project.cluster)
+        expand = json.loads(service.expand) if service.expand else {}
+        expand['status']='offline'
+        service.expand = json.dumps(expand)
+        db.session.commit()
         flash(__('服务清理完成'), category='success')
         return redirect(conf.get('MODEL_URLS', {}).get('service', ''))
 
@@ -186,7 +190,7 @@ class Service_ModelView_base():
                                      image=service.images,
                                      hostAliases=conf.get('HOSTALIASES', ''),
                                      env=env,
-                                     privileged=True,
+                                     privileged=None,
                                      accounts=None,
                                      username=service.created_by.username,
                                      ports=[int(port) for port in service.ports.split(',')]
@@ -229,17 +233,22 @@ class Service_ModelView_base():
             if ip and type(ip) == list:
                 SERVICE_EXTERNAL_IP = ip
 
+        # 使用集群的ip
+        if not SERVICE_EXTERNAL_IP:
+            ip = service.project.cluster.get('HOST','').split('|')[0].strip().split(':')[0]
+            if ip:
+                SERVICE_EXTERNAL_IP=[ip]
+
         # 使用全局ip
         if not SERVICE_EXTERNAL_IP:
             SERVICE_EXTERNAL_IP = conf.get('SERVICE_EXTERNAL_IP', None)
 
         # 使用当前ip
         if not SERVICE_EXTERNAL_IP:
-            ip = request.host[:request.host.rindex(':')] if ':' in request.host else request.host  # 如果捕获到端口号，要去掉
-            if ip == '127.0.0.1':
-                host = service.project.cluster.get('HOST', '')
+            ip = request.host.split(':')[0]
+            if '127.0.0.1' in ip:
+                host = service.project.cluster.get('HOST', '').split('|')[0].split(':')[0]
                 if host:
-                    host = host[:host.rindex(':')] if ':' in host else host
                     SERVICE_EXTERNAL_IP = [host]
             elif core.checkip(ip):
                 SERVICE_EXTERNAL_IP = [ip]
@@ -260,7 +269,10 @@ class Service_ModelView_base():
                 service_type='ClusterIP' if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else 'NodePort',
                 external_ip=SERVICE_EXTERNAL_IP if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else None
             )
-
+        expand = json.loads(service.expand) if service.expand else {}
+        expand['status']='online'
+        service.expand = json.dumps(expand)
+        db.session.commit()
         flash(__('服务部署完成'), category='success')
         return redirect(conf.get("MODEL_URLS", {}).get("service", '/'))
 

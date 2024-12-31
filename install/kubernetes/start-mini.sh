@@ -31,6 +31,7 @@ kubectl create -f mysql/deploy.yaml
 # 部署redis
 kubectl delete -f redis/redis.yaml
 kubectl create -f redis/redis.yaml
+
 # 部署gpu的监控
 kubectl apply -f gpu/nvidia-device-plugin.yml
 kubectl apply -f gpu/dcgm-exporter.yaml
@@ -51,6 +52,9 @@ kubectl apply -f virtual.yaml
 kubectl apply -f argo/minio-pv-pvc-hostpath.yaml
 kubectl apply -f argo/pipeline-runner-rolebinding.yaml
 kubectl apply -f argo/install-3.4.3-all.yaml
+
+# 部署trainjob:tfjob/pytorchjob/mpijob/mxnetjob/xgboostjobs/paddlepaddle
+kubectl apply -f kubeflow/sa-rbac.yaml
 
 # 部署管理平台
 kubectl delete configmap kubernetes-config -n infra

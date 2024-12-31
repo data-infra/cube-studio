@@ -245,7 +245,7 @@ class Dataset_ModelView_base():
         ),
         "url": StringField(
             label= _('相关网址'),
-            description='关于数据集介绍或者手动下载的网址，每行一个网址',
+            description=_('关于数据集介绍或者手动下载的网址，每行一个网址'),
             widget=MyBS3TextAreaFieldWidget(rows=3),
             default=''
         ),

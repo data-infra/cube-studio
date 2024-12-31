@@ -28,8 +28,8 @@ class Dataset(Model,AuditMixinNullable,MyappModelBase):
     doc = Column(String(200), nullable=True, default='',comment='数据集的文档页面')  #
     source_type = Column(String(200), nullable=True,comment='数据集来源，开源，资产，采购')  #
     source = Column(String(200), nullable=True,comment='数据集来源，github, 天池')  #
-    industry =  Column(String(200), nullable=True,comment='行业')  #
-    icon = Column(String(2000), nullable=True,comment='图标svg内容')  #
+    industry = Column(String(200), nullable=True,comment='行业')  #
+    icon = Column(Text, nullable=True,comment='数据集预览图片')  #
     field = Column(String(200), nullable=True,comment='数据领域，视觉，听觉，文本')  #
     usage = Column(String(200), nullable=True,comment='数据用途')  #
     research = Column(String(200), nullable=True,comment='研究方向')  #

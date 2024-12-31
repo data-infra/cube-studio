@@ -1,3 +1,5 @@
+import json
+
 from flask_appbuilder import Model
 from sqlalchemy import Float
 from sqlalchemy.orm import relationship
@@ -32,6 +34,7 @@ class NNI(Model,AuditMixinNullable,MyappModelBase):
     namespace = Column(String(200), nullable=True,default='automl',comment='命名空间')
     describe = Column(Text,comment='描述')
     parallel_trial_count = Column(Integer,default=3,comment='最大并行数')
+    parallel_trial_type = Column(String(100), default='multi-process', comment='并行方式')
     maxExecDuration = Column(Integer,default=3600,comment='最大执行时长')
     max_trial_count = Column(Integer,default=12,comment='最大搜索次数')
     max_failed_trial_count = Column(Integer,default=3,comment='最大失败次数')
@@ -57,7 +60,7 @@ class NNI(Model,AuditMixinNullable,MyappModelBase):
 
     experiment=Column(Text,default='',comment='构建出来的实验体')  #
     alert_status = Column(String(100), default='Pending,Running,Succeeded,Failed,Terminated',comment='哪些状态会报警Pending,Running,Succeeded,Failed,Unknown,Waiting,Terminated')   #
-
+    expand = Column(Text(65536), default='{}', comment='扩展参数')
 
 
     def __repr__(self):
@@ -84,7 +87,12 @@ class NNI(Model,AuditMixinNullable,MyappModelBase):
 
     @property
     def describe_url(self):
-        return Markup(f'<a target=_blank href="/nni_modelview/api/web/{self.id}">{self.describe}</a>')
+        expand = json.loads(self.expand) if self.expand else {}
+        status = expand.get('status','')
+        if status=='online':
+            return Markup(f'<a target=_blank href="/nni_modelview/api/web/{self.id}">{self.describe}</a>')
+        else:
+            return self.describe
 
 
     # @property

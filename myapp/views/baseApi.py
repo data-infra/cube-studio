@@ -565,6 +565,7 @@ class MyappModelRestApi(ModelRestApi):
                 except Exception as e:
                     print(e)
 
+
     # 根据columnsfields 转化为 info的json信息
     # @pysnooper.snoop()
     def columnsfield2info(self, columnsfields):
@@ -682,8 +683,20 @@ class MyappModelRestApi(ModelRestApi):
         for column in edit_columns:
             if column.get('retry_info', False):
                 column['disable'] = True
+
         edit_columns = self.merge_expand_field_info(edit_columns)   # 扩展字段的信息展开成独立字段
         response[API_EDIT_COLUMNS_RES_KEY] = edit_columns
+        # 提供字段变换内容
+        if self.set_columns_related and 'data' in response:
+            try:
+                response_edit_columns = {}
+                for column in response[API_EDIT_COLUMNS_RES_KEY]:
+                    response_edit_columns[column['name']] = column
+                self.set_columns_related(response['data'], response_edit_columns)
+                response[API_EDIT_COLUMNS_RES_KEY] = list(response_edit_columns.values())
+            except Exception as e:
+                print(e)
+
 
     # @pysnooper.snoop(watch_explode=('edit_columns'))
     def merge_add_fieldsets_info(self, response, **kwargs):
@@ -995,6 +1008,12 @@ class MyappModelRestApi(ModelRestApi):
         if id:
             item = self.datamodel.get(id)
             if item and self.pre_update_web:
+                try:
+                    data = self.show_model_schema.dump(item, many=False)
+                    _response['data']=data
+                except Exception as e:
+                    print(e)
+
                 try:
                     self.pre_update_web(item)
                 except Exception as e:

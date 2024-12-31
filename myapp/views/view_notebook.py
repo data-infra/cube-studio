@@ -151,7 +151,7 @@ class Notebook_ModelView_Base():
             default=Notebook.resource_memory.default.arg,
             description= _('内存的资源使用限制，示例：1G，20G'),
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
+            validators=[DataRequired(), Regexp("^.*G$")]
         )
         self.add_form_extra_fields['resource_cpu'] = StringField(
             _('cpu'),
@@ -181,9 +181,10 @@ class Notebook_ModelView_Base():
             "created_by": g.user.id
         }
 
-    # @pysnooper.snoop()
+
     def pre_add(self, item):
         item.name = item.name.replace("_", "-")[0:54].lower()
+        item.resource_gpu = item.resource_gpu.upper()
 
         # 不需要用户自己填写node selector
         # if core.get_gpu(item.resource_gpu)[0]:
@@ -306,15 +307,20 @@ class Notebook_ModelView_Base():
                 SERVICE_EXTERNAL_IP = SERVICE_EXTERNAL_IP.split('|')[0].strip()
                 SERVICE_EXTERNAL_IP = [SERVICE_EXTERNAL_IP]
 
+        # 使用集群的ip
+        if not SERVICE_EXTERNAL_IP:
+            ip = notebook.project.cluster.get('HOST','').split('|')[0].strip().split(':')[0]
+            if ip:
+                SERVICE_EXTERNAL_IP=[ip]
+
         # 使用全局ip
         if not SERVICE_EXTERNAL_IP:
             SERVICE_EXTERNAL_IP = conf.get('SERVICE_EXTERNAL_IP', None)
 
         # 使用当前
         if not SERVICE_EXTERNAL_IP:
-            if core.checkip(request.host):
-                ip = request.host
-                ip = ip[:ip.index(':')] if ":" in ip else ip
+            if core.checkip(request.host.split(':')[0]):
+                ip = request.host.split(':')[0]
                 SERVICE_EXTERNAL_IP = [ip]
 
         port = 3000
@@ -399,7 +405,7 @@ class Notebook_ModelView_Base():
             image=notebook.images,
             hostAliases=conf.get('HOSTALIASES', ''),
             env=env,
-            privileged=None,
+            privileged=None,   # 这里设置privileged 才能看到所有的gpu卡
             accounts=conf.get('JUPYTER_ACCOUNTS'),
             username=notebook.created_by.username
         )
@@ -423,12 +429,10 @@ class Notebook_ModelView_Base():
             host = SERVICE_EXTERNAL_IP[0]
         # 再使用项目配置
         if not host:
-            host = notebook.project.cluster.get('HOST', request.host)
+            host = notebook.project.cluster.get('HOST', request.host).split('|')[0].strip().split(':')[0]
         # 最后使用当前域名
         if not host:
-            host = request.host
-        if ':' in host:
-            host = host[:host.rindex(':')]  # 如果捕获到端口号，要去掉
+            host = request.host.split(':')[0]
         crd_json = {
             "apiVersion": "networking.istio.io/v1alpha3",
             "kind": "VirtualService",

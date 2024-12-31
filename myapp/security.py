@@ -94,8 +94,15 @@ class MyUser(User,MyappModelBase):
     __tablename__ = 'ab_user'
     org = Column(String(200))   # Organization
     quota = Column(String(2000))  # 资源配额
-    active = Column(Boolean, default=True)
-
+    active = Column(Boolean,default=True)
+    balance = Column(Text(),default="{}")  # 余额，冻结余额，余额不足是否关机，真实还是虚拟余额
+    wechat = Column(String(200))  # 微信
+    phone = Column(String(200))  # 电话号码
+    coupon = Column(Text(),default="{}")  # 优惠券：名称，使用条件，生效时间，失效时间，余额，原始面值，状态
+    voucher = Column(Text(),default="{}")  # 代金券：名称，类型，规则，最高抵扣，面额，折扣，生效时间，失效时间，状态，适用产品，适用范围
+    bill = Column(Text(),default="{}")  # 发票信息:发票抬头,发票类型,纳税人识别号,开户银行名称,基本开户账号,注册场所地址,注册固定电话,收件人姓名,手机号,地址,
+    real_name_authentication = Column(Text(),default="{}")  # 实名认证：真实姓名，身份证；企业证件类型，企业证件附件，企业名称，企业证件号码，法人/被授权人身份(法定代表人，被授予人)，身份证件附件正面，身份证件背面，姓名，证件号码，状态
+    subaccount = Column(Text(),default="{}")  # 子用户，用于表征子账户的信息：父账户，累计消息，共享主帐号余额，子账户权限
 
     def get_full_name(self):
         return self.username
@@ -176,8 +183,8 @@ class MyUserRemoteUserModelView_Base():
         "last_name": _("名"),
         "username": _("用户名"),
         "password": _("密码"),
-        "active": _("激活？"),
-        "email": _("邮件"),
+        "active": _("激活"),
+        "email": _("邮箱"),
         "roles": _("角色"),
         "roles_html": _("角色"),
         "last_login": _("最近一次登录"),
@@ -219,7 +226,7 @@ class MyUserRemoteUserModelView_Base():
         ),
         "email": StringField(
             _("邮箱"),
-            validators=[DataRequired(), Regexp(".*@.*.com")],
+            validators=[DataRequired(), Regexp(".*@.*\..*")],
             widget=BS3TextFieldWidget()
         ),
         "org": StringField(
@@ -874,6 +881,14 @@ class MyappSecurityManager(SecurityManager):
         else:
             return []
 
+    @classmethod
+    def get_join_projects(self,session):
+        from myapp.models.model_team import Project_User
+        if g.user:
+            projects = session.query(Project_User).filter(Project_User.user_id == g.user.id).all()
+            return [project.project for project in projects]
+        else:
+            return []
 
     @classmethod
     def get_create_pipeline_ids(self,session):

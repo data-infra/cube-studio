@@ -1281,7 +1281,9 @@ class Pipeline_ModelView(Pipeline_ModelView_Base, MyappModelView):
     # order_columns = ['changed_on']
 
 
-appbuilder.add_view_no_menu(Pipeline_ModelView)
+    @action("muldelete", "删除", "确定删除所选记录?", "fa-trash", single=False)
+    def muldelete(self, items):
+        return self._muldelete(items)
 
 
 # 添加api
@@ -1309,3 +1311,11 @@ class Pipeline_ModelView_Api(Pipeline_ModelView_Base, MyappModelRestApi):
 
 
 appbuilder.add_api(Pipeline_ModelView_Api)
+
+class Pipeline_ModelView_Home_Api(Pipeline_ModelView_Api):
+    datamodel = SQLAInterface(Pipeline)
+    route_base = '/pipeline_modelview/home/api'
+    list_columns = ['id', 'project', 'pipeline_url', 'creator', 'modified', 'changed_on', 'describe']
+
+
+appbuilder.add_api(Pipeline_ModelView_Home_Api)
