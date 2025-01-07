@@ -1,7 +1,6 @@
 # docker build -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2025.01.01 -f install/docker/Dockerfile .
 
-ARG TARGETARCH=amd64
-FROM ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard-enterprise:base-python3.9-20241201
+FROM ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard-enterprise:base-python3.9-20250101
 
 RUN wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/aihub/deeplearning/aihub.zip && mkdir -p /cube-studio/aihub && unzip aihub.zip -d /cube-studio/aihub/ && rm aihub.zip
 

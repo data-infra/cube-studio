@@ -481,6 +481,9 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
                 # 如果是pipeline命名空间，按照run-id进行删除，这里先只删除pod，也会造成任务停止
                 if namespace == 'pipeline':
                     k8s_client.delete_pods(namespace=namespace, pod_name=pod_name)
+                    run_id = pod['label'].get("run-id", '')
+                    if run_id:
+                        k8s_client.delete_workflow(all_crd_info=conf.get("CRD_INFO", {}),namespace='pipeline',run_id=run_id)
 
                 if namespace == 'automl':
                     vcjob_name = pod['label'].get("app", '')
