@@ -453,6 +453,11 @@ class Notebook_ModelView_Base():
                             {
                                 "uri": {
                                     "prefix": "/notebook/%s/%s/" % (namespace, notebook.name)
+                                },
+                                "headers": {
+                                    "cookie":{
+                                        "regex": ".*myapp_username=.*"
+                                    }
                                 }
                             }
                         ],

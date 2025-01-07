@@ -468,11 +468,21 @@ class NNI_ModelView_Base():
                             {
                                 "uri": {
                                     "prefix": "/nni/%s//" % nni.name
+                                },
+                                "headers": {
+                                    "cookie": {
+                                        "regex": ".*myapp_username=.*"
+                                    }
                                 }
                             },
                             {
                                 "uri": {
                                     "prefix": "/nni/%s/" % nni.name
+                                },
+                                "headers": {
+                                    "cookie": {
+                                        "regex": ".*myapp_username=.*"
+                                    }
                                 }
                             }
                         ],
