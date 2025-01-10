@@ -118,7 +118,7 @@ docker push ${cube_repo}kubeflow-dashboard:offline
 
 1、修改init_node.sh中pull_images.sh 修改为pull_harbor.sh，表示从内网拉取镜像，每台机器都要执行。
 
-2、取消下载kubectl，注释掉
+2、取消start.sh脚本中下载kubectl，注释掉
 ```bash
 ARCH=$(uname -m)
 
@@ -140,9 +140,11 @@ vi cube/overlays/kustomization.yml
 
 1、web界面hubsecret改为内部仓库的账号密码
 
-2、自带的目标识别pipeline中，第一个数据拉取任务启动命令改为，`cp offline/coco.zip ./ && ...`
+2、修改配置文件中的内网仓库信息和内外网ip
 
-3、自带的推理服务启动命令 由`wget https://xxxx/xx/.zip` 部分改为 `cp /mnt/admin/offline/xx.zip ./`
+3、自带的目标识别pipeline中，第一个数据拉取任务启动命令改为，`cp offline/coco.zip ./ && ...`
+
+4、自带的推理服务启动命令 由`wget https://xxxx/xx/.zip` 部分改为 `cp /mnt/admin/offline/xx.zip ./`
 
 # 内网中有可以联网的机器
 
