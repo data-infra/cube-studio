@@ -264,7 +264,7 @@ class MyUserRemoteUserModelView_Base():
         gamma_role = security_manager.find_role('Gamma')
         if gamma_role not in user.roles and not user.roles:
             user.roles.append(gamma_role)
-            user.avtice=True
+            user.active=True
             db.session.commit()
 
         # 添加到public项目组
@@ -288,7 +288,7 @@ class MyUserRemoteUserModelView_Base():
     def pre_add(self,user):
         user.first_name = user.username
         user.last_name = ''
-        user.avtice=True
+        user.active=True
 
     def pre_update(self,user):
         user.first_name = user.username
