@@ -101,7 +101,7 @@ vllm: 不同镜像提供不同的推理架构，使用vllm提供gpu推理加速�
         "path": StringField(
             _('模型文件地址'),
             default='/mnt/admin/xx/saved_model/',
-            description=_('模型文件的容器地址或下载地址，格式参考详情。<a target="_blank" href="/notebook_modelview/api/entry/jupyter?file_path=/mnt/{{creator}}/">上传模型</a>'),
+            description=_('模型文件的容器地址或下载地址，格式参考详情。'),
             validators=[DataRequired()],
             widget=MyBS3TextFieldWidget(tips=_(model_path_describe))
         ),
