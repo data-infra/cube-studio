@@ -1,5 +1,10 @@
+
+
+前置条件：
+
 内网机器需要安装了docker，docker-compose，iptables
 
+# [部署视频](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/video/%E5%86%85%E7%BD%91%E7%A6%BB%E7%BA%BF%E9%83%A8%E7%BD%B2.mp4)
 
 # 完全无法联网的内网机器
 

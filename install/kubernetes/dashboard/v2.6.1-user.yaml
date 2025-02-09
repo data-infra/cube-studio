@@ -147,6 +147,7 @@ rules:
   - services
   - events
   - pods
+  - pods/log
   verbs:
   - get
   - list
@@ -296,7 +297,7 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: ["*"]
     resources: ["nodes","namespaces"]
-    verbs: ["get", "list", "watch"]
+    verbs: ["get", "list", "watch"]   
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
