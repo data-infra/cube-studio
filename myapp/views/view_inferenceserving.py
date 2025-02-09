@@ -52,6 +52,12 @@ global_all_service_load = {
 
 
 # 推理服务的各种配置
+INFERNENCE_HOST={
+    "tfserving":"/v1/models/$model_name/metadata",
+    "torch-server":":8081/models",
+    "onnxruntime":"",
+    "triton-server":'/v2/models/$model_name'
+}
 
 INFERNENCE_COMMAND={
     "tfserving":"/usr/bin/tf_serving_entrypoint.sh --model_config_file=/config/models.config --monitoring_config_file=/config/monitoring.config --platform_config_file=/config/platform.config",
@@ -529,6 +535,12 @@ output %s
         else:
             item.health = item.health.replace('$model_name',item.model_name).replace('$model_version', item.model_version)
 
+        if not item.host:
+            item.host = INFERNENCE_HOST.get(item.service_type, '').replace('$model_name',item.model_name).replace('$model_version',item.model_version)
+        else:
+            item.host = item.host.replace('$model_name',item.model_name).replace('$model_version', item.model_version)
+
+
         # 对网络地址先统一在命令中下载
         download_command = ''
         if 'http:' in item.model_path or 'https:' in item.model_path:
@@ -696,7 +708,7 @@ output %s
         try:
             from myapp.utils.py.py_k8s import K8s
             k8s_client = K8s(cluster.get('KUBECONFIG', ''))
-            service_namespace = conf.get('SERVICE_NAMESPACE')
+            service_namespace = conf.get('SERVICE_NAMESPACE','service')
             for namespace in [service_namespace, ]:
                 for name in [service_name, 'debug-' + service_name, 'test-' + service_name]:
                     service_external_name = (name + "-external").lower()[:60].strip('-')

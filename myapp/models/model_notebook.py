@@ -116,7 +116,7 @@ class Notebook(Model,AuditMixinNullable,MyappModelBase):
     def status(self):
         try:
             k8s_client = py_k8s.K8s(self.cluster.get('KUBECONFIG',''))
-            namespace = conf.get('NOTEBOOK_NAMESPACE')
+            namespace = conf.get('NOTEBOOK_NAMESPACE','jupyter')
             pods = k8s_client.get_pods(namespace=namespace,pod_name=self.name)
             if pods and len(pods)>0:
                 status = pods[0]['status']

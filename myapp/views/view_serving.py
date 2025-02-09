@@ -53,7 +53,7 @@ class Service_ModelView_base():
     show_columns = ['project', 'name', 'label', 'images', 'volume_mount', 'working_dir', 'command', 'env',
                     'resource_memory', 'resource_cpu', 'resource_gpu', 'replicas', 'ports', 'host']
     add_columns = ['project', 'name', 'label', 'images', 'working_dir', 'command', 'env', 'resource_memory',
-                   'resource_cpu', 'resource_gpu', 'replicas', 'ports', 'host']
+                   'resource_cpu', 'resource_gpu', 'replicas', 'ports']
     list_columns = ['project', 'name_url', 'host_url', 'ip', 'deploy', 'creator', 'modified']
     cols_width = {
         "name_url": {"type": "ellip2", "width": 200},
@@ -64,7 +64,7 @@ class Service_ModelView_base():
     }
     search_columns = ['created_by', 'project', 'name', 'label', 'images', 'resource_memory', 'resource_cpu', 'resource_gpu', 'volume_mount', 'host']
 
-    edit_columns = ['project', 'name', 'label', 'images', 'working_dir', 'command', 'env', 'resource_memory', 'resource_cpu', 'resource_gpu', 'replicas', 'ports', 'volume_mount', 'host', ]
+    edit_columns = ['project', 'name', 'label', 'images', 'working_dir', 'command', 'env', 'resource_memory', 'resource_cpu', 'resource_gpu', 'replicas', 'ports', 'volume_mount' ]
     base_order = ('id', 'desc')
     order_columns = ['id']
     label_title = _('云原生服务')
@@ -122,7 +122,7 @@ class Service_ModelView_base():
         service_external_name = (service_name + "-external").lower()[:60].strip('-')
         from myapp.utils.py.py_k8s import K8s
         k8s = K8s(cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('SERVICE_NAMESPACE')
+        namespace = conf.get('SERVICE_NAMESPACE','service')
         k8s.delete_deployment(namespace=namespace, name=service_name)
         k8s.delete_service(namespace=namespace, name=service_name)
         k8s.delete_service(namespace=namespace, name=service_external_name)

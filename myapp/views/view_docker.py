@@ -135,7 +135,7 @@ class Docker_ModelView_Base():
         self.add_form_extra_fields['base_image'] = StringField(
             _('基础镜像'),
             default=conf.get('USER_IMAGE',''),
-            description=f'{__("基础镜像和构建方法可参考：")}<a target="_blank" href="%s">{__("点击打开")}</a>' % (conf.get('HELP_URL').get('docker', '')),
+            description=f'{__("基础镜像和构建方法可参考：")}<a target="_blank" href="%s">{__("点击打开")}</a>' % (conf.get('HELP_URL',{}).get('docker', '')),
             widget=BS3TextFieldWidget(),
             validators=[DataRequired(), ]
         )
@@ -160,7 +160,7 @@ class Docker_ModelView_Base():
 
         if item.expand:
             expand = json.loads(item.expand)
-            expand['namespace'] = json.loads(item.project.expand).get('NOTEBOOK_NAMESPACE', conf.get('NOTEBOOK_NAMESPACE'))
+            expand['namespace'] = json.loads(item.project.expand).get('NOTEBOOK_NAMESPACE', conf.get('NOTEBOOK_NAMESPACE','jupyter'))
             item.expand = json.dumps(expand,indent=4,ensure_ascii=False)
 
     def pre_update(self, item):
@@ -179,7 +179,7 @@ class Docker_ModelView_Base():
         docker = db.session.query(Docker).filter_by(id=docker_id).first()
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(docker.project.cluster.get('KUBECONFIG', ''))
-        namespace = json.loads(docker.expand).get("namespace", conf.get('NOTEBOOK_NAMESPACE'))
+        namespace = json.loads(docker.expand).get("namespace", conf.get('NOTEBOOK_NAMESPACE','jupyter'))
         pod_name = "docker-%s-%s" % (docker.created_by.username, str(docker.id))
         pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
         if pod:
@@ -237,7 +237,7 @@ class Docker_ModelView_Base():
             try_num = try_num - 1
             time.sleep(2)
         if try_num == 0:
-            pod_url = conf.get('K8S_DASHBOARD_CLUSTER') + '#/search?namespace=%s&q=%s' % (namespace, pod_name)
+            pod_url = conf.get('K8S_DASHBOARD_CLUSTER','') + '#/search?namespace=%s&q=%s' % (namespace, pod_name)
             # event = k8s_client.get_pod_event(namespace=namespace,pod_name=pod_name)
 
             message = __('拉取镜像时间过长，一分钟后刷新此页面，或者打开链接：')+'<a href="%s">' % pod_url+__('查看pod信息')+'</a>'
@@ -257,7 +257,7 @@ class Docker_ModelView_Base():
         docker = db.session.query(Docker).filter_by(id=docker_id).first()
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(conf.get('CLUSTERS').get(conf.get('ENVIRONMENT')).get('KUBECONFIG', ''))
-        namespace = json.loads(docker.expand).get("namespace", conf.get('NOTEBOOK_NAMESPACE'))
+        namespace = json.loads(docker.expand).get("namespace", conf.get('NOTEBOOK_NAMESPACE','jupyter'))
         pod_name = "docker-%s-%s" % (docker.created_by.username, str(docker.id))
         k8s_client.delete_pods(namespace=namespace, pod_name=pod_name)
         pod_name = "docker-commit-%s-%s" % (docker.created_by.username, str(docker.id))
@@ -275,7 +275,7 @@ class Docker_ModelView_Base():
         docker = db.session.query(Docker).filter_by(id=docker_id).first()
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(docker.project.cluster.get('KUBECONFIG', ''))
-        namespace = json.loads(docker.expand).get("namespace", conf.get('NOTEBOOK_NAMESPACE'))
+        namespace = json.loads(docker.expand).get("namespace", conf.get('NOTEBOOK_NAMESPACE','jupyter'))
         pod_name = "docker-%s-%s" % (docker.created_by.username, str(docker.id))
         pod = None
         try:

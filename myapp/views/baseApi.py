@@ -1271,6 +1271,21 @@ class MyappModelRestApi(ModelRestApi):
             json_data[column_name]=json.dumps(expand_value,indent=4,ensure_ascii=False)
         return json_data
 
+
+    def fix_xss(self,input):
+        return input
+        if '<svg' in input:
+            return input
+        # 去除用户添加的html dom
+        import bleach
+        # 允许的 HTML 标签和属性
+        allowed_tags = ['svg']  # 注意  会把启动命令的&&也转义了
+        allowed_attributes = {}
+
+        # 使用 bleach.clean 函数来清理输入
+        cleaned_input = bleach.clean(input, tags=allowed_tags, attributes=allowed_attributes).replace('&amp;', '&')
+        return cleaned_input
+
         # @expose("/add", methods=["POST"])
     # def add(self):
     @expose("/", methods=["POST"])
@@ -1284,6 +1299,9 @@ class MyappModelRestApi(ModelRestApi):
             for key in json_data:
                 if type(json_data[key]) == str:
                     json_data[key] = json_data[key].strip(" ")  # 所有输入去除首尾空格，避免误输入
+
+                    json_data[key] = self.fix_xss(json_data[key])
+
             if self.pre_add_req:
                 json_data_temp = self.pre_add_req(req_json=json_data)
                 if json_data_temp:
@@ -1349,6 +1367,7 @@ class MyappModelRestApi(ModelRestApi):
             for key in json_data:
                 if type(json_data[key]) == str:
                     json_data[key] = json_data[key].strip(" ")  # 所有输入去除首尾空格，避免误输入
+                    json_data[key] = self.fix_xss(json_data[key])
 
             # 对于RelatedListt参数做处理，因为传递过来的是逗号分隔的id
             for col in self.edit_columns:
@@ -1444,6 +1463,8 @@ class MyappModelRestApi(ModelRestApi):
         action = self.actions.get(name)
         try:
             res = action.func(self.datamodel.get(pk))
+            if isinstance(res,Response) and action.icon=='url':
+                return res
             back = {
                 "status": 0,
                 "result": {},
@@ -1472,6 +1493,8 @@ class MyappModelRestApi(ModelRestApi):
         ]
         try:
             back = action.func(items)
+            if isinstance(back, Response) and action.icon=='url':
+                return back
             message = back if type(back) == str else 'success'
             back = {
                 "status": 0,
@@ -1535,6 +1558,14 @@ class MyappModelRestApi(ModelRestApi):
     @expose("/upload/", methods=["POST"])
     def upload(self):
         csv_file = request.files.get('csv_file')  # FileStorage
+        if '.csv' not in csv_file and '.json' not in csv_file:
+            back = {
+                "status": 1,
+                "message": '不支持的格式文件',
+                "result": {}
+            }
+            return self.response(200, **back)
+
         # 文件保存至指定路径
         i_path = csv_file.filename
         if os.path.exists(i_path):
@@ -1567,7 +1598,7 @@ class MyappModelRestApi(ModelRestApi):
                 continue
 
             # 全是空值的去掉
-            ll = [l.strip() for l in line if l.strip()]
+            ll = [self.fix_xss(l.strip()) for l in line if l.strip()]
             if not ll:
                 continue
 
@@ -1587,6 +1618,7 @@ class MyappModelRestApi(ModelRestApi):
                 print(e)
                 result.append(str(e))
 
+        csv_file.remove(i_path)
         flash('success %s rows，fail %s rows' % (len([x for x in result if x == 'success']), len([x for x in result if x == 'fail'])),'warning')
         back = {
             "status": 0,

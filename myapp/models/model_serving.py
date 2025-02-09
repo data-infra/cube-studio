@@ -22,7 +22,7 @@ import pysnooper
 class service_common():
     @property
     def monitoring_url(self):
-        url="//"+self.project.cluster.get('HOST',request.host).split('|')[-1]+conf.get('GRAFANA_SERVICE_PATH')+self.name
+        url="//"+self.project.cluster.get('HOST',request.host).split('|')[-1]+conf.get('GRAFANA_SERVICE_PATH','')+self.name
         return Markup(f'<a href="{url}">{__("监控")}</a>')
         # https://www.angularjswiki.com/fontawesome/fa-flask/    <i class="fa-solid fa-monitor-waveform"></i>
 
@@ -61,7 +61,7 @@ class Service(Model,AuditMixinNullable,MyappModelBase,service_common):
 
     @property
     def deploy(self):
-        monitoring_url = "//"+self.project.cluster.get('HOST', request.host).split('|')[-1] + conf.get('GRAFANA_SERVICE_PATH') + self.name
+        monitoring_url = "//"+self.project.cluster.get('HOST', request.host).split('|')[-1] + conf.get('GRAFANA_SERVICE_PATH','') + self.name
         help_url=''
         try:
             help_url = json.loads(self.expand).get('help_url','') if self.expand else ''
@@ -83,7 +83,7 @@ class Service(Model,AuditMixinNullable,MyappModelBase,service_common):
     def name_url(self):
         # user_roles = [role.name.lower() for role in list(g.user.roles)]
         # if "admin" in user_roles:
-        url = f'/k8s/web/search/{self.project.cluster["NAME"]}/{conf.get("SERVICE_NAMESPACE")}/{self.name.replace("_", "-")}'
+        url = f'/k8s/web/search/{self.project.cluster["NAME"]}/{conf.get("SERVICE_NAMESPACE","service")}/{self.name.replace("_", "-")}'
 
         return Markup(f'<a target=_blank href="{url}">{self.label}</a>')
 
@@ -239,7 +239,7 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
 
     @property
     def model_name_url(self):
-        url = f'/k8s/web/search/{self.project.cluster["NAME"]}/{conf.get("SERVICE_NAMESPACE")}/{self.name.replace("_", "-")}'
+        url = f'/k8s/web/search/{self.project.cluster["NAME"]}/{conf.get("SERVICE_NAMESPACE","service")}/{self.name.replace("_", "-")}'
 
         return Markup(f'<a target=_blank href="{url}">{self.model_name}</a>')
 
@@ -260,7 +260,7 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
         except Exception as e:
             print(e)
 
-        monitoring_url="//"+self.project.cluster.get('HOST', request.host).split('|')[-1]+conf.get('GRAFANA_SERVICE_PATH')+self.name
+        monitoring_url="//"+self.project.cluster.get('HOST', request.host).split('|')[-1]+conf.get('GRAFANA_SERVICE_PATH','')+self.name
         # if self.created_by.username==g.user.username or g.user.is_admin():
         if self.created_by.id == g.user.id or self.project.user_role(g.user.id)=='creator':
             dom = f'''
@@ -307,14 +307,14 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
                     pass
                     # return self.model_status+"(ready)"
                 else:
-                    url = f'/k8s/web/search/{self.project.cluster["NAME"]}/{conf.get("SERVICE_NAMESPACE")}/{self.name.replace("_", "-")}'
+                    url = f'/k8s/web/search/{self.project.cluster["NAME"]}/{conf.get("SERVICE_NAMESPACE","service")}/{self.name.replace("_", "-")}'
                     return Markup(f'<a target=_blank href="{url}">deploying</a>')
                     # return "deploying"
                     # return self.model_status + "(not ready)"
             except Exception as e:
                 print(e)
 
-        url = f'/k8s/web/search/{self.project.cluster["NAME"]}/{conf.get("SERVICE_NAMESPACE")}/{self.name.replace("_", "-")}'
+        url = f'/k8s/web/search/{self.project.cluster["NAME"]}/{conf.get("SERVICE_NAMESPACE","service")}/{self.name.replace("_", "-")}'
         return Markup(f'<a target=_blank href="{url}">{self.model_status}</a>')
 
         # return self.model_status

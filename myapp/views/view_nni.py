@@ -637,7 +637,7 @@ trainingService:
         nni = db.session.query(NNI).filter_by(id=nni_id).first()
         from myapp.utils.py.py_k8s import K8s
         k8s = K8s(nni.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('AUTOML_NAMESPACE')
+        namespace = conf.get('AUTOML_NAMESPACE','automl')
         pod = k8s.get_pods(namespace=namespace, pod_name=nni.name+"-master-0")
         if pod:
             return redirect("/k8s/web/log/%s/%s/%s/nnijob" % (nni.project.cluster['NAME'], namespace, nni.name+"-master-0"))
@@ -650,7 +650,7 @@ trainingService:
         nni = db.session.query(NNI).filter_by(id=nni_id).first()
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(nni.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('AUTOML_NAMESPACE')
+        namespace = conf.get('AUTOML_NAMESPACE','automl')
         try:
             # time.sleep(2)
             k8s_client.NetworkingV1Api.delete_namespaced_network_policy(namespace=namespace,name=nni.name)

@@ -68,7 +68,7 @@ class NNI(Model,AuditMixinNullable,MyappModelBase):
 
     @property
     def run(self):
-        ops_html = f'<a target=_blank href="/nni_modelview/api/run/{self.id}">{__("运行")}</a> | <a target=_blank href="/k8s/web/search/{self.project.cluster["NAME"]}/{conf.get("AUTOML_NAMESPACE")}/{self.name}">{__("容器")}</a>  | <a href="/nni_modelview/api/stop/{self.id}">{__("清理")}</a> '
+        ops_html = f'<a target=_blank href="/nni_modelview/api/run/{self.id}">{__("运行")}</a> | <a target=_blank href="/k8s/web/search/{self.project.cluster["NAME"]}/{conf.get("AUTOML_NAMESPACE","automl")}/{self.name}">{__("容器")}</a>  | <a href="/nni_modelview/api/stop/{self.id}">{__("清理")}</a> '
         return Markup(ops_html)
 
     # @property

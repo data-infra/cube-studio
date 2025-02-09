@@ -79,7 +79,7 @@ class Task_ModelView_Base():
     add_form_extra_fields = {
         "args": StringField(
             _('启动参数'),
-            widget=MyBS3TextAreaFieldWidget(rows=10),
+            widget=MyBS3TextAreaFieldWidget(rows=10,is_json=True),
         ),
         "pipeline": QuerySelectField(
             _('任务流'),
@@ -559,7 +559,7 @@ class Task_ModelView_Base():
 
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(task.pipeline.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('PIPELINE_NAMESPACE')
+        namespace = conf.get('PIPELINE_NAMESPACE','pipeline')
         pod_name = "debug-" + task.pipeline.name.replace('_', '-') + "-" + task.name.replace('_', '-')
         pod_name = pod_name.lower()[:60].strip('-')
         pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
@@ -667,7 +667,7 @@ class Task_ModelView_Base():
 
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(task.pipeline.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('PIPELINE_NAMESPACE')
+        namespace = conf.get('PIPELINE_NAMESPACE','pipeline')
         pod_name = "run-" + task.pipeline.name.replace('_', '-') + "-" + task.name.replace('_', '-')
         pod_name = pod_name.lower()[:60].strip('-')
         pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
@@ -770,7 +770,7 @@ class Task_ModelView_Base():
     def delete_task_run(self, task):
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(task.pipeline.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('PIPELINE_NAMESPACE')
+        namespace = conf.get('PIPELINE_NAMESPACE','pipeline')
         # 删除运行时容器
         pod_name = "run-" + task.pipeline.name.replace('_', '-') + "-" + task.name.replace('_', '-')
         pod_name = pod_name.lower()[:60].strip('-')
@@ -817,7 +817,7 @@ class Task_ModelView_Base():
         task = db.session.query(Task).filter_by(id=task_id).first()
         from myapp.utils.py.py_k8s import K8s
         k8s = K8s(task.pipeline.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('PIPELINE_NAMESPACE')
+        namespace = conf.get('PIPELINE_NAMESPACE','pipeline')
         running_pod_name = "run-" + task.pipeline.name.replace('_', '-') + "-" + task.name.replace('_', '-')
         pod_name = running_pod_name.lower()[:60].strip('-')
         pod = k8s.get_pods(namespace=namespace, pod_name=pod_name)

@@ -492,7 +492,9 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                     {
                                         !!singleAction.length && singleAction.map((action, index) => {
                                             return <Menu.Item key={`table_action_${index}`}><div className="link" onClick={() => {
-                                                Modal.confirm({
+                                                action.icon==='url'?
+                                                    window.open(`${route_base}action/${action.name}/${record[primary_key]}`, '_blank') :
+                                                    Modal.confirm({
                                                     title: action.confirmation,
                                                     icon: <ExclamationCircleOutlined />,
                                                     content: '',
@@ -1277,6 +1279,9 @@ export default function TaskListManager(props?: IAppMenuItem) {
                             }}
                             scroll={{ x: tableWidth, y: scrollY }}
                         /> : <div className="bg-w p16">
+                            {/*{*/}
+                            {/*    permissions.includes('can_add') ? <Button className="mr16" type="primary" onClick={() => setVisableAdd(true)}>{t('添加')}{labelTitle}<PlusOutlined /></Button> : null*/}
+                            {/*}*/}
                             <div className="d-f fw">
                                 {
                                     dataList.map((row, rowIndex) => {

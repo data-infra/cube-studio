@@ -875,8 +875,9 @@ class MyappSecurityManager(SecurityManager):
     def get_join_projects_id(self,session):
         from myapp.models.model_team import Project_User
         if g.user:
-            projects_id = session.query(Project_User.project_id).filter(Project_User.user_id == User.get_user_id()).all()
-            projects_id = [project_id[0] for project_id in projects_id]
+            project_users = session.query(Project_User).filter(Project_User.user_id == User.get_user_id()).all()
+
+            projects_id = [project_user.project_id for project_user in project_users if project_user.project.type=='org']
             return projects_id
         else:
             return []
@@ -885,8 +886,8 @@ class MyappSecurityManager(SecurityManager):
     def get_join_projects(self,session):
         from myapp.models.model_team import Project_User
         if g.user:
-            projects = session.query(Project_User).filter(Project_User.user_id == g.user.id).all()
-            return [project.project for project in projects]
+            project_users = session.query(Project_User).filter(Project_User.user_id == g.user.id).all()
+            return [project_user.project for project_user in project_users if project_user.project.type=='org']
         else:
             return []
 

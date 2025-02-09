@@ -101,7 +101,7 @@ vllm: 不同镜像提供不同的推理架构，使用vllm提供gpu推理加速�
         "path": StringField(
             _('模型文件地址'),
             default='/mnt/admin/xx/saved_model/',
-            description=_('模型文件的容器地址或下载地址，格式参考详情'),
+            description=_('模型文件的容器地址或下载地址，格式参考详情。<a target="_blank" href="/notebook_modelview/api/entry/jupyter?file_path=/mnt/{{creator}}/">上传模型</a>'),
             validators=[DataRequired()],
             widget=MyBS3TextFieldWidget(tips=_(model_path_describe))
         ),
@@ -203,7 +203,7 @@ vllm: 不同镜像提供不同的推理架构，使用vllm提供gpu推理加速�
                 return redirect(download_url)
         flash(__('未发现模型存储地址'),'warning')
 
-        return redirect(conf.get('train_model'))
+        return redirect(conf.get('MODEL_URLS',{}).get('train_model','/frontend/'))
 
 
     @expose("/deploy/<model_id>", methods=["GET", 'POST'])
