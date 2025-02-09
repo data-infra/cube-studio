@@ -123,14 +123,14 @@ class Dataset(Model,AuditMixinNullable,MyappModelBase):
         if '</svg>' in img_url:
             # img_url = img_url.replace('width="200"','width="50"')
             return f'''
-<div type=enhancedDetails addedValue='/dataset_modelview/api/alert/info/{self.id}'>
+<div>
     {img_url}
 </div>
 '''
 
         else:
             return f'''    
-<div type=enhancedDetails addedValue='/dataset_modelview/api/alert/info/{self.id}'>
+<div>
   <img style='height:50px; width:50px; border-radius:10%;' src='{img_url}' onerror="this.src='/static/assets/images/dataset.png'">
 </div>
 '''
