@@ -287,7 +287,7 @@ class Notebook_ModelView_Base():
         if f'/mnt/{g.user.username}' in file_path:
             file_path = file_path.replace(f'/mnt/{g.user.username}','')
 
-        images = data.get('images',f'{conf.get("REPOSITORY_ORG","ccr.ccs.tencentyun.com/cube-studio/")}notebook-enterprise:jupyter-ubuntu-cpu-pro')
+        images = data.get('images',f'{conf.get("REPOSITORY_ORG","ccr.ccs.tencentyun.com/cube-studio/")}notebook:jupyter-ubuntu22.04-cuda11.8.0-cudnn8')
         project = db.session.query(Project).filter(Project.name==project_name).filter(Project.type=='org').first()
         notebook = db.session.query(Notebook).filter(Notebook.name==name).first()
         if not project:
