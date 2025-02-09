@@ -87,7 +87,7 @@ class Dataset_ModelView_base():
     }
 
     edit_columns = add_columns
-    list_columns = ['icon_html', 'name', 'version', 'label_html', 'describe','owner', 'ops_html', 'path_html', 'download_url_html']
+    list_columns = ['icon_html', 'name', 'version', 'label_html', 'describe','owner', 'path_html', 'download_url_html']
 
     cols_width = {
         "name": {"type": "ellip1", "width": 150},
