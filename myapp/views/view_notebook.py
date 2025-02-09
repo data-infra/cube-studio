@@ -481,7 +481,30 @@ class Notebook_ModelView_Base():
                 print(e)
         # print(pod)
 
+        left_retry = 10
+        status=''
+        while(left_retry):
+            pod = k8s_client.get_pods(namespace=namespace, pod_name=name)
+            if pod:
+                pod=pod[0]
+                status=json.dumps(pod['status_more'],ensure_ascii=False,indent=4, default=str).replace('\n',"<br>")
+                if pod['status']=='Running':
+                    if file_path:
+                        if file_path.lstrip('/'):
+                            file_path=f'/notebook/jupyter/{name}/lab/tree/'+file_path.strip('/')
+                            time.sleep(2)
+                            return redirect(file_path)
+                        else:
+                            file_path = f'/notebook/jupyter/{name}/lab?#/mnt/{g.user.username}'
+                            time.sleep(2)
+                            return redirect(file_path)
 
+                    return redirect('http://%s%s'%(host,rewrite_url))
+            left_retry=left_retry-1
+            time.sleep(2)
+        res = make_response(__("notebook未就绪，刷新此页面。<br> notebook状态：<br><br>")+Markup(status))
+        res.status_code=200
+        return res
 
 
     # @pysnooper.snoop(watch_explode=('notebook'))

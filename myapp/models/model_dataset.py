@@ -106,13 +106,34 @@ class Dataset(Model,AuditMixinNullable,MyappModelBase):
 
     @property
     def icon_html(self):
-        img_url = self.icon if self.icon else "/static/assets/images/dataset.png"
+        import re
+        icon = self.icon  # 可以是相对url，可以是绝对url，可能是容器地址，可能是接口url
+        if icon and icon.strip():
+            path=''
+            if re.match('^/mnt/', icon):
+                path = icon.replace('/mnt/', '/data/k8s/kubeflow/pipeline/workspace/')
+            if path and os.path.exists(path):
+                import imghdr
+                if imghdr.what(path) in {'jpg', 'bmp', 'png', 'jpeg', 'rgb', 'tif', 'tiff', 'gif', 'GIF'}:
+                    icon = "/static"+icon  # 形成相对网址
 
-        url = f'''
-<a target=_blank href='{img_url}'>
-  <img style='height:50px; width:50px; border-radius:10%' src='{img_url}'>
-</a>
-        '''
+
+        img_url = icon if icon else "/static/assets/images/dataset.png"
+        link_url = f"/dataset_modelview/api/preview/dataset/{self.id}"
+        if '</svg>' in img_url:
+            # img_url = img_url.replace('width="200"','width="50"')
+            return f'''
+<div type=enhancedDetails addedValue='/dataset_modelview/api/alert/info/{self.id}'>
+    {img_url}
+</div>
+'''
+
+        else:
+            return f'''    
+<div type=enhancedDetails addedValue='/dataset_modelview/api/alert/info/{self.id}'>
+  <img style='height:50px; width:50px; border-radius:10%;' src='{img_url}' onerror="this.src='/static/assets/images/dataset.png'">
+</div>
+'''
         # print(url)
         return url
 
