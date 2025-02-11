@@ -118,7 +118,8 @@ class Service_ModelView_base():
         if not item.volume_mount:
             item.volume_mount = item.project.volume_mount
 
-		item.resource_gpu = item.resource_gpu.upper() if item.resource_gpu else '0'
+        item.resource_gpu = item.resource_gpu.upper() if item.resource_gpu else '0'
+
     def delete_old_service(self, service_name, cluster):
         service_external_name = (service_name + "-external").lower()[:60].strip('-')
         from myapp.utils.py.py_k8s import K8s
