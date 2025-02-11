@@ -184,7 +184,7 @@ class Notebook_ModelView_Base():
 
     def pre_add(self, item):
         item.name = item.name.replace("_", "-")[0:54].lower()
-        item.resource_gpu = item.resource_gpu.upper()
+        item.resource_gpu = item.resource_gpu.upper() if item.resource_gpu else '0'
 
         # 不需要用户自己填写node selector
         # if core.get_gpu(item.resource_gpu)[0]:

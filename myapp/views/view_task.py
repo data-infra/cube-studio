@@ -299,7 +299,7 @@ class Task_ModelView_Base():
             raise MyappException(__("Job Template 为必选"))
 
         item.resource_memory=item.resource_memory.upper()
-        item.resource_gpu = item.resource_gpu.upper()
+        item.resource_gpu = item.resource_gpu.upper() if item.resource_gpu else '0'
         if 'G' not in item.resource_memory and 'M' not in item.resource_memory:
             item.resource_memory = item.resource_memory+"G"
         item.volume_mount = item.pipeline.project.volume_mount  # 默认使用项目的配置
@@ -334,7 +334,7 @@ class Task_ModelView_Base():
         if item.resource_gpu:
             item.resource_gpu = str(item.resource_gpu).upper()
         item.resource_memory=item.resource_memory.upper()
-        item.resource_gpu = item.resource_gpu.upper()
+        item.resource_gpu = item.resource_gpu.upper() if item.resource_gpu else '0'
         if 'G' not in item.resource_memory and 'M' not in item.resource_memory:
             item.resource_memory = item.resource_memory+"G"
         if item.job_template is None:

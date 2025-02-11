@@ -689,7 +689,7 @@ output %s
             item.volume_mount = item.project.volume_mount
 
         self.use_expand(item)
-        item.resource_gpu = item.resource_gpu.upper()
+        item.resource_gpu = item.resource_gpu.upper() if item.resource_gpu else '0'
         if not item.resource_memory:
             item.resource_memory = '2G'
         if not item.resource_cpu:
