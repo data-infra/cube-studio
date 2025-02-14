@@ -2678,48 +2678,6 @@
       }
     }
   },
-  "chatglm2": {
-    "project_name": "大模型",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/chatglm",
-    "image_describe": "chatglm2",
-    "job_template_name": "chatglm2",
-    "job_template_describe": "chatglm2 lora微调(企业版)",
-    "job_template_version": "Release",
-    "job_template_workdir": "/root/chatglm",
-    "job_template_command": "python start.py --mode glm2",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
-    "job_template_expand": {
-      "index": 1,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/chatglm"
-    },
-    "job_template_args": {
-    }
-  },
-  "chatglm3": {
-    "project_name": "大模型",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/chatglm",
-    "image_describe": "chatglm3",
-    "job_template_name": "chatglm3",
-    "job_template_describe": "chatglm3 lora微调(企业版)",
-    "job_template_version": "Release",
-    "job_template_workdir": "/root/chatglm",
-    "job_template_command": "python start.py --mode glm3",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
-    "job_template_expand": {
-      "index": 2,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/chatglm"
-    },
-    "job_template_args": {
-    }
-  },
   "chatglm4": {
     "project_name": "大模型",
     "image_name": "python:3.9",
@@ -2741,23 +2699,23 @@
     "job_template_args": {
     }
   },
-  "llama2": {
+  "deepseek": {
     "project_name": "大模型",
     "image_name": "python:3.9",
-    "gitpath": "/job-template/job/llama2",
-    "image_describe": "llama2",
-    "job_template_name": "llama2",
-    "job_template_describe": "llama2 lora微调(企业版)",
+    "gitpath": "/job-template/job/llama_factory",
+    "image_describe": "deepseek",
+    "job_template_name": "deepseek",
+    "job_template_describe": "deepseek 微调(企业版)",
     "job_template_version": "Release",
-    "job_template_workdir": "/root/Llama2-Chinese/train/sft",
-    "job_template_command": "deepspeed finetune_clm_lora.py --do_train --do_eval --use_fast_tokenizer false --evaluation_strategy  steps --logging_strategy steps --save_strategy steps --disable_tqdm false --ddp_find_unused_parameters false --report_to tensorboard --overwrite_output_dir --ignore_data_skip true --fp16  --gradient_checkpointing  --fp16_full_eval --ddp_timeout 18000000 ",
+    "job_template_workdir": "/root/llama_factory",
+    "job_template_command": "python start.py",
     "job_template_volume": "",
     "job_template_account": "",
-    "job_template_env": "",
+    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
     "job_template_expand": {
       "index": 4,
       "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/llama2"
+      "help_url": "/job-template/job/llama_factory"
     },
     "job_template_args": {
     }

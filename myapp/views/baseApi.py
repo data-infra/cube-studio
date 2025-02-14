@@ -253,6 +253,7 @@ class MyappModelRestApi(ModelRestApi):
     check_edit_permission = None
     check_delete_permission = None
     datamodel = None
+    list_show_columns=[]   # 在list查询的时候，从数据库获取的数据字段列，list_columns是显示的字段列
 
     def pre_show(self, item):
         pass
@@ -1138,7 +1139,7 @@ class MyappModelRestApi(ModelRestApi):
             _args = self.pre_list_req(req_json=_args)
 
         # handle select columns
-        select_cols = _args.get(API_SELECT_COLUMNS_RIS_KEY, [])
+        select_cols = _args.get(API_SELECT_COLUMNS_RIS_KEY, self.list_select_columns)
         _pruned_select_cols = [col for col in select_cols if col in list(set(self.list_columns + self.show_columns))]
         self.set_response_key_mappings(
             _response,

@@ -923,6 +923,8 @@ output %s
         pod_env += "\nRESOURCE_MAX_REPLICAS=" + str(service.max_replicas)
         pod_env += "\nRESOURCE_GPU=" + (str(gpu_num) if ',' not in str(gpu_num) else str(gpu_num).split(',')[1])
         pod_env += "\nMODEL_PATH=" + service.model_path
+        pod_env += "\nMODEL_NAME=" + service.model_name
+
         pod_env = pod_env.strip(',')
 
         if env == 'test' or env == 'debug':
@@ -1420,6 +1422,7 @@ class InferenceService_ModelView_Api(InferenceService_ModelView_base, MyappModel
         response_add_columns['images']['values'] = [{"id":x,"value":x} for x in conf.get('INFERNENCE_IMAGES',{}).get(exist_service_type,[])]
         response_add_columns['model_path']['default']=service_model_path.get(exist_service_type,'')
         response_add_columns['command']['default'] = INFERNENCE_COMMAND.get(exist_service_type,'')
+        response_add_columns['host']['default'] = INFERNENCE_HOST.get(exist_service_type, '')
         response_add_columns['env']['default'] = '\n'.join(INFERNENCE_ENV.get(exist_service_type,[]))
         response_add_columns['ports']['default'] = INFERNENCE_PORTS.get(exist_service_type,'80')
         response_add_columns['metrics']['default'] = INFERNENCE_METRICS.get(exist_service_type,'')
