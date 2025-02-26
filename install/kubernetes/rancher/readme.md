@@ -102,17 +102,18 @@ docker ps -a   查看是否还有剩余没清理干净的，如果有，重启�
 # 提前拉取需要的镜像
 sh pull_rancher_images.sh 
 
-如果拉取中碰到拉取失败的问题，可以尝试通过“systemctl restart docker”重启docker，再次执行拉取脚本就可以了。
+如果拉取中碰到拉取失败的问题，配置好docker加速器后尝试通过“systemctl restart docker”重启docker，再次执行拉取脚本就可以了。
 
 echo "127.0.0.1 localhost" >> /etc/hosts
-sysctl -w net/netfilter/nf_conntrack_max=524288
+echo "net.netfilter.nf_conntrack_max = 524288" | sudo tee -a /etc/sysctl.conf
+sysctl -p
 
 # 部署rancher server
 export RANCHER_CONTAINER_TAG=v2.8.5
 export PASSWORD=cube-studio
 sudo docker run -d --privileged --restart=unless-stopped -p 443:443 --name=myrancher -e AUDIT_LEVEL=3 -e CATTLE_SYSTEM_DEFAULT_REGISTRY=registry.cn-hangzhou.aliyuncs.com -e CATTLE_BOOTSTRAP_PASSWORD=$PASSWORD registry.cn-hangzhou.aliyuncs.com/rancher/rancher:$RANCHER_CONTAINER_TAG
 # 打开 https://xx.xx.xx.xx:443/ 等待web界面可以打开。预计要1~10分钟
-# 输入密码cube-studio
+# 用户名admin，输入密码cube-studio
 ```
 
 ## 4.1 rancher server 启动可能问题
