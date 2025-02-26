@@ -105,6 +105,7 @@ sh pull_rancher_images.sh
 如果拉取中碰到拉取失败的问题，可以尝试通过“systemctl restart docker”重启docker，再次执行拉取脚本就可以了。
 
 echo "127.0.0.1 localhost" >> /etc/hosts
+sysctl -w net/netfilter/nf_conntrack_max=524288
 
 # 部署rancher server
 export RANCHER_CONTAINER_TAG=v2.8.5
@@ -172,6 +173,8 @@ sudo docker run -d --privileged --restart=unless-stopped -p 443:443 --name=myran
         enforce-node-allocatable: "pods"
         system-reserved: "cpu=0.25,memory=200Mi"
         kube-reserved: "cpu=0.25,memory=1500Mi"
+        image-gc-high-threshold: 95
+        image-gc-low-threshold: 90
       extra_binds:
         - '/data:/data'
         
@@ -222,6 +225,8 @@ services部分的示例（注意缩进对齐）
       cluster_dns_server: 172.16.0.10
       # 主机镜像回收触发门槛，如果机器空间小，可以把这两个参数调高
       extra_args:
+        # 配置特殊的端口
+        port: 10250  
         image-gc-high-threshold: 90
         image-gc-low-threshold: 85
         resolv-conf: "/etc/resolv-src.conf"
