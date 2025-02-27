@@ -164,7 +164,13 @@ class Service_ModelView_base():
         k8s_client = K8s(service.project.cluster.get('KUBECONFIG', ''))
         namespace = conf.get('SERVICE_NAMESPACE')
 
-        volume_mount = service.volume_mount
+        # 对挂载做一下渲染替换，可以替换用户名，也可以替换环境变量
+        volume_mount = service.volume_mount.replace("{{creator}}", service.created_by.username)
+        if service.env:
+            for e in service.env.split("\n"):
+                if '=' in e:
+                    volume_mount = volume_mount.replace('{{'+e.split("=")[0]+'}}',e.split("=")[1])
+
         labels = {"app": service.name, "user": service.created_by.username, "pod-type": "service"}
         env = service.env
         env += "\nRESOURCE_CPU=" + service.resource_cpu

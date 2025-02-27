@@ -907,6 +907,14 @@ output %s
             print('create configmap')
             k8s_client.create_configmap(namespace=namespace, name=name, data=config_data, labels={'app': name})
             volume_mount += ",%s(configmap):/config/" % name
+
+        # 对挂载做一下渲染替换，可以替换用户名，也可以替换环境变量
+        volume_mount = volume_mount.replace("{{creator}}", service.created_by.username)
+        if service.env:
+            for e in service.env.split("\n"):
+                if '=' in e:
+                    volume_mount = volume_mount.replace('{{' + e.split("=")[0] + '}}', e.split("=")[1])
+
         ports = [int(port) for port in service.ports.split(',')]
         gpu_num, gpu_type, resource_name = core.get_gpu(service.resource_gpu)
 
