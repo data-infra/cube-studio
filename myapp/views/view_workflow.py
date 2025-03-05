@@ -254,9 +254,29 @@ class Workflow_ModelView_Base(Crd_ModelView_Base):
         workflow_obj=None
         # 尝试三次查询
         while not workflow_obj and try_num>0:
-            workflow_obj = k8s_client.get_one_crd(group=crd_info['group'], version=crd_info['version'],
-                                                  plural=crd_info['plural'], namespace=namespace, name=workflow_name)
+            workflow_obj = k8s_client.get_one_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'], namespace=namespace, name=workflow_name)
             workflow_model = db.session.query(Workflow).filter_by(name=workflow_name).first()
+            if workflow_obj and not workflow_model:
+                labels = json.loads(workflow_obj['labels']) if workflow_obj['labels'] else {}
+                username = labels.get('run-rtx',labels.get('pipeline-rtx',labels.get('run-username',labels.get('pipeline-username','admin'))))
+
+                workflow = Workflow(name=workflow_obj['name'], cluster=cluster_name, namespace=namespace,
+                                    create_time=workflow_obj['create_time'],
+                                    status=workflow_obj['status'],
+                                    annotations=workflow_obj['annotations'],
+                                    labels=workflow_obj['labels'],
+                                    spec=workflow_obj['spec'],
+                                    status_more=workflow_obj['status_more'],
+                                    username=username,
+                                    info_json='{}'
+                                    )
+                db.session.add(workflow)
+                db.session.commit()
+            elif workflow_model and workflow_obj:
+                workflow_model.status = workflow_obj['status']
+                workflow_model.status_more = workflow_obj['status_more']
+                db.session.commit()
+
             if not workflow_obj:
                 if workflow_model:
                     workflow_obj = workflow_model.to_json()

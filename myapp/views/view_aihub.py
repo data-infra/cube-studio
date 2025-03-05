@@ -1,13 +1,16 @@
 import re
 import shutil
 import time
+
+from wtforms.validators import Regexp, Length, DataRequired
+
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 import urllib.parse
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 from myapp import app, appbuilder, db
-from wtforms import SelectField
-from flask_appbuilder.fieldwidgets import Select2Widget
+from wtforms import SelectField, StringField
+from flask_appbuilder.fieldwidgets import Select2Widget, BS3TextFieldWidget
 from myapp.models.model_job import Images, Job_Template, Repository
 from myapp.models.model_team import Project, Project_User
 from myapp.models.model_serving import InferenceService
@@ -31,6 +34,8 @@ from myapp.utils.py.py_k8s import K8s
 from flask_appbuilder import expose
 import datetime, json
 
+from myapp.forms import MyBS3TextAreaFieldWidget
+
 conf = app.config
 logging = app.logger
 
@@ -46,7 +51,7 @@ class Aihub_Filter(MyappFilter):
 
 
 class Aihub_base():
-    label_title = _('模型市场')
+    label_title = _('aihub应用')
     datamodel = SQLAInterface(Aihub)
     base_permissions = ['can_show','can_list']
     base_order = ("hot", "desc")
