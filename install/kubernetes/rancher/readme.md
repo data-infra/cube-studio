@@ -105,8 +105,6 @@ sh pull_rancher_images.sh
 如果拉取中碰到拉取失败的问题，配置好docker加速器后尝试通过“systemctl restart docker”重启docker，再次执行拉取脚本就可以了。
 
 echo "127.0.0.1 localhost" >> /etc/hosts
-echo "net.netfilter.nf_conntrack_max = 524288" | sudo tee -a /etc/sysctl.conf
-sysctl -p
 
 # 部署rancher server
 export RANCHER_CONTAINER_TAG=v2.8.5
@@ -130,10 +128,16 @@ sudo docker run -d --privileged --restart=unless-stopped -p 443:443 --name=myran
  
 - 7 查看k3s的日志报错，在容器刚重启后，执行 `docker exec -it myrancher cat k3s.log > k3s.log` 将报错日志保存到本地，在日志中搜索error相关内容。
 
-    如果是k3s启动失败，docker exec -it myrancher cat k3s.log > k3s.log  查看k3s的日志  
-    如果k3s日志报错 iptable的问题，那就按照上面的centos8配置iptable，  
-    如果k3s日志报错 containerd的问题，那就 docker exec -it myrancher mv /var/lib/rancher/k3s/agent/containerd /varllib/rancher/k3slagent/_containerd  
-    如果k3s日志报错系统内容中没有xx模块，那就降低linux系统版本
+    7.1 如果k3s日志报错 iptable的问题，那就按照上面的centos8配置iptable，  
+
+    7.2 如果k3s日志报错 containerd的问题，那就 `docker exec -it myrancher mv /var/lib/rancher/k3s/agent/containerd /varllib/rancher/k3slagent/_containerd`
+    
+    7.3 如果k3s日志报错系统内容中没有xx模块，那就降低linux系统版本
+    
+    7.4 如果k3s日志报错`Failed to set sysctl: open /proc/sys/net/netfilter/nf_conntrack_max: permission denied`，那就设置`echo "net.netfilter.nf_conntrack_max = 524288" | sudo tee -a /etc/sysctl.conf`，然后再执行`sysctl -p`
+    
+    7.5 如果报错没有权限修改nf_conntrack_max，则主机命令行执行 `echo "net.netfilter.nf_conntrack_max = 524288" | sudo tee -a /etc/sysctl.conf  && sysctl -p`
+
 
 # 5. 部署k8s集群
 

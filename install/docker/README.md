@@ -113,7 +113,7 @@ docker-compose -f docker-compose.yml  up
 
 需要先在k8s开发集群部署一遍cube-studio，然后才能在本地连接并调度
 
-![k8s配置](https://img-blog.csdnimg.cn/direct/fa582b82e228432188d8db1b942238ce.png)
+![k8s配置](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/image/localk8s.jpg)
 
 3) 修改minio地址
 
