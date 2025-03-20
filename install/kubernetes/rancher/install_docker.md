@@ -143,7 +143,7 @@ vi /etc/docker/daemon.json
     # dns可不配置
     "dns": ["114.114.114.114","8.8.8.8"],
     # k8s集群可以同时拉取多个镜像
-    "max-concurrent-downloads": 5,
+    "max-concurrent-downloads": 30,
     # 默认系统根目录下，如果磁盘有限可以改为其他有空间的目录，占用存储会越来越多
     "data-root": "/data/docker",
     # 内部如果有http的镜像仓库，可以添加
