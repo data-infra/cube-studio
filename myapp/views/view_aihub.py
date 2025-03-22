@@ -51,7 +51,7 @@ class Aihub_Filter(MyappFilter):
 
 
 class Aihub_base():
-    label_title = _('aihub应用')
+    label_title = _('模型市场')
     datamodel = SQLAInterface(Aihub)
     base_permissions = ['can_show','can_list']
     base_order = ("hot", "desc")

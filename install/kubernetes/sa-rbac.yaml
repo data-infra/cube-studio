@@ -44,7 +44,7 @@ metadata:
   namespace: automl
 rules:
 - apiGroups: [""]
-  resources: ["pod"]
+  resources: ["pods"]
   verbs: ["get"]
 ---
 kind: RoleBinding
