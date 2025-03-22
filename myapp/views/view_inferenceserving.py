@@ -389,7 +389,7 @@ llm-server: 不同镜像提供不同的推理架构，默认为vllm提供gpu推�
 
     check_delete_permission = check_edit_permission
 
-    def pre_add_web(self):
+    def pre_add_web(self,item=None):
         self.default_filter = {
             "created_by": g.user.id
         }
