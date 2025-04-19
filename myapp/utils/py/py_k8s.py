@@ -139,9 +139,7 @@ class K8s():
                 cpu = [self.to_cpu(container.resources.requests.get('cpu', '0')) for container in containers if container.resources  and container.resources.requests]
 
                 # gpu = [int(container.resources.requests.get('nvidia.com/gpu', '0')) for container in containers if container.resources and container.resources.requests]
-                vgpu = [float(container.resources.requests.get('tencent.com/vcuda-core', '0'))/100 for container in containers if container.resources and container.resources.requests]
-                vgpu += [float(container.resources.requests.get('tke.cloud.tencent.com/qgpu-core', '0'))/100 for container in containers if container.resources and container.resources.requests]
-                vgpu += [float(container.resources.requests.get('nvidia.com/gpucores', '0')) / 100 for container in containers if container.resources and container.resources.requests]
+                vgpu = [float(container.resources.requests.get('nvidia.com/gpucores', '0')) / 100 for container in containers if container.resources and container.resources.requests]
 
                 # 获取gpu异构资源占用
                 ai_resource={}
@@ -207,7 +205,8 @@ class K8s():
                 print(api_e)
         except Exception as e:
             print(e)
-            return back_pods
+
+        return back_pods
 
     def get_pod_event(self, namespace, pod_name):
         events = [item.to_dict() for item in self.v1.list_namespaced_event(namespace, field_selector=f'involvedObject.name={pod_name}').items]
@@ -290,10 +289,8 @@ class K8s():
                 memory = [self.to_memory_GB(container.resources.requests.get('memory', '0G')) for container in containers if container.resources and container.resources.requests]
                 cpu = [self.to_cpu(container.resources.requests.get('cpu', '0')) for container in containers if container.resources and container.resources.requests]
                 # gpu = [int(container.resources.requests.get('nvidia.com/gpu', '0')) for container in containers if container.resources and container.resources.requests]
-                vgpu = [float(container.resources.requests.get('tencent.com/vcuda-core', '0')) / 100 for container in containers if container.resources and container.resources.requests]
-                vgpu += [float(container.resources.requests.get('tke.cloud.tencent.com/qgpu-core', '0')) / 100 for container in containers if container.resources and container.resources.requests]
                 # vgpu += [float(container.resources.requests.get('nvidia.com/vgpu', '0')) / 10 for container in containers if container.resources and container.resources.requests]
-                vgpu += [float(container.resources.requests.get('nvidia.com/gpucores', '0')) / 100 for container in containers if container.resources and container.resources.requests]
+                vgpu = [float(container.resources.requests.get('nvidia.com/gpucores', '0')) / 100 for container in containers if container.resources and container.resources.requests]
 
                 node_name = pod.spec.node_name
                 if node_name not in nodes_resource:
@@ -775,45 +772,6 @@ class K8s():
                     print(api_e)
             except Exception as e:
                 print(e)
-    #
-    # @pysnooper.snoop()
-    # def get_volume_mounts(self,volume_mount,username):
-    #     k8s_volumes = []
-    #     k8s_volume_mounts = []
-    #     if volume_mount and ":" in volume_mount:
-    #         volume_mount = volume_mount.strip()
-    #         if volume_mount:
-    #             volume_mounts_temp = re.split(',|;', volumdelete_workflowe_mount)
-    #             volume_mounts_temp = [volume_mount_temp.strip() for volume_mount_temp in volume_mounts_temp if volume_mount_temp.strip()]
-    #
-    #             for volume_mount in volume_mounts_temp:
-    #                 volume, mount = volume_mount.split(":")[0].strip(), volume_mount.split(":")[1].strip()
-    #                 if "(pvc)" in volume:
-    #                     pvc_name = volume.replace('(pvc)', '').replace(' ', '')
-    #                     volumn_name = pvc_name.replace('_', '-').lower()
-    #                     k8s_volumes.append(client.V1Volume(name=volumn_name,
-    #                                                        persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-    #                                                            claim_name=pvc_name)))
-    #                     k8s_volume_mounts.append(
-    #                         client.V1VolumeMount(name=volumn_name, mount_path=os.path.join(mount, username),
-    #                                              sub_path=username))
-    #                 if "(hostpath)" in volume:
-    #                     hostpath_name = volume.replace('(hostpath)', '').replace(' ', '')
-    #                     temps = re.split('_|\.|/', hostpath_name)
-    #                     temps = [temp for temp in temps if temp]
-    #                     volumn_name = '-'.join(temps).lower()  # hostpath_name.replace('_', '-').replace('/', '-').replace('.', '-')
-    #                     k8s_volumes.append(client.V1Volume(name=volumn_name,
-    #                                                        host_path=client.V1HostPathVolumeSource(path=hostpath_name)))
-    #                     k8s_volume_mounts.append(client.V1VolumeMount(name=volumn_name, mount_path=mount))
-    #
-    #                 if "(configmap)" in volume:
-    #                     configmap_name = volume.replace('(configmap)', '').replace(' ', '')
-    #                     volumn_name = configmap_name.replace('_', '-').replace('/', '-').replace('.', '-').lower()
-    #                     k8s_volumes.append(client.V1Volume(name=volumn_name, host_path=client.V1ConfigMapVolumeSource(
-    #                         name=configmap_name)))
-    #                     k8s_volume_mounts.append(client.V1VolumeMount(name=volumn_name, mount_path=mount))
-    #
-    #     return k8s_volumes,k8s_volume_mounts
 
     # @pysnooper.snoop()
     @staticmethod
@@ -825,9 +783,18 @@ class K8s():
             if volume_mount_new:
                 volume_mounts_temp = re.split(',|;', volume_mount_new)
                 volume_mounts_temp = [volume_mount_temp.strip() for volume_mount_temp in volume_mounts_temp if volume_mount_temp.strip()]
-
+                all_volumns=[]
+                all_mounts=[]
                 for one_volume_mount in volume_mounts_temp:
                     volume, mount = one_volume_mount.split(":")[0].strip(), one_volume_mount.split(":")[1].strip()
+
+                    # 这里设置下避免重复挂载
+                    if volume.strip() not in all_volumns and mount.strip() not in all_mounts:
+                        all_volumns.append(volume.strip())
+                        all_mounts.append(mount.strip())
+                    else:
+                        continue
+
                     if "(pvc)" in volume:
                         pvc_name = volume.replace('(pvc)', '').replace(' ', '')
                         volumn_name = pvc_name.replace('_', '-').lower()[-60:].strip('-')
@@ -1228,15 +1195,16 @@ class K8s():
     # 创建hubsecret
     # @pysnooper.snoop()
     def apply_hubsecret(self, namespace, name, user, password, server):
-        try:
-            hubsecrest = self.v1.read_namespaced_secret(name=name, namespace=namespace,_request_timeout=5)
-            if hubsecrest:
-                self.v1.delete_namespaced_secret(name, namespace=namespace)
-        except ApiException as api_e:
-            if api_e.status != 404:
-                print(api_e)
-        except Exception as e:
-            print(e)
+
+        # try:
+        #     hubsecrest = self.v1.read_namespaced_secret(name=name, namespace=namespace,_request_timeout=5)
+        #     if hubsecrest:
+        #         self.v1.delete_namespaced_secret(name, namespace=namespace)
+        # except ApiException as api_e:
+        #     if api_e.status != 404:
+        #         print(api_e)
+        # except Exception as e:
+        #     print(e)
 
         cred_payload = {
             "auths": {
@@ -1261,7 +1229,38 @@ class K8s():
             type="kubernetes.io/dockerconfigjson",
         )
 
-        secret_objects = self.v1.create_namespaced_secret(namespace=namespace, body=secret)
+        secret_objects=None
+        try:
+            secret_objects = self.v1.create_namespaced_secret(namespace=namespace, body=secret)
+        except client.exceptions.ApiException as e:
+            if e.status == 409:
+                # 如果 Secret 已经存在，更新它
+                secret_objects = self.v1.patch_namespaced_secret(name=name,namespace=namespace, body=secret)
+            else:
+                print(f"Exception when creating secret: {e}")
+
+        return secret_objects
+
+    # 创建secret
+    def apply_secret(self, namespace, name, data,type):
+        secret = client.V1Secret(
+            api_version="v1",
+            data=data,
+            kind="Secret",
+            metadata=dict(name=name, namespace=namespace),
+            type=type # "Opaque",
+        )
+
+        secret_objects = None
+        try:
+            secret_objects = self.v1.create_namespaced_secret(namespace=namespace, body=secret)
+        except client.exceptions.ApiException as e:
+            if e.status == 409:
+                # 如果 Secret 已经存在，更新它
+                secret_objects = self.v1.patch_namespaced_secret(name=name, namespace=namespace, body=secret)
+            else:
+                print(f"Exception when creating secret: {e}")
+
         return secret_objects
 
     # 创建notebook
@@ -1532,14 +1531,12 @@ class K8s():
             "timeout": 60 * 60 * 24 * 1
         }
         try:
-            self.delete_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],
-                            namespace=namespace, name=name)
+            self.delete_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'], namespace=namespace, name=name)
         except Exception as e:
             print(e)
 
         try:
-            self.delete_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],
-                            namespace=namespace, name=name+"-8080")
+            self.delete_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],namespace=namespace, name=name+"-8080")
         except Exception as e:
             print(e)
 
@@ -2059,10 +2056,6 @@ class K8s():
 
         return all_gpu_pods
 
-    def make_sidecar(self, agent_name):
-        if agent_name.upper() == 'L5':
-            pass
-        pass
 
     def to_local_time(self,time_str):
         if not time_str:

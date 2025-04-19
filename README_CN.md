@@ -91,7 +91,7 @@ https://github.com/data-infra/cube-studio/wiki
 | 数据处理工具   | ray                   | 分布式 | job-template/job/ray/README.md
 | 数据处理工具   | volcanojob            | 分布式 | job-template/job/volcano/README.md
 | 特征处理   | feature-process       | 单机 | job-template/job/feature-process/README.md
-| 机器学习框架 | ray-sklearn           | 分布式 | job-template/job/ray_sklearn/README.md
+| 机器学习框架 | ray-sklearn           | 分布式 | job-template/job/ray-sklearn/README.md
 | 机器学习算法 | random_forest         | 单机 | job-template/job/random_forest/README.md
 | 机器学习算法 | lr                    | 单机 | job-template/job/lr/README.md
 | 机器学习算法 | lightgbm              | 单机 | job-template/job/lightgbm/README.md
@@ -117,13 +117,11 @@ https://github.com/data-infra/cube-studio/wiki
 | 模型服务化  | model-convert         | 单机 | job-template/job/model_convert/README.md
 | 模型服务化  | model-register        | 单机 | job-template/job/model_register/README.md
 | 模型服务化  | deploy-service        | 单机 | job-template/job/deploy-service/README.md
-| 模型服务化  | model-offline-predict | 分布式 | job-template/job/model_offline_predict/README.md
+| 模型服务化  | model-offline-predict | 分布式 | job-template/job/offline-predict/README.md
 | 多媒体类   | media-download        | 分布式 | job-template/job/video-audio/README.md
 | 多媒体类   | video-img             | 分布式 | job-template/job/video-audio/README.md
 | 多媒体类   | video-audio           | 分布式 | job-template/job/video-audio/README.md
 | 大模型    | llama2                | 单机多卡 | job-template/job/llama2/README.md
-| 大模型    | chatglm2              | 单机多卡 | job-template/job/chatglm2/README.md
-| 大模型    | chatglm3              | 单机多卡 | job-template/job/chatglm3/README.md
 | 大模型    | chatglm4              | 单机多卡 | job-template/job/chatglm4/README.md
 | 大模型    | baichuan2             | 单机多卡 | job-template/job/baichuan2/README.md
 | 大模型    | qwen2                 | 单机多卡 | job-template/job/qwen2/README.md
@@ -142,7 +140,7 @@ https://github.com/data-infra/cube-studio/wiki
  - 3、基础能力(tf/pytorch/mxnet/valcano/ray等分布式，nni/ray超参搜索)
  - 4、平台web部分(oa/权限/项目组、在线构建镜像、在线开发、pipeline拖拉拽、超参搜索、推理服务管理等)
 
-<img width="1437" alt="image" src="https://user-images.githubusercontent.com/20157705/182564530-2c965f5f-407d-4baa-8772-73cb2645901b.png">
+![输入图片说明](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/image/infra.png) 
 
 
 # 算力/存储/用户管理
