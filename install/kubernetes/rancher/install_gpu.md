@@ -55,7 +55,9 @@ bash ./cuda_12.4.0_550.54.14_linux.run
 
 也可以使用命令推荐安装ubuntu-drivers devices，
 ```bash
-sudo apt install -y nvidia-driver-550-server
+apt install -y nvidia-driver-550-server
+或者 apt install nvidia-driver-550  # 最新稳定版
+
 重启机器
 ```
 

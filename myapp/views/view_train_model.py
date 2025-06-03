@@ -1,3 +1,5 @@
+import re
+
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from myapp.models.model_train_model import Training_Model
 from myapp.models.model_serving import InferenceService
@@ -22,7 +24,7 @@ from flask import (
     Markup,
     make_response,
     redirect,
-    request
+    request, jsonify
 )
 from .base import (
     DeleteMixin,
@@ -68,12 +70,12 @@ class Training_Model_ModelView_Base():
     }
     edit_form_query_rel_fields = add_form_query_rel_fields
     cols_width = {
-        "name": {"type": "ellip2", "width": 250},
+        "name": {"type": "ellip2", "width": 200},
         "project_url": {"type": "ellip2", "width": 200},
         "pipeline_url": {"type": "ellip2", "width": 300},
         "version": {"type": "ellip2", "width": 200},
         "modified": {"type": "ellip2", "width": 150},
-        "deploy": {"type": "ellip2", "width": 100},
+        "deploy": {"type": "ellip2", "width": 90},
         "model_metric": {"type": "ellip2", "width": 300},
     }
     spec_label_columns = {
@@ -90,9 +92,9 @@ class Training_Model_ModelView_Base():
 ml-server：支持sklearn和xgb导出的模型，需按文档设置ml推理服务的配置文件
 tfserving：仅支持添加了服务签名的saved_model目录地址，例如：/mnt/xx/../saved_model/
 torch-server：torch-model-archiver编译后的mar模型文件，需保存模型结构和模型参数，例如：/mnt/xx/../xx.mar或torch script保存的模型
-onnxruntime：onnx模型文件的地址，例如：/mnt/xx/../xx.onnx
 triton-server：框架:地址。onnx:模型文件地址model.onnx，pytorch:torchscript模型文件地址model.pt，tf:模型目录地址saved_model，tensorrt:模型文件地址model.plan
-vllm: 不同镜像提供不同的推理架构，使用vllm提供gpu推理加速和openai流式接口
+ollama: 使用ollama官方模型，提供openai接口
+vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
 '''.strip()
 
     service_type_choices = [x.replace('_', '-') for x in ['serving','ml-server','tfserving', 'torch-server', 'onnxruntime', 'triton-server','vllm','aihub']]
@@ -163,6 +165,7 @@ vllm: 不同镜像提供不同的推理架构，使用vllm提供gpu推理加速�
     #             FileAllowed(["zip",'tar.gz'],_("zip/tar.gz Files Only!")),
     #         ]
     #     )
+    import pysnooper
 
     # @pysnooper.snoop(watch_explode=('item'))
     def pre_add(self, item):

@@ -2,6 +2,7 @@ import time, datetime, os
 import re
 from kubernetes import client
 from kubernetes.client.models import v1_pod, v1_object_meta, v1_pod_spec, v1_deployment, v1_deployment_spec
+from kubernetes.client.models.v1_pod import V1Pod
 import yaml
 import json
 import multiprocessing
@@ -53,20 +54,101 @@ class K8s():
             all_pods.append(pod)
 
     def exist_hold_resource(self,pod):
+        hold_resource = False
         try:
-            exist_hold_resource=False
             if pod['status'] == 'Running' or pod['status_more'].get('phase', '') == 'Running':
-                exist_hold_resource = True
-            if pod['status'] == 'Pending':
+                hold_resource = True
+            elif pod['status'] == 'Pending':
                 for condition in pod['status_more']['conditions']:
                     if condition['type'] == 'PodScheduled' and str(condition['status']).lower() == 'true':
-                        exist_hold_resource = True
+                        hold_resource = True
                         break
+
         except Exception as e:
             print(e)
-            exist_hold_resource=True
+            hold_resource=True
 
-        return exist_hold_resource
+        return hold_resource
+
+    # v1pod格式转为json格式
+    def pod_model2dict(self,pod):
+        # print(pod)
+        metadata = pod.metadata
+        status = pod.status.phase if pod and hasattr(pod, 'status') and hasattr(pod.status, 'phase') else ''
+        # Pending Running Succeeded Failed Unknown
+        # 辅助状态 ContainerCreating CrashLoopBackOff ImagePullBackOff ErrImagePull  Terminating
+        # 如果是running 也分为重启运行中
+        if status.lower() == 'running':
+            status = 'Running' if [x.status for x in pod.status.conditions if
+                                   x.type == 'Ready' and x.status == 'True'] else 'CrashLoopBackOff'
+
+        containers = pod.spec.containers
+        # mem = [container.resources.requests for container in containers]
+        memory = [self.to_memory_GB(container.resources.requests.get('memory', '0G')) for container in containers if
+                  container.resources and container.resources.requests]
+        cpu = [self.to_cpu(container.resources.requests.get('cpu', '0')) for container in containers if
+               container.resources and container.resources.requests]
+
+        # gpu = [int(container.resources.requests.get('nvidia.com/gpu', '0')) for container in containers if container.resources and container.resources.requests]
+        vgpu = [float(container.resources.requests.get('nvidia.com/gpucores', '0')) / 100 for container in containers if
+                container.resources and container.resources.requests]
+
+        # 获取gpu异构资源占用
+        ai_resource = {}
+        for name in self.gpu_resource:
+            resource = self.gpu_resource[name]
+            gpu = [int(container.resources.requests.get(resource, '0')) for container in containers if
+                   container.resources and container.resources.requests]
+            ai_resource[name] = sum(gpu)
+        ai_resource['gpu'] = ai_resource.get('gpu', 0) + sum(vgpu)
+
+        node_selector = {}
+        try:
+            # aa=client.V1NodeSelector
+            match_expressions = pod.spec.affinity.node_affinity.required_during_scheduling_ignored_during_execution.node_selector_terms
+            match_expressions = [ex.match_expressions for ex in match_expressions]
+            match_expressions = match_expressions[0]
+            for match_expression in match_expressions:
+                if match_expression.operator == 'In':
+                    node_selector[match_expression.key] = match_expression.values[0]
+                if match_expression.operator == 'Equal':
+                    node_selector[match_expression.key] = match_expression.values
+        except Exception:
+            pass
+            # print(e)
+        if pod.spec.node_selector:
+            node_selector.update(pod.spec.node_selector)
+
+        username = ''
+        if pod.metadata.labels:
+            username = pod.metadata.labels.get('run-rtx', '')
+            if not username:
+                username = pod.metadata.labels.get('user', '')
+            if not username:
+                username = pod.metadata.labels.get('rtx-user', '')
+            if not username:
+                username = pod.metadata.labels.get('run-username', '')
+            if not username:
+                username = pod.metadata.labels.get('username', '')
+
+        temp = {
+            'name': metadata.name,
+            "username": username,
+            'host_ip': pod.status.host_ip if pod.status.host_ip else '',
+            'pod_ip': pod.status.pod_ip,
+            'status': status,  # 每个容器都正常才算正常
+            'status_more': pod.status.to_dict(),  # 无法json序列化
+            'node_name': pod.spec.node_name,
+            "labels": metadata.labels if metadata.labels else {},
+            "annotations": metadata.annotations if metadata.annotations else {},
+            "memory": sum(memory),
+            "cpu": sum(cpu),
+            # "gpu": sum(gpu) + sum(vgpu),
+            "start_time": (metadata.creation_timestamp + datetime.timedelta(hours=8)).replace(tzinfo=None),  # 时间格式
+            "node_selector": node_selector
+        }
+        temp.update(ai_resource)
+        return temp
 
     # @pysnooper.snoop()
     def get_pods(self, namespace=None, service_name=None, pod_name=None, labels={},status=None):
@@ -124,78 +206,7 @@ class K8s():
                         all_pods.append(pod)
 
             for pod in all_pods:
-                # print(pod)
-                metadata = pod.metadata
-                status = pod.status.phase if pod and hasattr(pod, 'status') and hasattr(pod.status, 'phase') else ''
-                # Pending Running Succeeded Failed Unknown
-                # 辅助状态 ContainerCreating CrashLoopBackOff ImagePullBackOff ErrImagePull  Terminating
-                # 如果是running 也分为重启运行中
-                if status.lower()=='running':
-                    status = 'Running' if [x.status for x in pod.status.conditions if x.type == 'Ready' and x.status == 'True'] else 'CrashLoopBackOff'
-
-                containers = pod.spec.containers
-                # mem = [container.resources.requests for container in containers]
-                memory = [self.to_memory_GB(container.resources.requests.get('memory','0G')) for container in containers if container.resources and container.resources.requests]
-                cpu = [self.to_cpu(container.resources.requests.get('cpu', '0')) for container in containers if container.resources  and container.resources.requests]
-
-                # gpu = [int(container.resources.requests.get('nvidia.com/gpu', '0')) for container in containers if container.resources and container.resources.requests]
-                vgpu = [float(container.resources.requests.get('nvidia.com/gpucores', '0')) / 100 for container in containers if container.resources and container.resources.requests]
-
-                # 获取gpu异构资源占用
-                ai_resource={}
-                for name in self.gpu_resource:
-                    resource = self.gpu_resource[name]
-                    gpu = [int(container.resources.requests.get(resource, '0')) for container in containers if container.resources and container.resources.requests]
-                    ai_resource[name]=sum(gpu)
-                ai_resource['gpu']=ai_resource.get('gpu',0)+sum(vgpu)
-
-                node_selector = {}
-                try:
-                    # aa=client.V1NodeSelector
-                    match_expressions = pod.spec.affinity.node_affinity.required_during_scheduling_ignored_during_execution.node_selector_terms
-                    match_expressions = [ex.match_expressions for ex in match_expressions]
-                    match_expressions = match_expressions[0]
-                    for match_expression in match_expressions:
-                        if match_expression.operator == 'In':
-                            node_selector[match_expression.key] = match_expression.values[0]
-                        if match_expression.operator == 'Equal':
-                            node_selector[match_expression.key] = match_expression.values
-                except Exception:
-                    pass
-                    # print(e)
-                if pod.spec.node_selector:
-                    node_selector.update(pod.spec.node_selector)
-
-                username = ''
-                if pod.metadata.labels:
-                    username = pod.metadata.labels.get('run-rtx', '')
-                    if not username:
-                        username = pod.metadata.labels.get('user', '')
-                    if not username:
-                        username = pod.metadata.labels.get('rtx-user', '')
-                    if not username:
-                        username = pod.metadata.labels.get('run-username', '')
-                    if not username:
-                        username = pod.metadata.labels.get('username', '')
-
-                temp = {
-                    'name': metadata.name,
-                    "username": username,
-                    'host_ip': pod.status.host_ip if pod.status.host_ip else '',
-                    'pod_ip': pod.status.pod_ip,
-                    'status': status,  # 每个容器都正常才算正常
-                    'status_more': pod.status.to_dict(),  # 无法json序列化
-                    'node_name': pod.spec.node_name,
-                    "labels": metadata.labels if metadata.labels else {},
-                    "annotations": metadata.annotations if metadata.annotations else {},
-                    "memory": sum(memory),
-                    "cpu": sum(cpu),
-                    # "gpu": sum(gpu) + sum(vgpu),
-                    "start_time": (metadata.creation_timestamp + datetime.timedelta(hours=8)).replace(tzinfo=None),   # 时间格式
-                    "node_selector": node_selector
-                }
-                temp.update(ai_resource)
-
+                temp=self.pod_model2dict(pod)
                 back_pods.append(temp)
             # print(back_pods)
             return back_pods
@@ -283,7 +294,8 @@ class K8s():
             pods = self.v1.list_pod_for_all_namespaces(watch=False).items or []
 
             for pod in pods:
-                if not pod.status or pod.status.phase != 'Running':
+                # 如果没有占用资源，这里就不计算
+                if not self.exist_hold_resource(self.pod_model2dict(pod)):
                     continue
                 containers = pod.spec.containers
                 memory = [self.to_memory_GB(container.resources.requests.get('memory', '0G')) for container in containers if container.resources and container.resources.requests]
@@ -350,6 +362,10 @@ class K8s():
                     ai_resource = {}
                     for gpu_mfrs in self.gpu_resource:
                         resource = self.gpu_resource[gpu_mfrs]
+                        ai_resource[gpu_mfrs] = int(node.status.allocatable.get(resource, '0'))
+
+                    for gpu_mfrs in self.vgpu_resource:
+                        resource = self.vgpu_resource[gpu_mfrs]
                         ai_resource[gpu_mfrs] = int(node.status.allocatable.get(resource, '0'))
 
                     # print(node.status.conditions)
@@ -1064,7 +1080,7 @@ class K8s():
     def make_pod(self, namespace, name, labels, command, args, volume_mount, working_dir, node_selector,
                  resource_memory, resource_cpu, resource_gpu, image_pull_policy, image_pull_secrets, image, hostAliases,
                  env, privileged, accounts, username, ports=None, restart_policy='OnFailure',
-                 scheduler_name='default-scheduler', node_name='', health=None, annotations={}, hostPort=[],resource_rdma=0):
+                 scheduler_name='default-scheduler', node_name='', health=None, annotations={}, hostPort=[],resource_rdma=0,sidecar=[]):
         if not labels:
             labels={}
         if scheduler_name == 'kube-batch':
@@ -1126,7 +1142,8 @@ class K8s():
                                           hostPort=hostPort,
                                           resource_rdma=resource_rdma
                                           )]
-
+        if sidecar:
+            containers = sidecar+containers
         # 添加host
         host_aliases = []
         if hostAliases:
@@ -1150,7 +1167,7 @@ class K8s():
     def create_debug_pod(self, namespace, name, labels, command, args, volume_mount, working_dir, node_selector,
                          resource_memory, resource_cpu, resource_gpu, image_pull_policy, image_pull_secrets, image,
                          hostAliases, env, privileged, accounts, username, scheduler_name='default-scheduler',
-                         node_name='',annotations={},hostPort=[],resource_rdma=0):
+                         node_name='',annotations={},hostPort=[],resource_rdma=0,sidecar=[]):
         try:
             self.v1.delete_namespaced_pod(name=name, namespace=namespace, grace_period_seconds=0)
             # time.sleep(1)
@@ -1186,7 +1203,8 @@ class K8s():
             scheduler_name=scheduler_name,
             node_name=node_name,
             hostPort=hostPort,
-            resource_rdma=resource_rdma
+            resource_rdma=resource_rdma,
+            sidecar=sidecar
         )
         # print(pod)
         pod = self.v1.create_namespaced_pod(namespace, pod)
@@ -1283,7 +1301,7 @@ class K8s():
     def create_ReplicationController(self, namespace, name, replicas, labels, command, args, volume_mount, working_dir,
                           node_selector, resource_memory, resource_cpu, resource_gpu, image_pull_policy,
                           image_pull_secrets, image, hostAliases, env, privileged, accounts, username, ports,
-                          scheduler_name='default-scheduler', health=None, annotations={},**kwargs):
+                          scheduler_name='default-scheduler', health=None, annotations={}, sidecar=[],**kwargs):
 
         pod, pod_spec = self.make_pod(
             namespace=namespace,
@@ -1308,7 +1326,8 @@ class K8s():
             username=username,
             ports=ports,
             scheduler_name=scheduler_name,
-            health=health
+            health=health,
+            sidecar=sidecar
         )
 
         pod_spec.restart_policy = 'Always'  # dp里面必须是Always
@@ -1371,13 +1390,13 @@ class K8s():
                                      node_selector, resource_memory, resource_cpu, resource_gpu, image_pull_policy,
                                      image_pull_secrets, image, hostAliases, env, privileged, accounts, username,
                                      ports,
-                                     scheduler_name='default-scheduler', health=None, annotations={}):
+                                     scheduler_name='default-scheduler', health=None, annotations={},sidecar=[]):
         pod,pod_spec = self.create_ReplicationController(
             namespace=namespace,name=name,replicas=replicas,labels=labels,command=command,args=args,volume_mount=volume_mount,
             working_dir=working_dir,node_selector=node_selector,resource_memory=resource_memory,resource_cpu=resource_cpu,
             resource_gpu=resource_gpu,image_pull_policy=image_pull_policy,image_pull_secrets=image_pull_secrets,image=image,
             hostAliases=hostAliases,env=env,privileged=privileged,accounts=accounts,username=username,ports=ports,scheduler_name=scheduler_name,
-            health=health,annotations=annotations
+            health=health,annotations=annotations,sidecar=sidecar
         )
         metadata = v1_object_meta.V1ObjectMeta(name=name, namespace=namespace, labels=labels, annotations=annotations)
         selector = client.models.V1LabelSelector(match_labels=labels)
@@ -1437,7 +1456,7 @@ class K8s():
     def create_statefulset(self, namespace, name, replicas, labels, command, args, volume_mount, working_dir,
                           node_selector, resource_memory, resource_cpu, resource_gpu, image_pull_policy,
                           image_pull_secrets, image, hostAliases, env, privileged, accounts, username, ports,
-                          scheduler_name='default-scheduler', health=None, annotations={}):
+                          scheduler_name='default-scheduler', health=None, annotations={},sidecar=[]):
 
         pod,pod_spec = self.create_ReplicationController(
             namespace=namespace, name=name, replicas=replicas, labels=labels, command=command, args=args,
@@ -1448,7 +1467,7 @@ class K8s():
             image=image,
             hostAliases=hostAliases, env=env, privileged=privileged, accounts=accounts, username=username, ports=ports,
             scheduler_name=scheduler_name,
-            health=health, annotations=annotations
+            health=health, annotations=annotations, sidecar=sidecar
         )
         metadata = v1_object_meta.V1ObjectMeta(name=name, namespace=namespace, labels=labels)
         selector = client.models.V1LabelSelector(match_labels=labels)
@@ -1920,10 +1939,13 @@ class K8s():
     def get_pod_metrics(self, namespace=None):
         back_metrics = []
         cust = client.CustomObjectsApi()
-        if namespace:
-            metrics = cust.list_namespaced_custom_object('metrics.k8s.io', 'v1beta1', namespace,'pods')  # Just pod metrics for the default namespace
-        else:
-            metrics = cust.list_cluster_custom_object('metrics.k8s.io', 'v1beta1', 'pods')  # All Pod Metrics
+        try:
+            if namespace:
+                metrics = cust.list_namespaced_custom_object('metrics.k8s.io', 'v1beta1', namespace,'pods')  # Just pod metrics for the default namespace
+            else:
+                metrics = cust.list_cluster_custom_object('metrics.k8s.io', 'v1beta1', 'pods')  # All Pod Metrics
+        except:
+            return back_metrics
         items = metrics.get('items', [])
         # print(items)
         for item in items:

@@ -15,11 +15,12 @@ RUN wget -P /root/.config/Ultralytics/ https://ultralytics.com/assets/Arial.ttf
 COPY . /yolov8/
 
 # 安装aihub包
-ENV TZ Asia/Shanghai
-ENV PYTHONPATH /src/:/github/:$PYTHONPATH
-ENV NODE_PATH $NODE_HOME/lib/node_modules:$PATH
-ENV PATH $NODE_HOME/bin:$PATH
+ENV TZ=Asia/Shanghai
+ENV PYTHONPATH=/src/:/github/
+ENV NODE_PATH=$NODE_HOME/lib/node_modules:${PATH:-}
+ENV PATH=$NODE_HOME/bin:${PATH:-}
 
+RUN bash /yolov8/install-cube-studio.sh
 RUN rm -rf /usr/bin/python3 && ln -s /usr/bin/python /usr/bin/python3
 
 ENTRYPOINT ["python","train.py"]

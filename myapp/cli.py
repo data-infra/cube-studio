@@ -213,8 +213,8 @@ def init():
                 repository = Repository()
                 repository.name = 'hubsecret'
                 repository.server=conf.get('REPOSITORY_ORG','ccr.ccs.tencentyun.com/cube-studio/')
-                repository.user = 'yourname'
-                repository.password = 'yourpassword'
+                repository.user = ''
+                repository.password = ''
                 repository.hubsecret = 'hubsecret'
                 repository.created_by_fk = 1
                 repository.changed_by_fk = 1
@@ -730,7 +730,7 @@ def init():
                             chat.tips = data.get('tips', '')
                             chat.prompt = data.get('prompt', '')
                             chat.knowledge = knowledge
-                            chat.service_type = data.get('service_type', 'chatgpt3.5')
+                            chat.service_type = data.get('service_type', 'openai')
                             chat.service_config = json.dumps(data.get('service_config', {}), indent=4, ensure_ascii=False)
                             chat.owner = data.get('owner', 'admin')
                             chat.expand = json.dumps(data.get('expand', {}), indent=4,ensure_ascii=False)

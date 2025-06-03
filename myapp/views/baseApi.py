@@ -392,8 +392,11 @@ class MyappModelRestApi(ModelRestApi):
             _ret_json = jsonify(kwargs)
         resp = make_response(_ret_json, code)
         flash_json = []
+        max_len=0
         for f in flashes:
-            flash_json.append([f[0], f[1]])
+            max_len+=len(f[1])
+            if max_len<2000:
+                flash_json.append([f[0], f[1]])
         resp.headers["api_flashes"] = json.dumps(flash_json)
         resp.headers["Content-Type"] = "application/json; charset=utf-8"
         return resp
@@ -1070,7 +1073,9 @@ class MyappModelRestApi(ModelRestApi):
         # from flask_appbuilder.models.sqla.interface import SQLAInterface
         item = self.datamodel.get(pk, self._base_filters)
         if not item:
-            return self.response_error(404, "Not found")
+            message = '未查询到当前记录，可能是系统缓存未更新，请重试'
+            flash(message, 'info')
+            return self.response_error(404, message=message)
 
         if self.pre_show:
             self.pre_show(item)
@@ -1122,7 +1127,7 @@ class MyappModelRestApi(ModelRestApi):
         return self.response(200, **back_data)
 
     @expose("/", methods=["GET"])
-    # @pysnooper.snoop(watch_explode=('aa'))
+    # @pysnooper.snoop(watch_explode=('select_cols'))
     def api_list(self, **kwargs):
         _response = dict()
 
@@ -1358,6 +1363,11 @@ class MyappModelRestApi(ModelRestApi):
     def api_edit(self, pk):
 
         item = self.datamodel.get(pk, self._base_filters)
+        if not item:
+            message = '未查询到当前记录，可能是系统缓存未更新，请重试'
+            flash(message,'info')
+            return self.response_error(404, message=message)
+
         self.src_item_json = item.to_json()
 
         if self.check_edit_permission:
@@ -1434,7 +1444,9 @@ class MyappModelRestApi(ModelRestApi):
     def api_delete(self, pk):
         item = self.datamodel.get(pk, self._base_filters)
         if not item:
-            return self.response_error(404, message='Not found')
+            message = '未查询到当前记录，可能是系统缓存未更新，请重试'
+            flash(message, 'info')
+            return self.response_error(404, message=message)
 
         if self.check_delete_permission:
             has_permission = self.check_delete_permission(item)

@@ -3,7 +3,7 @@ import os,re
 # 所需要的所有镜像
 kubeflow = [
     'mysql:8.0.32',  # 数据库
-    'bitnami/redis:6.2.12',  # 缓存
+    'bitnami/redis:7.4',  # 缓存
     "busybox:1.36.0",
     "kubeflow/training-operator:v1-8a066f9",  # 分布式训练
     'alpine:3.10',
