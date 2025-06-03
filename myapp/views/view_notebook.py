@@ -76,7 +76,7 @@ class Notebook_ModelView_Base():
         "resource": {"type": "ellip2", "width": 300},
         "status": {"type": "ellip2", "width": 100},
         "renew": {"type": "ellip2", "width": 200},
-        "save": {"type": "ellip2", "width": 100},
+        "save": {"type": "ellip2", "width": 200},
         "ops_html": {"type": "ellip2", "width": 130}
     }
     add_form_query_rel_fields = {

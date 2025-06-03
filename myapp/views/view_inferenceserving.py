@@ -151,6 +151,7 @@ class InferenceService_ModelView_base():
     label_title = _('推理服务')
     base_order = ('id', 'desc')
     order_columns = ['id']
+    fixed_columns = ['operate_html']
 
     base_filters = [["id", InferenceService_Filter, lambda: []]]
     images = []

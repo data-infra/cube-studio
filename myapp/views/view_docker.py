@@ -154,6 +154,10 @@ class Docker_ModelView_Base():
         # self.edit_columns=['describe','base_image','target_image','need_gpu','consecutive_build']
         self.edit_form_extra_fields = self.add_form_extra_fields
 
+        self.default_filter = {
+            "created_by": g.user.id
+        }
+
     pre_update_web = pre_add_web
 
     def pre_add(self, item):
