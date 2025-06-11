@@ -1063,15 +1063,16 @@ output %s
         if host and (env == 'debug' or env == 'test'):
             host = env + '.' + host
         try:
-            # print('deploy istio ingressgateway')
-            k8s_client.create_istio_ingress(
-                namespace=namespace,
-                name=name,
-                host=host,
-                ports=service.ports.split(','),
-                canary=service.canary,
-                shadow=service.shadow
-            )
+            if not core.checkip(host):
+                # print('deploy istio ingressgateway')
+                k8s_client.create_istio_ingress(
+                    namespace=namespace,
+                    name=name,
+                    host=host,
+                    ports=service.ports.split(','),
+                    canary=service.canary,
+                    shadow=service.shadow
+                )
         except Exception as e:
             print(e)
 

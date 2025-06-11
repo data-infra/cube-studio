@@ -238,11 +238,12 @@ class Service_ModelView_base():
                 host = host[:host.index(":")]
             if host:
                 real_host=host
-        k8s_client.create_istio_ingress(namespace=namespace,
-                                        name=service.name,
-                                        host=real_host,
-                                        ports=service.ports.split(',')
-                                        )
+        if not core.checkip(real_host):
+            k8s_client.create_istio_ingress(namespace=namespace,
+                                            name=service.name,
+                                            host=real_host,
+                                            ports=service.ports.split(',')
+                                            )
 
         # 以ip形式访问的话，使用的代理ip。不然不好处理机器服务化机器扩容和缩容时ip变化
         # 创建EXTERNAL_IP的服务

@@ -1568,6 +1568,9 @@ class K8s():
             'kind': 'VirtualService',
             "timeout": 60 * 60 * 24 * 1
         }
+        host = host.split(":")[0]
+        if not host or core.checkip(host):
+            return
 
         crd_list = self.get_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],namespace=namespace)
         # for vs_obj in crd_list:
