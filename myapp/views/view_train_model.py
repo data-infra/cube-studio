@@ -98,7 +98,7 @@ ollama: 使用ollama官方模型，提供openai接口
 vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
 '''.strip()
 
-    service_type_choices = [x.replace('_', '-') for x in ['serving','ml-server','tfserving', 'torch-server', 'onnxruntime', 'triton-server','vllm','aihub']]
+    service_type_choices = [x.replace('_', '-') for x in ['serving','ml-server','tfserving', 'torch-server', 'onnxruntime', 'triton-server']]
 
     add_form_extra_fields = {
         "path": StringField(
@@ -213,7 +213,7 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
     @expose("/deploy/<model_id>", methods=["GET", 'POST'])
     def deploy(self, model_id):
         train_model = db.session.query(Training_Model).filter_by(id=model_id).first()
-        name = '%s-%s' % (train_model.name, train_model.version.replace('v', '').replace('.', ''))
+        name = train_model.name + "-" + train_model.version.replace('v', '').replace('.', '')
         exist_inference = db.session.query(InferenceService).filter_by(model_name=train_model.name).filter_by(model_version=train_model.version).first()
         if not exist_inference:
             exist_inference = db.session.query(InferenceService).filter_by(name=name).first()
