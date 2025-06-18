@@ -139,7 +139,7 @@ vi install/kubernetes/cube/overlays/kustomization.yml
 修改最底部的newName和newTag
 ```
 
-3、复制k8s的config文件，部署cube-studio，部署方式通外网，参考：部署/单机部署
+4、复制k8s的config文件，部署cube-studio，部署方式通外网，参考：部署/单机部署
 
 ## web界面的部分内网修正
 
