@@ -1,6 +1,8 @@
 import math
 import random
-
+import threading
+import uuid
+from flask import Flask, request, Response
 import requests
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask import jsonify, render_template
@@ -63,7 +65,7 @@ INFERNENCE_HOST={
 INFERNENCE_CONFIGMAP={
 }
 INFERNENCE_COMMAND={
-    "tfserving":"/usr/bin/tf_serving_entrypoint.sh --model_config_file=/config/models.config --monitoring_config_file=/config/monitoring.config --platform_config_file=/config/platform.config",
+    "tfserving":"/usr/bin/tf_serving_entrypoint.sh --model_config_file=/config/models.config --monitoring_config_file=/config/monitoring.config --platform_config_file=/config/platform.config --rest_api_num_threads=300 --enable_batching=true",
     "torch-server":"torchserve --start --model-store /models/$model_name/ --models $model_name=$model_name.mar --foreground --log-config /config/log4j2.xml",
     "onnxruntime":"onnxruntime_server --model_path /models/",
     "triton-server":'tritonserver --model-repository=/models/ --strict-model-config=true --log-verbose=1'
@@ -276,7 +278,7 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
         'model_path': StringField(
             _('模型地址'),
             default='',
-            description= _('模型文件的容器地址或下载地址，格式参考详情。'),
+            description= _('模型文件的容器地址或下载地址，格式参考详情。<a target="_blank" href="/notebook_modelview/api/entry/jupyter?file_path=/mnt/{{creator}}/">导入模型</a>'),
             widget=MyBS3TextFieldWidget(tips=_(model_path_describe)),
             validators=[]
         ),
