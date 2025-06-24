@@ -149,7 +149,8 @@ def init():
             for old_name in job_template_old_names:
                 job_template = db.session.query(Job_Template).filter_by(name=old_name).first()
                 if job_template:
-                    break
+                    job_template.name=job_template_name
+                    db.session.commit()
 
         project = db.session.query(Project).filter_by(name=project_name).filter_by(type='job-template').first()
         if project and images.id:
@@ -304,6 +305,7 @@ def init():
                     task_model.resource_rdma = task.get('resource_rdma', '0')
                     task_model.created_by_fk = 1
                     task_model.changed_by_fk = 1
+                    task_model.retry = int(task.get('retry', '0'))
                     task_model.pipeline_id = pipeline_model.id
                     task_model.job_template_id = job_template.id
                     db.session.add(task_model)

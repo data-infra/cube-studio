@@ -48,7 +48,7 @@
           "--val": "/mnt/{{creator}}/coco_data_sample/valid.txt",
           "--classes": "person,bicycle,car,motorcycle,airplane,bus,train,truck,boat,trafficlight,firehydrant,stopsign,parkingmeter,bench,bird,cat,dog,horse,sheep,cow,elephant,bear,zebra,giraffe,backpack,umbrella,handbag,tie,suitcase,frisbee,skis,snowboard,sportsball,kite,baseballbat,baseballglove,skateboard,surfboard,tennisracket,bottle,wineglass,cup,fork,knife,spoon,bowl,banana,apple,sandwich,orange,broccoli,carrot,hotdog,pizza,donut,cake,chair,couch,pottedplant,bed,diningtable,toilet,tv,laptop,mouse,remote,keyboard,cellphone,microwave,oven,toaster,sink,refrigerator,book,clock,vase,scissors,teddybear,hairdrier,toothbrush",
           "--batch_size": "1",
-          "--epoch": "1",
+          "--epoch": "10",
           "--weights": "/yolov8/yolov8n.pt",
           "--save_model_path": "/mnt/{{creator}}/coco_data_sample/yolov8_best.pt"
         }
@@ -65,7 +65,7 @@
           "--model_version": "v2024.07.01.1",
           "--model_path": "/mnt/{{creator}}/coco_data_sample/yolov8_best.pt",
           "--service_type": "serving",
-          "--images": "ccr.ccs.tencentyun.com/cube-studio/yolov8:2025.03",
+          "--images": "ccr.ccs.tencentyun.com/cube-studio/yolov8:2025.06",
           "--volume_mount": "kubeflow-user-workspace(pvc):/mnt,/data/k8s/kubeflow/labelstudio(hostpath):/labelstudio/",
           "--working_dir": "/yolov8",
           "--command": "python server.py",
