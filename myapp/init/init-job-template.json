@@ -2853,7 +2853,7 @@
     "job_template_account": "",
     "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
     "job_template_expand": {
-      "index": 5,
+      "index": 7,
       "rec_job_template": "自定义镜像",
       "help_url": "/job-template/job/llama-factory",
       "enterprise": true
@@ -2875,7 +2875,7 @@
     "job_template_account": "",
     "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
     "job_template_expand": {
-      "index": 6,
+      "index": 8,
       "rec_job_template": "自定义镜像",
       "help_url": "/job-template/job/llama-factory",
       "enterprise": true
@@ -2897,7 +2897,7 @@
     "job_template_account": "",
     "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
     "job_template_expand": {
-      "index": 7,
+      "index": 9,
       "rec_job_template": "自定义镜像",
       "help_url": "/job-template/job/llama-factory",
       "enterprise": true
