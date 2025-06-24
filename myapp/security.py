@@ -315,7 +315,7 @@ class UserInfoEditView(SimpleFormView):
         )
         email = StringField(
             _("邮箱"),
-            validators=[DataRequired(), Regexp(".*@.*.com")],
+            validators=[DataRequired(), Regexp(".*@.*\..*")],
             widget=BS3TextFieldWidget(),
             description=_("填写邮箱地址"),
         )
