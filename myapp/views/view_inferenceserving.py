@@ -92,6 +92,22 @@ INFERNENCE_HEALTH={
 }
 
 
+sidecars={
+    "istio":"流量监控",
+    # "open-webui": "open-webui",
+    "rate_limit":'限速(企业版)',
+    "jwt": 'token认证(企业版)',
+    'monitor':'token统计(企业版)',
+    'whitelist':'黑白名单(企业版)',
+    'quotalimit':'额度限制(企业版)',
+    'security':'内容安全(企业版)',
+    'search':'联网查询(企业版)',
+    "retry":'失败重试(企业版)',
+    'desensitization':'数据脱敏(企业版)',
+    'prompt':'提示词模板(企业版)',
+    'value_map':'参数值映射(企业版)',
+    "value_fixed":'参数值固定(企业版)'
+}
 
 class InferenceService_Filter(MyappFilter):
     # @pysnooper.snoop()
@@ -200,7 +216,7 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
             description = _('容器的agent代理,istio用于服务网格，jwt用于统一认证(需要客户端在请求头中添加开发者生成的token)'),
             widget=Select2ManyWidget(),
             validators=[],
-            choices=[['istio', 'istio'],['jwt','jwt']]
+            choices=[[x,sidecars[x]] for x in sidecars]
         ),
         "priority": SelectField(
             _('服务优先级'),
