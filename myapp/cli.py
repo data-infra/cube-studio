@@ -214,8 +214,8 @@ def init():
                 repository = Repository()
                 repository.name = 'hubsecret'
                 repository.server=conf.get('REPOSITORY_ORG','ccr.ccs.tencentyun.com/cube-studio/')
-                repository.user = ''
-                repository.password = ''
+                repository.user = 'yourname'
+                repository.password = 'yourpassword'
                 repository.hubsecret = 'hubsecret'
                 repository.created_by_fk = 1
                 repository.changed_by_fk = 1

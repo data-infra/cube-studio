@@ -53,7 +53,6 @@ docker pull ccr.ccs.tencentyun.com/cube-studio/tf:20230801 &
 docker pull argoproj/argocli:v3.4.3 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/tritonserver:22.07-py3 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-machinelearning &
-docker pull ccr.ccs.tencentyun.com/cube-studio/yolov7:2024.01 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/ray:gpu-20240101 &
 docker pull alpine:3.10 &
 docker pull argoproj/argoexec:v3.4.3 &
