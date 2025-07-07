@@ -1632,6 +1632,44 @@ def get_gpu(resource_gpu,resource_name=None):
     # gpu_num 可以是小数，可以是整数，也可以是1G,0.1这种写了显存的字符串结构
     return gpu_num, gpu_type, resource_name
 
+# @pysnooper.snoop()
+def get_rdma(resource_rdma,resource_name=None):
+    from myapp import conf
+    rdma_num = 0
+    if not resource_name:
+        resource_name = conf.get('RDMA_RESOURCE_NAME', '')
+    rdma_type = None
+    try:
+        if resource_rdma:
+            # 英文括号
+            if '(' in resource_rdma:
+                rdma_type = re.findall(r"\((.+?)\)", resource_rdma)
+                rdma_type = rdma_type[0] if rdma_type else None
+            # 中文括号
+            if '（' in resource_rdma:
+                rdma_type = re.findall(r"（(.+?)）", resource_rdma)
+                rdma_type = rdma_type[0] if rdma_type else None
+
+            # 括号里面填的可能是roce，这种词汇，不是资源名，而是类型
+            if rdma_type and rdma_type.lower() in list(conf.get('RDMA_RESOURCE', {}).keys()):
+                rdma_mfrs = rdma_type.lower()
+                rdma_type = None
+                resource_name = conf.get("RDMA_RESOURCE", {}).get(rdma_mfrs, resource_name)
+
+            # 处理中文括号，和英文括号
+            resource_rdma = resource_rdma[0:resource_rdma.index('(')] if '(' in resource_rdma else resource_rdma
+            resource_rdma = resource_rdma[0:resource_rdma.index('（')] if '（' in resource_rdma else resource_rdma
+
+            rdma_num = int(resource_rdma)
+
+    except Exception as e:
+        print(e)
+    rdma_type = rdma_type.upper() if rdma_type else None
+
+    return rdma_num, rdma_type, resource_name
+
+
+
 # 按expand字段中index字段进行排序
 def sort_expand_index(items):
     all = {

@@ -1048,7 +1048,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                 }
                             )
                         } else {
-                            processedValue = (next.value || '').split(',');
+                            processedValue = next.value ? next.value.split(',') : [];
                           }
                         return { ...pre, [next.key]: processedValue }
                     }

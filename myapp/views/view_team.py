@@ -43,8 +43,7 @@ from flask_appbuilder import CompactCRUDMixin, expose
 class Creator_Filter(MyappFilter):
     # @pysnooper.snoop()
     def apply(self, query, func):
-        user_roles = [role.name.lower() for role in list(self.get_user_roles())]
-        if "admin" in user_roles:
+        if g.user.is_admin():
             return query.order_by(self.model.id.desc())
 
         return query.filter(self.model.created_by_fk == g.user.id).order_by(self.model.id.desc())

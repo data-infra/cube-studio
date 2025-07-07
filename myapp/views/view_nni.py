@@ -51,8 +51,7 @@ conf = app.config
 class NNI_Filter(MyappFilter):
     # @pysnooper.snoop()
     def apply(self, query, func):
-        user_roles = [role.name.lower() for role in list(self.get_user_roles())]
-        if "admin" in user_roles:
+        if g.user.is_admin():
             return query.order_by(self.model.id.desc())
 
         join_projects_id = security_manager.get_join_projects_id(db.session)

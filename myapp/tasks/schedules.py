@@ -108,7 +108,7 @@ def delete_old_crd(object_info):
                                 if username:
                                     push_message([username]+conf.get('ADMIN_USER','admin').split(','),__('%s %s %s %s 创建时间 %s， 已经运行时间过久，注意修正') % (username,object_info['plural'],crd_object['name'],pipeline_id,crd_object['create_time']))
                     else:
-                        # 如果运行结束已经1天，就直接删除
+                        # 如果运行结束已经3小时，就直接删除
                         if crd_object['finish_time'] and crd_object['finish_time'] < (datetime.datetime.now() - datetime.timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S'):
                             logging.info('delete %s.%s namespace=%s, name=%s success' % (object_info['group'], object_info['plural'], crd_object['namespace'], crd_object['name']))
                             crd_names = k8s_client.delete_crd(group=object_info['group'], version=object_info['version'],
@@ -183,9 +183,7 @@ def delete_workflow(task):
 def delete_notebook(task):
     # 删除jupyter
     logging.info('============= begin run delete_notebook task')
-    object_info = conf.get("CRD_INFO", {}).get('notebook', {})
-    logging.info(object_info)
-    timeout = int(object_info.get('timeout', 60 * 60 * 24 * 3))
+    timeout = int(conf.get('ENABLE_JUPYTER_EXPIRY', conf.get("CRD_INFO", {}).get('notebook', {}).get('timeout',60 * 60 * 24 * 3)))
     namespace = conf.get('NOTEBOOK_NAMESPACE','jupyter')
     with session_scope(nullpool=True) as dbsession:
         # 删除vscode的pod

@@ -45,8 +45,7 @@ conf = app.config
 class CRD_Filter(MyappFilter):
     # @pysnooper.snoop()
     def apply(self, query, func):
-        user_roles = [role.name.lower() for role in list(self.get_user_roles())]
-        if "admin" in user_roles:
+        if g.user.is_admin():
             return query.order_by(self.model.create_time.desc())
         return query.filter(
             or_(
@@ -168,8 +167,7 @@ class Crd_ModelView_Base():
 class Workflow_Filter(MyappFilter):
     # @pysnooper.snoop()
     def apply(self, query, func):
-        user_roles = [role.name.lower() for role in list(self.get_user_roles())]
-        if "admin" in user_roles:
+        if g.user.is_admin():
             return query.order_by(self.model.create_time.desc())
         return query.filter(
             or_(
@@ -911,7 +909,7 @@ class Workflow_ModelView_Base(Crd_ModelView_Base):
                 can = ['area-stack.json', 'rose.json', 'mix-line-bar.json', 'pie-nest.json', 'bar-stack.json',
                        'candlestick-simple.json', 'graph-simple.json', 'tree-polyline.json', 'sankey-simple.json',
                        'radar.json', 'sunburst-visualMap.json', 'parallel-aqi.json', 'funnel.json',
-                       'sunburst-visualMap.json', 'scatter-effect.json']
+                       'sunburst-visualMap.json', 'scatter-effect.json','multiple-lines.json']
                 not_can = ['bar3d-punch-card.json', 'simple-surface.json']# 不行的。
 
                 # if '.json' in file and file in []:

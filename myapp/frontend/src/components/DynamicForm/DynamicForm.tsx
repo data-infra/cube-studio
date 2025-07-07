@@ -450,6 +450,7 @@ export default function DynamicForm(props: IProps) {
             key={`dynamicForm_${config.name}`}
             label={config.label}
             name={config.name}
+            initialValue={config.defaultValue ? moment(config.defaultValue) : undefined}
             rules={[{ required: true, message: t('请选择时间') }]}
             extra={<>
                 {config.data.tips ? <Tooltip
@@ -466,9 +467,7 @@ export default function DynamicForm(props: IProps) {
             </>}
             {...itemProps}
         >
-            <DatePicker style={{ width: '100%' }} locale={locale} showTime={!!config.data.showTime} disabledDate={(current) => {
-                return current && current > moment().endOf('day');
-            }} />
+            <DatePicker style={{ width: '100%' }} locale={locale} showTime={!!config.data.showTime} />
         </Form.Item>
     }
     const renderRangePicker = (config: IDynamicFormConfigItem, itemProps: Record<string, any>) => {

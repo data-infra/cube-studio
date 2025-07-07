@@ -124,7 +124,7 @@ def save_workflow(crd, dbsession):
             "has_push": ''
         }
         logging.info('new workflow')
-        workflow = Workflow(name=crd['name'], cluster=cluster, namespace=crd['namespace'], create_time=crd['create_time'],
+        workflow = Workflow(name=crd['name'], cluster=cluster, namespace=crd['namespace'], create_time=crd['create_time'],change_time=crd['create_time'],
                             status=crd['status'],
                             annotations=json.dumps(crd['annotations'], indent=4, ensure_ascii=False),
                             labels=json.dumps(crd['labels'], indent=4, ensure_ascii=False),

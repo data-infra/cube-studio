@@ -1,4 +1,5 @@
 import os
+import re
 
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
@@ -92,7 +93,7 @@ class Repository_ModelView_Base():
             "hubsecret",
             default=g.user.username + "-hubsecret",
             widget=BS3TextFieldWidget(),
-            description= _("在k8s中创建的hub secret"),
+            description= _("在k8s中创建的hub secret，英文名(小写字母、数字、-组成)，最长50个字符"),
             validators=[Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$"), Length(1, 54), DataRequired()]
         )
 

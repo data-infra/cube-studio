@@ -38,8 +38,7 @@ from myapp.models.model_docker import Docker
 class Docker_Filter(MyappFilter):
     # @pysnooper.snoop()
     def apply(self, query, func):
-        user_roles = [role.name.lower() for role in list(self.get_user_roles())]
-        if "admin" in user_roles:
+        if g.user.is_admin():
             return query
 
         return query.filter(self.model.created_by_fk == g.user.id)

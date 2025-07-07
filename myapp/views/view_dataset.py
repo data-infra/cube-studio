@@ -36,8 +36,7 @@ conf = app.config
 class Dataset_Filter(MyappFilter):
     # @pysnooper.snoop()
     def apply(self, query, func):
-        user_roles = [role.name.lower() for role in list(self.get_user_roles())]
-        if "admin" in user_roles:
+        if g.user.is_admin():
             return query
 
         return query.filter(
@@ -146,7 +145,7 @@ class Dataset_ModelView_base():
     add_form_extra_fields = {
         "name": StringField(
             label= _('名称'),
-            description= _('数据集英文名，小写'),
+            description= _('数据集英文名，(小写字母、数字、- 组成)，最长50个字符'),
             default='',
             widget=BS3TextFieldWidget(),
             validators=[DataRequired(), Regexp("^[a-z][a-z0-9_]*[a-z0-9]$"), ]

@@ -45,8 +45,7 @@ conf = app.config
 class Notebook_Filter(MyappFilter):
     # @pysnooper.snoop()
     def apply(self, query, func):
-        user_roles = [role.name.lower() for role in list(self.get_user_roles())]
-        if "admin" in user_roles:
+        if g.user.is_admin():
             return query
 
         return query.filter(self.model.created_by_fk == g.user.id)
@@ -62,8 +61,6 @@ class Notebook_ModelView_Base():
     base_filters = [["id", Notebook_Filter, lambda: []]]
     order_columns = ['id']
     search_columns = ['created_by', 'name']
-
-
 
     add_columns = ['project', 'name', 'describe', 'images', 'working_dir', 'volume_mount', 'resource_memory','resource_cpu', 'resource_gpu']
     list_columns = ['project', 'ide_type_html', 'name_url', 'status', 'describe','reset', 'resource', 'renew', 'save']

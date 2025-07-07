@@ -209,6 +209,7 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
         "transformer":StringField(_('前后置处理'), default=InferenceService.transformer.default.arg,description= _('前后置处理逻辑，用于原生开源框架的请求预处理和响应预处理，目前仅支持kfserving下框架'),widget=BS3TextFieldWidget()),
         'resource_gpu':StringField(_('gpu'), default='0', description= _('申请的gpu卡数目，示例:2，每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)，<span style="color:red;">虚拟化占用和共享模式占用仅企业版支持</span>'),
                                                         widget=BS3TextFieldWidget(),validators=[DataRequired()]),
+		"working_dir": StringField(_('工作目录'), description=_('工作目录，容器进程启动目录，不填默认使用Dockerfile内定义的工作目录。<a target="_blank" href="/notebook_modelview/api/entry/jupyter?file_path=/mnt/{{creator}}/">打开目录</a>'),widget=BS3TextFieldWidget()),
 
         'sidecar': MySelectMultipleField(
             _('sidecar'),
