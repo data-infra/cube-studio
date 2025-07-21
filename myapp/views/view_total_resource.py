@@ -110,9 +110,9 @@ def node_traffic():
                 nodes.update(stored_nodes[org][device])
 
         cluster_config = conf.get('CLUSTERS', {}).get(cluster_name, {})
-        grafana_url = "//" + cluster_config.get('HOST', request.host).split('|')[-1] + conf.get('GRAFANA_CLUSTER_PATH')
+        grafana_url = "//" + cluster_config.get('HOST', request.host).split('|')[-1].strip() + conf.get('GRAFANA_CLUSTER_PATH')
         for ip in nodes:
-            node_dashboard_url = "//"+ cluster_config.get('HOST', request.host).split('|')[-1] + conf.get('K8S_DASHBOARD_CLUSTER') + '#/node/%s?namespace=default' % nodes[ip]['name']
+            node_dashboard_url = "//"+ cluster_config.get('HOST', request.host).split('|')[-1].strip() + conf.get('K8S_DASHBOARD_CLUSTER') + '#/node/%s?namespace=default' % nodes[ip]['name']
             org = nodes[ip]['labels'].get('org', 'unknown')
             enable_train = nodes[ip]['labels'].get('train', 'true')
             if g.user.is_admin():
@@ -121,7 +121,7 @@ def node_traffic():
                 ip_html = ip if nodes[ip]['status']=='Ready' else f'<del>{ip}</del>'
 
             share = nodes[ip]['labels'].get('share', 'true')
-            clolr = "#FFFFFF" if share == 'true' else '#F0F0F0'
+            color = "#FFFFFF" if share == 'true' else '#F0F0F0'
             device = ''
             if nodes[ip]['labels'].get('cpu','') == 'true':
                 device = 'cpu/'
@@ -145,7 +145,7 @@ def node_traffic():
                 gpu_total += gpu_total_temp
 
             message += '<tr bgcolor="%s">%s %s %s %s %s %s %s<tr>' % (
-                clolr,
+                color,
                 td_html % cluster_name,
                 td_html % org,
                 td_html % ip_html,
@@ -153,17 +153,17 @@ def node_traffic():
                 td_html % ("cpu:%s/%s" % (nodes[ip]['used_cpu'], nodes[ip]['cpu'])),
                 td_html % ("mem:%s/%s" % (nodes[ip]['used_memory'], nodes[ip]['memory'])),
                 # td_html % ("gpu:%s/%s" % (round(nodes[ip]['used_gpu'],2) if 'vgpu' in device else int(float(nodes[ip]['used_gpu'])), nodes[ip]['gpu'])),
-                td_html % (f"{gpu_mfrs}{gpu_used}/{int(gpu_total)}"),
+                td_html % (f"{gpu_mfrs}{gpu_used}/{round(float(gpu_total))}"),
 
                 # td_html % (','.join(list(set(nodes[ip]['user']))[0:1]))
             )
 
-            global_cluster_load[cluster_name]['cpu_req'] += int(nodes[ip]['used_cpu'])
-            global_cluster_load[cluster_name]['cpu_all'] += int(nodes[ip]['cpu'])
-            global_cluster_load[cluster_name]['mem_req'] += int(nodes[ip]['used_memory'])
-            global_cluster_load[cluster_name]['mem_all'] += int(nodes[ip]['memory'])
-            global_cluster_load[cluster_name]['gpu_req'] += round(gpu_used, 2)
-            global_cluster_load[cluster_name]['gpu_all'] += int(float(gpu_total))
+            global_cluster_load[cluster_name]['cpu_req'] += round(float(nodes[ip]['used_cpu']))
+            global_cluster_load[cluster_name]['cpu_all'] += round(float(nodes[ip]['cpu']))
+            global_cluster_load[cluster_name]['mem_req'] += round(float(nodes[ip]['used_memory']))
+            global_cluster_load[cluster_name]['mem_all'] += round(float(nodes[ip]['memory']))
+            global_cluster_load[cluster_name]['gpu_req'] += round(float(gpu_used), 2)
+            global_cluster_load[cluster_name]['gpu_all'] += round(float(gpu_total))
 
     message = Markup('<div style="padding:20px"><table>%s</table></div>' % message)
 
@@ -251,8 +251,8 @@ def pod_resource():
                 for pod_name in all_tasks_json[cluster_name][namespace][org]:
                     pod = all_tasks_json[cluster_name][namespace][org][pod_name]
                     dashboard_url = f'/k8s/web/search/{cluster_name}/{namespace}/{pod_name}'
-                    task_grafana_url = "//" + cluster_config.get('HOST', request.host).split('|')[-1] + conf.get('GRAFANA_TASK_PATH')
-                    node_grafana_url = "//" + cluster_config.get('HOST', request.host).split('|')[-1] + conf.get('GRAFANA_NODE_PATH')
+                    task_grafana_url = "//" + cluster_config.get('HOST', request.host).split('|')[-1].strip() + conf.get('GRAFANA_TASK_PATH')
+                    node_grafana_url = "//" + cluster_config.get('HOST', request.host).split('|')[-1].strip() + conf.get('GRAFANA_NODE_PATH')
                     pod_resource={
                         "cluster":cluster_name,
                         'project':pod['annotations'].get('project','unknown'),
@@ -263,8 +263,8 @@ def pod_resource():
                         "label":pod['label'],
                         "username":pod['username'],
                         "node":Markup('<a target="blank" href="%s">%s</a>' % (node_grafana_url + pod.get("host_ip",""), pod.get("host_ip",""))),
-                        "cpu":"%s/%s" % (math.ceil(int(pod.get('used_cpu', '0')) / 1000), int(pod.get('request_cpu', '0'))),
-                        "memory":"%s/%s" % (int(pod.get('used_memory', '0')), int(pod.get('request_memory', '0'))),
+                        "cpu":"%s/%s" % (math.ceil(round(float(pod.get('used_cpu', '0'))) / 1000), round(float(pod.get('request_cpu', '0')))),
+                        "memory":"%s/%s" % (round(float(pod.get('used_memory', '0'))), round(float(pod.get('request_memory', '0')))),
                         "gpu":"%s" % str(round(float(pod.get('request_gpu', '0')),2)),
                         "start_time":pod['start_time']
                     }
@@ -283,7 +283,7 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
         "project": {"type": "ellip2", "width": 100},
         "namespace": {"type": "ellip2", "width": 100},
         "node": {"type": "ellip2", "width": 150},
-        "pod": {"type": "ellip2", "width": 400},
+        "pod": {"type": "ellip2", "width": 300},
         "username": {"type": "ellip2", "width": 100},
         "cpu": {"type": "ellip2", "width": 100},
         "memory": {"type": "ellip2", "width": 100},
@@ -299,8 +299,8 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
         "pod": _("容器(资源使用)"),
         "username": _("用户"),
         "node": _("节点(资源使用)"),
-        "cpu": _("cpu使用"),
-        "memory": _("内存使用"),
+        "cpu": _("cpu"),
+        "memory": _("内存"),
         "gpu": _("AI卡使用"),
         "start_time":_("创建时间")
     }
@@ -356,14 +356,14 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
         pod_resource_metric = prometheus.get_resource_metric()
 
         all_resource={
-            "mem_all": sum([int(global_cluster_load[cluster_name]['mem_all']) for cluster_name in global_cluster_load]),
-            "cpu_all": sum([int(global_cluster_load[cluster_name]['cpu_all']) for cluster_name in global_cluster_load]),
-            "gpu_all": sum([int(global_cluster_load[cluster_name]['gpu_all']) for cluster_name in global_cluster_load]),
+            "mem_all": sum([round(float(global_cluster_load[cluster_name]['mem_all'])) for cluster_name in global_cluster_load]),
+            "cpu_all": sum([round(float(global_cluster_load[cluster_name]['cpu_all'])) for cluster_name in global_cluster_load]),
+            "gpu_all": sum([round(float(global_cluster_load[cluster_name]['gpu_all'])) for cluster_name in global_cluster_load]),
         }
         all_resource_req = {
-            "mem_req": sum([int(global_cluster_load[cluster_name]['mem_req']) for cluster_name in global_cluster_load]),
-            "cpu_req": sum([int(global_cluster_load[cluster_name]['cpu_req']) for cluster_name in global_cluster_load]),
-            "gpu_req": sum([int(global_cluster_load[cluster_name]['gpu_req']) for cluster_name in global_cluster_load]),
+            "mem_req": sum([round(float(global_cluster_load[cluster_name]['mem_req'])) for cluster_name in global_cluster_load]),
+            "cpu_req": sum([round(float(global_cluster_load[cluster_name]['cpu_req'])) for cluster_name in global_cluster_load]),
+            "gpu_req": sum([round(float(global_cluster_load[cluster_name]['gpu_req'])) for cluster_name in global_cluster_load]),
         }
         all_resource_used = {
             "mem_used": sum([pod_resource_metric[x].get('memory',0) for x in pod_resource_metric]),
@@ -373,23 +373,23 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
 
         resource_options = open('myapp/utils/echart/resource.txt').read()
         chat1 = copy.deepcopy(resource_options)
-        chat1 = chat1.replace('MEM_NAME', __('内存总量(G)')).replace('MEM_CENTER_X', '7%').replace('MEM_VALUE', str(int(all_resource['mem_all'])))
-        chat1 = chat1.replace('CPU_NAME', __('CPU总量(核)')).replace('CPU_CENTER_X', '17%').replace('CPU_VALUE', str(int(all_resource['cpu_all'])))
-        chat1 = chat1.replace('GPU_NAME', __('GPU总量(卡)')).replace('GPU_CENTER_X', '27%').replace('GPU_VALUE', str(int(all_resource['gpu_all'])))
-        chat1 = chat1.replace('MEM_MAX', str(int(all_resource['mem_all']*2))).replace('CPU_MAX', str(int(all_resource['cpu_all']*2))).replace('GPU_MAX', str(int(all_resource['gpu_all']*2)))
+        chat1 = chat1.replace('MEM_NAME', __('内存总量(G)')).replace('MEM_CENTER_X', '7%').replace('MEM_VALUE', str(round(float(all_resource['mem_all']))))
+        chat1 = chat1.replace('CPU_NAME', __('CPU总量(核)')).replace('CPU_CENTER_X', '17%').replace('CPU_VALUE', str(round(float(all_resource['cpu_all']))))
+        chat1 = chat1.replace('GPU_NAME', __('GPU总量(卡)')).replace('GPU_CENTER_X', '27%').replace('GPU_VALUE', str(round(float(all_resource['gpu_all']))))
+        chat1 = chat1.replace('MEM_MAX', str(round(all_resource['mem_all']*2))).replace('CPU_MAX', str(round(float(all_resource['cpu_all'])*2))).replace('GPU_MAX', str(round(float(all_resource['gpu_all'])*2)))
         chat1 = chat1.strip('\n').strip(' ').strip(',')
 
         chat2 = copy.deepcopy(resource_options)
-        chat2 = chat2.replace('MEM_NAME',__('内存占用率')).replace('MEM_CENTER_X','40%').replace('MEM_VALUE',str(int(100*all_resource_req['mem_req']/(0.001+all_resource['mem_all']))))
-        chat2 = chat2.replace('CPU_NAME',__('CPU占用率')).replace('CPU_CENTER_X','50%').replace('CPU_VALUE',str(int(100*all_resource_req['cpu_req']/(0.001+all_resource['cpu_all']))))
-        chat2 = chat2.replace('GPU_NAME',__('GPU占用率')).replace('GPU_CENTER_X','60%').replace('GPU_VALUE',str(int(100*all_resource_req['gpu_req']/(0.001+all_resource['gpu_all']))))
+        chat2 = chat2.replace('MEM_NAME',__('内存占用率')).replace('MEM_CENTER_X','40%').replace('MEM_VALUE',str(round(100*all_resource_req['mem_req']/(0.001+all_resource['mem_all']))))
+        chat2 = chat2.replace('CPU_NAME',__('CPU占用率')).replace('CPU_CENTER_X','50%').replace('CPU_VALUE',str(round(100*all_resource_req['cpu_req']/(0.001+all_resource['cpu_all']))))
+        chat2 = chat2.replace('GPU_NAME',__('GPU占用率')).replace('GPU_CENTER_X','60%').replace('GPU_VALUE',str(round(100*all_resource_req['gpu_req']/(0.001+all_resource['gpu_all']))))
         chat2 = chat2.replace('MEM_MAX', '100').replace('CPU_MAX', '100').replace('GPU_MAX', '100').replace('{a|{value}}','{a|{value}%}')
         chat2 = chat2.strip('\n').strip(' ').strip(',')
 
         chat3 = copy.deepcopy(resource_options)
-        chat3 = chat3.replace('MEM_NAME',__('内存利用率')).replace('MEM_CENTER_X','73%').replace('MEM_VALUE',str(min(100,int(100*all_resource_used['mem_used']/(0.001+all_resource['mem_all'])))))
-        chat3 = chat3.replace('CPU_NAME',__('CPU利用率')).replace('CPU_CENTER_X','83%').replace('CPU_VALUE',str(min(100,int(100*all_resource_used['cpu_used']/(0.001+all_resource['cpu_all'])))))
-        chat3 = chat3.replace('GPU_NAME',__('GPU利用率')).replace('GPU_CENTER_X','93%').replace('GPU_VALUE',str(min(100,int(100*all_resource_used['gpu_used']/(0.001+all_resource['gpu_all'])))))
+        chat3 = chat3.replace('MEM_NAME',__('内存利用率')).replace('MEM_CENTER_X','73%').replace('MEM_VALUE',str(min(100,round(100*all_resource_used['mem_used']/(0.001+all_resource['mem_all'])))))
+        chat3 = chat3.replace('CPU_NAME',__('CPU利用率')).replace('CPU_CENTER_X','83%').replace('CPU_VALUE',str(min(100,round(100*all_resource_used['cpu_used']/(0.001+all_resource['cpu_all'])))))
+        chat3 = chat3.replace('GPU_NAME',__('GPU利用率')).replace('GPU_CENTER_X','93%').replace('GPU_VALUE',str(min(100,round(100*all_resource_used['gpu_used']/(0.001+all_resource['gpu_all'])))))
         chat3 = chat3.replace('MEM_MAX', '100').replace('CPU_MAX', '100').replace('GPU_MAX', '100').replace('{a|{value}}','{a|{value}%}')
         chat3 = chat3.strip('\n').strip(' ').strip(',')
         DATA = ',\n'.join([chat1,chat2,chat3])

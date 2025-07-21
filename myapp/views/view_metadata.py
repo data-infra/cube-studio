@@ -135,7 +135,7 @@ class Metadata_table_ModelView_base():
             description='',
             widget=MySelect2Widget(can_input=True, conten2choices=True),
             choices=[[]],
-            validators=[DataRequired()]
+            validators=[DataRequired(),Regexp('^[\x00-\x7F]*$')]
         ),
         "field": MySelectMultipleField(
             label= _('数据域'),

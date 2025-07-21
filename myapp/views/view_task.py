@@ -1,5 +1,6 @@
 import math
 import random
+import re
 
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
@@ -111,7 +112,8 @@ class Task_ModelView_Base():
             label= _('挂载'),
             description= _('外部挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2<br>注意pvc会自动挂载对应目录下的个人username子目录'),
             widget=BS3TextFieldWidget(),
-            default='kubeflow-user-workspace(pvc):/mnt'
+            default='kubeflow-user-workspace(pvc):/mnt',
+            validators=[Regexp('^[\x00-\x7F]*$')]
         ),
         "working_dir": StringField(
             label= _('工作目录'),
@@ -137,16 +139,16 @@ class Task_ModelView_Base():
         'resource_memory': StringField(
             label= _('memory'),
             default=Task.resource_memory.default.arg,
-            description= _('内存的资源使用限制，示例1G，10G， 最大100G，如需更多联系管理员'),
+            description= _('内存的资源使用配置，示例1G，10G， 最大100G，如需更多联系管理员'),
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired(), Regexp("^.*G$")]
+            validators=[DataRequired(), Regexp("^[0-9]*G$")]
         ),
         'resource_cpu': StringField(
             label= _('cpu'),
             default=Task.resource_cpu.default.arg,
-            description= _('cpu的资源使用限制(单位核)，示例 0.4，10，最大50核，如需更多联系管理员'),
+            description= _('cpu的资源使用配置(单位核)，示例 0.4，10，最大50核，如需更多联系管理员'),
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
+            validators=[DataRequired(),Regexp("^[0-9]*$")]
         ),
         'timeout': IntegerField(
             label= _('超时'),
@@ -168,8 +170,8 @@ class Task_ModelView_Base():
         ),
     }
 
-    add_form_extra_fields['resource_gpu'] = StringField('gpu', default='0', description= _('gpu的资源使用限制(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)'),widget=BS3TextFieldWidget())
-    add_form_extra_fields['resource_rdma'] = StringField('rdma', default='0', description= _('RDMA的资源使用限制，示例 0，1，10，填写方式咨询管理员'), widget=BS3TextFieldWidget())
+    add_form_extra_fields['resource_gpu'] = StringField('gpu', default='0', description= _('gpu的资源使用配置(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)'),widget=BS3TextFieldWidget(),validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')])
+    add_form_extra_fields['resource_rdma'] = StringField('rdma', default='0', description= _('RDMA的资源使用配置，示例 0，1，10，填写方式咨询管理员'), widget=BS3TextFieldWidget())
 
     edit_form_extra_fields = add_form_extra_fields
 
@@ -359,9 +361,9 @@ class Task_ModelView_Base():
         # # 切换了项目组，要把项目组的挂载加进去
         all_project_volumes = []
         if item.volume_mount:
-            all_project_volumes = [x.strip() for x in item.volume_mount.split(',') if x.strip()]
+            all_project_volumes = [x.strip() for x in item.volume_mount.replace('，',',').split(',') if x.strip()]
         if item.job_template.volume_mount:
-            all_project_volumes += [x.strip() for x in item.job_template.volume_mount.split(',') if x.strip()]
+            all_project_volumes += [x.strip() for x in item.job_template.volume_mount.replace('，',',').split(',') if x.strip()]
         for volume_mount in all_project_volumes:
             if ":" in volume_mount:
                 volume, mount = volume_mount.split(":")[0], volume_mount.split(":")[1]
@@ -391,7 +393,7 @@ class Task_ModelView_Base():
         self.task_args_check(item)
         item.change_datetime = datetime.datetime.now()
         gpu_num, _, _ = core.get_gpu(item.resource_gpu)
-        gpu_num = math.ceil(float(str(gpu_num).split(',')[-1]))
+        gpu_num = math.ceil(float(str(gpu_num).replace('，',',').split(',')[-1]))
         if gpu_num==0:
             item.node_selector = item.node_selector.replace('gpu=true', 'cpu=true')
         else:

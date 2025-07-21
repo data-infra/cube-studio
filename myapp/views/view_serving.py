@@ -1,4 +1,5 @@
 import copy
+import re
 
 import pysnooper
 
@@ -56,10 +57,12 @@ class Service_ModelView_base():
                     'resource_memory', 'resource_cpu', 'resource_gpu', 'replicas', 'ports', 'host']
 
     columns = ['project', 'name', 'label', 'images', 'working_dir', 'command', 'env', 'resource_memory', 'resource_cpu',
-               'resource_gpu', 'replicas', 'ports']
+               'resource_gpu', 'replicas', 'ports', 'host']
     add_columns = columns + ['volume_mount']
     edit_columns = add_columns
-
+    spec_label_columns={
+        "host":_("首页路径")
+    }
     list_columns = ['project', 'name_url', 'host_url', 'ip', 'deploy', 'creator', 'modified']
     cols_width = {
         "name_url": {"type": "ellip2", "width": 200},
@@ -84,18 +87,17 @@ class Service_ModelView_base():
         "project": QuerySelectField(_('项目组'),query_factory=filter_join_org_project,allow_blank=True,widget=Select2Widget()),
         "name":StringField(_('名称'), description= _('英文名(小写字母、数字、- 组成)，最长50个字符'),widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$"),Length(1,54)]),
         "label":StringField(_('标签'), description= _('中文名'), widget=BS3TextFieldWidget(),validators=[DataRequired()]),
-        "images": StringField(_('镜像'), description= _('镜像全称'), widget=BS3TextFieldWidget(), validators=[DataRequired()]),
-        "volume_mount":StringField(_('挂载'),description= _('外部挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2<br>注意pvc会自动挂载对应目录下的个人username子目录'),widget=BS3TextFieldWidget(),default=''),
-        "working_dir": StringField(_('工作目录'),description= _('工作目录，容器进程启动目录，不填默认使用Dockerfile内定义的工作目录。<a target="_blank" href="/notebook_modelview/api/entry/jupyter?file_path=/mnt/{{creator}}/">打开目录</a>'),widget=BS3TextFieldWidget()),
+        "images": StringField(_('镜像'), description= _('镜像全称'), widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp('^[a-zA-Z0-9\-._:@\/]*$')]),
+        "volume_mount":StringField(_('挂载'),description= _('外部挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2<br>注意pvc会自动挂载对应目录下的个人username子目录'),widget=BS3TextFieldWidget(),default='',validators=[Regexp('^[\x00-\x7F]*$')]),
+        "working_dir": StringField(_('工作目录'),description= _('工作目录，容器进程启动目录，不填默认使用Dockerfile内定义的工作目录。<a target="_blank" href="/notebook_modelview/api/entry/jupyter?file_path=/mnt/{{creator}}/">打开目录</a>'),widget=BS3TextFieldWidget(),validators=[Regexp('^[\x00-\x7F]*$')]),
         "command":StringField(_('启动命令'), description= _('启动命令，支持多行命令'),widget=MyBS3TextAreaFieldWidget(rows=3)),
         "node_selector":StringField(_('机器选择'), description= _('运行当前服务所在的机器'),widget=BS3TextFieldWidget(),default='cpu=true,serving=true'),
-        "resource_memory":StringField(_('memory'),default=Service.resource_memory.default.arg,description= _('内存的资源使用限制，示例1G，10G， 最大100G，如需更多联系管路员'),widget=BS3TextFieldWidget(),validators=[DataRequired(), Regexp("^.*G$")]),
-        "resource_cpu":StringField(_('cpu'), default=Service.resource_cpu.default.arg,description= _('cpu的资源使用限制(单位核)，示例 0.4，10，最大50核，如需更多联系管路员'),widget=BS3TextFieldWidget(), validators=[DataRequired()]),
-        "resource_gpu": StringField(_('gpu'), default='0',description= _('gpu的资源使用限制(单位卡)，示例:1，2，训练任务每个容器独占整卡'), widget=BS3TextFieldWidget(), validators=[DataRequired()]),
-        "replicas": StringField(_('副本数'), default=Service.replicas.default.arg,description= _('pod副本数，用来配置高可用'),widget=BS3TextFieldWidget(), validators=[DataRequired()]),
-        "ports": StringField(_('端口'), default=Service.ports.default.arg,description= _('进程端口号，逗号分隔'),widget=BS3TextFieldWidget(), validators=[DataRequired()]),
+        "resource_memory":StringField(_('memory'),default=Service.resource_memory.default.arg,description= _('内存的资源使用配置，示例1G，10G， 最大100G，如需更多联系管路员'),widget=BS3TextFieldWidget(),validators=[DataRequired(), Regexp("^[0-9]*G$")]),
+        "resource_cpu":StringField(_('cpu'), default=Service.resource_cpu.default.arg,description= _('cpu的资源使用配置(单位核)，示例 0.4，10，最大50核，如需更多联系管路员'),widget=BS3TextFieldWidget(), validators=[DataRequired(), Regexp("^[0-9]*$")]),
+        "resource_gpu": StringField(_('gpu'), default='0',description= _('gpu的资源使用配置(单位卡)，示例:1，2，训练任务每个容器独占整卡'), widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')]),
+        "replicas": StringField(_('副本数'), default=Service.replicas.default.arg,description= _('pod副本数，用来配置高可用'),widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp("^[0-9]+$")]),
+        "ports": StringField(_('端口'), default=Service.ports.default.arg,description= _('进程端口号，逗号分隔'),widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp('^[0-9,:]*$')]),
         "env": StringField(_('环境变量'), default=Service.env.default.arg, description= _('使用模板的task自动添加的环境变量，支持模板变量。书写格式:每行一个环境变量env_key=env_value'),widget=MyBS3TextAreaFieldWidget()),
-        "host": StringField(_('域名'), default=Service.host.default.arg,description= _('访问域名，') + host_rule, widget=BS3TextFieldWidget()),
     }
 
     edit_form_extra_fields = copy.deepcopy(add_form_extra_fields)
@@ -113,7 +115,7 @@ class Service_ModelView_base():
     check_delete_permission = check_edit_permission
 
     def set_column(self, service=None):
-        host_field = StringField(_('域名'), default=Service.host.default.arg,description= _('访问域名，') + self.host_rule, widget=BS3TextFieldWidget())
+        host_field = StringField(_('首页路径'), default='',description= _('首页路径，例如/index.html'), widget=BS3TextFieldWidget(),validators=[Regexp('^[:/].*$')])
         self.edit_form_extra_fields['host'] = host_field
         self.add_form_extra_fields['host'] = host_field
 
@@ -216,10 +218,10 @@ class Service_ModelView_base():
                                      privileged=None,
                                      accounts=None,
                                      username=service.created_by.username,
-                                     ports=[int(port) for port in service.ports.split(',')]
+                                     ports=[int(port) for port in service.ports.replace('，',',').split(',')]
                                      )
 
-        ports = [int(port) for port in service.ports.split(',')]
+        ports = [int(port) for port in service.ports.replace('，',',').split(',')]
 
         k8s_client.create_service(
             namespace=namespace,
@@ -242,7 +244,7 @@ class Service_ModelView_base():
             k8s_client.create_istio_ingress(namespace=namespace,
                                             name=service.name,
                                             host=real_host,
-                                            ports=service.ports.split(',')
+                                            ports=service.ports.replace('，',',').split(',')
                                             )
 
         # 以ip形式访问的话，使用的代理ip。不然不好处理机器服务化机器扩容和缩容时ip变化

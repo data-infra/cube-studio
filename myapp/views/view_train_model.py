@@ -122,7 +122,7 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
             widget=MyBS3TextFieldWidget(),
             description= _('模型版本'),
             default=datetime.datetime.now().strftime('v%Y.%m.%d.1'),
-            validators=[DataRequired()]
+            validators=[DataRequired(),Regexp("[a-z0-9_\-\.]*")]
         ),
         "run_id": StringField(
             _('run id'),
@@ -173,6 +173,12 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
             item.run_id = 'random_run_id_' + uuid.uuid4().hex[:32]
         if not item.pipeline_id:
             item.pipeline_id = 0
+        try:
+            if item.metrics:
+                metric = json.loads(item.metrics)
+                item.metrics = json.dumps(metric,indent=4,ensure_ascii=False)
+        except:
+            pass
 
     def pre_update(self, item):
         if not item.path:

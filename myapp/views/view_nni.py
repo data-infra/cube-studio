@@ -114,7 +114,7 @@ class NNI_ModelView_Base():
         description='',
         widget=BS3TextFieldWidget(),
         default=datamodel.obj.namespace.default.arg,
-        validators=[DataRequired()]
+        validators=[DataRequired(), Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$"), Length(1, 54)]
     )
 
     edit_form_extra_fields['parallel_trial_count'] = IntegerField(
@@ -122,21 +122,21 @@ class NNI_ModelView_Base():
         default=datamodel.obj.parallel_trial_count.default.arg,
         description= _('可并行的计算实例数目'),
         widget=BS3TextFieldWidget(),
-        validators=[DataRequired()]
+        validators=[DataRequired(),Regexp("^[0-9]*$")]
     )
     edit_form_extra_fields['max_trial_count'] = IntegerField(
         _('最大任务数'),
         default=datamodel.obj.max_trial_count.default.arg,
         description= _('最大并行的计算实例数目'),
         widget=BS3TextFieldWidget(),
-        validators=[DataRequired()]
+        validators=[DataRequired(),Regexp("^[0-9]*$")]
     )
     edit_form_extra_fields['max_failed_trial_count'] = IntegerField(
         _('最大失败次数'),
         default=datamodel.obj.max_failed_trial_count.default.arg,
         description= _('最大失败的计算实例数目'),
         widget=BS3TextFieldWidget(),
-        validators=[DataRequired()]
+        validators=[DataRequired(),Regexp("^[0-9]*$")]
     )
     edit_form_extra_fields['objective_type'] = SelectField(
         _('目标函数类型'),
@@ -152,7 +152,7 @@ class NNI_ModelView_Base():
         default=datamodel.obj.objective_goal.default.arg,
         description= _('目标门限'),
         widget=BS3TextFieldWidget(),
-        validators=[DataRequired()]
+        validators=[DataRequired(),Regexp("^[\.0-9]*$")]
     )
     edit_form_extra_fields['objective_metric_name'] = StringField(
         _('目标指标名'),
@@ -214,9 +214,10 @@ class NNI_ModelView_Base():
     )
     edit_form_extra_fields['working_dir'] = StringField(
         _('工作目录'),
-        description= _("代码所在目录，nni代码、配置和log都将在/mnt/${your_name}/nni/目录下进行"),
+        description= _('代码所在目录，nni代码、配置和log都将在/mnt/${username}/nni/目录下进行。<a target="_blank" href="/notebook_modelview/api/entry/jupyter?file_path=/mnt/{{creator}}/">打开目录</a>'),
         default=datamodel.obj.working_dir.default.arg,
-        widget=BS3TextFieldWidget()
+        widget=BS3TextFieldWidget(),
+        validators=[Regexp('^[\x00-\x7F]*$')]
     )
     edit_form_extra_fields['image_pull_policy'] = SelectField(
         _('拉取策略'),
@@ -226,30 +227,31 @@ class NNI_ModelView_Base():
     )
     edit_form_extra_fields['volume_mount'] = StringField(
         _('挂载'),
-        description= _('外部挂载，格式:$pvc_name1(pvc):/$container_path1,$pvc_name2(pvc):/$container_path2'),
+        description= _('外部挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2<br>注意pvc会自动挂载对应目录下的个人username子目录'),
         default=datamodel.obj.volume_mount.default.arg,
-        widget=BS3TextFieldWidget()
+        widget=BS3TextFieldWidget(),
+        validators=[Regexp('^[\x00-\x7F]*$')]
     )
     edit_form_extra_fields['resource_memory'] = StringField(
         _('memory'),
         default=datamodel.obj.resource_memory.default.arg,
-        description= _('内存的资源使用限制(每个测试实例)，示例：1G，20G'),
+        description= _('内存的资源使用配置(每个测试实例)，示例：1G，20G'),
         widget=BS3TextFieldWidget(),
         validators=[DataRequired(), Regexp("^.*G$")]
     )
     edit_form_extra_fields['resource_cpu'] = StringField(
         _('cpu'),
         default=datamodel.obj.resource_cpu.default.arg,
-        description= _('cpu的资源使用限制(每个测试实例)(单位：核)，示例：2'),
+        description= _('cpu的资源使用配置(每个测试实例)(单位：核)，示例：2'),
         widget=BS3TextFieldWidget(),
-        validators=[DataRequired()]
+        validators=[DataRequired(),Regexp("^[0-9]*$")]
     )
     edit_form_extra_fields['resource_gpu'] = StringField(
         _('gpu'),
         default='0',
-        description=_('申请的gpu卡数目，示例:2。训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)'),
+        description=_('申请的gpu卡数目，示例:2，每个容器独占整卡。-1为共享占用方式，小数(0.1)为vgpu方式，申请具体的卡型号，可以类似 1(V100)'),
         widget=BS3TextFieldWidget(),
-        validators=[DataRequired()]
+        validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')]
     )
 
     # @pysnooper.snoop()
@@ -273,7 +275,7 @@ class NNI_ModelView_Base():
             default=conf.get('NNI_IMAGES',''),
             description= _('工作节点镜像'),
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
+            validators=[DataRequired(),Regexp('^[\x00-\x7F]*$')]
         )
         self.edit_form_extra_fields['job_worker_command'] = StringField(
             _('任务启动命令'),
@@ -408,7 +410,7 @@ class NNI_ModelView_Base():
         }
 
         gpu_num,gpu_type,resource_name = core.get_gpu(nni.resource_gpu)
-        gpu_num = math.ceil(float(str(gpu_num).split(',')[-1]))
+        gpu_num = math.ceil(float(str(gpu_num).replace('，',',').split(',')[-1]))
         if gpu_num>0:
             resources['requests'][resource_name] = gpu_num
             resources['limits'][resource_name] = gpu_num

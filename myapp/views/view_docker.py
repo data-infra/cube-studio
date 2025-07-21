@@ -87,23 +87,23 @@ class Docker_ModelView_Base():
             'resource_memory': StringField(
                 label= _('内存'),
                 default='8G',
-                description= _('内存的资源使用限制，示例：1G，20G'),
+                description= _('内存的资源使用配置，示例：1G，20G'),
                 widget=BS3TextFieldWidget(),
-                validators=[DataRequired(), Regexp("^.*G$")]
+                validators=[DataRequired(), Regexp("^[0-9]*G$")]
             ),
             'resource_cpu': StringField(
                 label= _('cpu'),
                 default='4',
-                description= _('cpu的资源使用限制(单位：核)，示例：2'),
+                description= _('cpu的资源使用配置(单位：核)，示例：2'),
                 widget=BS3TextFieldWidget(),
-                validators=[DataRequired()]
+                validators=[DataRequired(),Regexp("^[0-9]*$")]
             ),
             'resource_gpu': StringField(
                 label= _('gpu'),
                 default='0',
                 description= _('申请的gpu卡数目，示例:2，每个容器独占整卡。-1为共享占用方式，小数(0.1)为vgpu方式，申请具体的卡型号，可以类似 1(V100)'),
                 widget=BS3TextFieldWidget(),
-                validators=[DataRequired()]
+                validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')]
             )
         }
     }
@@ -140,14 +140,14 @@ class Docker_ModelView_Base():
             default=conf.get('PUSH_REPOSITORY_ORG','ccr.ccs.tencentyun.com/cube-studio/')+g.user.username+":"+datetime.datetime.now().strftime('%Y.%m.%d'+".1"),
             description= _("目标镜像名，将直接推送到目标仓库，需在镜像仓库中配置了相应仓库的账号密码"),
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired(), ]
+            validators=[DataRequired(),Regexp('^[a-zA-Z0-9\-._:@\/]*$')]
         )
         self.add_form_extra_fields['base_image'] = StringField(
             _('基础镜像'),
             default=conf.get('USER_IMAGE',''),
             description=f'{__("基础镜像和构建方法可参考：")}<a target="_blank" href="%s">{__("点击打开")}</a>' % (conf.get('HELP_URL',{}).get('docker', '')),
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired(), ]
+            validators=[DataRequired(), Regexp('^[a-zA-Z0-9\-._:@\/]*$')]
         )
         # # if g.user.is_admin():
         # self.edit_columns=['describe','base_image','target_image','need_gpu','consecutive_build']

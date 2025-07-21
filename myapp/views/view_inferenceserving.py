@@ -199,16 +199,16 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
             widget=Select2Widget(),
             validators=[DataRequired()]
         ),
-        "resource_memory":StringField('memory',default='5G',description= _('内存的资源使用限制，示例1G，10G， 最大100G，如需更多联系管路员'),widget=BS3TextFieldWidget(),validators=[DataRequired(), Regexp("^.*G$")]),
-        "resource_cpu":StringField('cpu', default='5',description= _('cpu的资源使用限制(单位核)，示例 0.4，10，最大50核，如需更多联系管路员'),widget=BS3TextFieldWidget(), validators=[DataRequired()]),
-        "min_replicas": StringField(_('最小副本数'), default=InferenceService.min_replicas.default.arg,description= _('最小副本数，用来配置高可用，流量变动自动伸缩'),widget=BS3TextFieldWidget(), validators=[DataRequired()]),
+        "resource_memory":StringField('memory',default='5G',description= _('内存的资源使用配置，示例1G，10G， 最大100G，如需更多联系管路员'),widget=BS3TextFieldWidget(),validators=[DataRequired(), Regexp("^[0-9]*G$")]),
+        "resource_cpu":StringField('cpu', default='5',description= _('cpu的资源使用配置(单位核)，示例 0.4，10，最大50核，如需更多联系管路员'),widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp("^[0-9]*$")]),
+        "min_replicas": StringField(_('最小副本数'), default=InferenceService.min_replicas.default.arg,description= _('最小副本数，用来配置高可用，流量变动自动伸缩'),widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp("^[0-9]+$")]),
         "max_replicas": StringField(_('最大副本数'), default=InferenceService.max_replicas.default.arg,
                                     description= _('最大副本数，用来配置高可用，流量变动自动伸缩'), widget=BS3TextFieldWidget(),
-                                    validators=[DataRequired()]),
-        "host": StringField(_('域名'), default=InferenceService.host.default.arg,description= _('访问域名，')+host_rule,widget=BS3TextFieldWidget()),
+                                    validators=[DataRequired(),Regexp("^[0-9]+$")]),
+        "host": StringField(_('域名'), default=InferenceService.host.default.arg,description= _('访问域名，')+host_rule,widget=BS3TextFieldWidget(),validators=[Regexp('^[\x00-\x7F]*$')]),
         "transformer":StringField(_('前后置处理'), default=InferenceService.transformer.default.arg,description= _('前后置处理逻辑，用于原生开源框架的请求预处理和响应预处理，目前仅支持kfserving下框架'),widget=BS3TextFieldWidget()),
         'resource_gpu':StringField(_('gpu'), default='0', description= _('申请的gpu卡数目，示例:2，每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)，<span style="color:red;">虚拟化占用和共享模式占用仅企业版支持</span>'),
-                                                        widget=BS3TextFieldWidget(),validators=[DataRequired()]),
+                                                        widget=BS3TextFieldWidget(),validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')]),
 		"working_dir": StringField(_('工作目录'), description=_('工作目录，容器进程启动目录，不填默认使用Dockerfile内定义的工作目录。<a target="_blank" href="/notebook_modelview/api/entry/jupyter?file_path=/mnt/{{creator}}/">打开目录</a>'),widget=BS3TextFieldWidget()),
 
         'sidecar': MySelectMultipleField(
@@ -232,14 +232,14 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
             default='',
             description= _('英文名(小写字母、数字、- 组成)，最长50个字符'),
             widget=MyBS3TextFieldWidget(),
-            validators=[DataRequired(), Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$"), Length(1, 54)]
+            validators=[DataRequired(), Regexp("^[a-z][a-z0-9\.\/:\-]*[a-z0-9]$"), Length(1, 54)]  #
         ),
         'model_version': StringField(
             _('模型版本号'),
             default=datetime.datetime.now().strftime('v%Y.%m.%d.1'),
             description= _('版本号，时间格式'),
             widget=MyBS3TextFieldWidget(),
-            validators=[DataRequired(), Length(1, 54)]
+            validators=[DataRequired(),Regexp("[a-z0-9_\-\.]*"), Length(1, 54)]
         ),
 
         'service_type': SelectField(
@@ -261,7 +261,15 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
             _('弹性伸缩'),
             default='',
             description= _('弹性伸缩容的触发条件：可以使用cpu/mem/gpu/qps等信息，可以使用其中一个指标或者多个指标，示例：cpu:50%,mem:50%,gpu:50%'),
-            widget=BS3TextFieldWidget()
+            widget=BS3TextFieldWidget(),
+            validators=[Regexp('^(cpu:|mem:|gpu:|%|,|[0-9])*$')]
+        ),
+        "cronhpa": StringField(
+            _('定时伸缩'),
+            default='',
+            description=_('根据时间定时伸缩容，定时伸缩时，弹性伸缩容失效。24小时制，示例：9~21:1,21~9:0，表示9点到21点使用一个副本。21点到第二天9点为0个副本'),
+            widget=BS3TextFieldWidget(),
+            validators=[Regexp('^[0-9~:,]$')]
         ),
 
         'expand': StringField(
@@ -277,20 +285,23 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
             _('流量分流'),
             default='',
             description= _('流量分流，将该服务的所有请求，按比例分流到目标服务上。格式 service1:20%,service2:30%，表示分流20%流量到service1，30%到service2'),
-            widget=BS3TextFieldWidget()
+            widget=BS3TextFieldWidget(),
+            validators=[Regexp('^[0-9a-z:,%]*$')]
         ),
 
         'shadow': StringField(
             _('流量复制'),
             default='',
             description= _('流量复制，将该服务的所有请求，按比例复制到目标服务上，格式 service1:20%,service2:30%，表示复制20%流量到service1，30%到service2'),
-            widget=BS3TextFieldWidget()
+            widget=BS3TextFieldWidget(),
+            validators=[Regexp('^[0-9a-z:,%]*$')]
         ),
         'volume_mount': StringField(
             _('挂载'),
             default='',
             description= _('外部挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2<br>注意pvc会自动挂载对应目录下的个人username子目录'),
-            widget=BS3TextFieldWidget()
+            widget=BS3TextFieldWidget(),
+            validators=[Regexp('^[\x00-\x7F]*$')]
         ),
         'model_path': StringField(
             _('模型地址'),
@@ -304,7 +315,8 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
             default='',
             description= _("推理服务镜像"),
             widget=MySelect2Widget(can_input=True),
-            choices=[[x, x] for x in images]
+            choices=[[x, x] for x in images],
+            validators=[Regexp('^[\x00-\x7F]*$')]
         ),
         'command': StringField(
             _('启动命令'),
@@ -323,19 +335,21 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
             default='',
             description= _('监听端口号，逗号分隔'),
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
+            validators=[DataRequired(),Regexp('^[0-9,:]*$')]
         ),
         'metrics': StringField(
             _('指标地址'),
             default='',
             description= _('请求指标采集，配置端口+url，示例：8080:/metrics'),
-            widget=BS3TextFieldWidget()
+            widget=BS3TextFieldWidget(),
+            validators=[Regexp('^[0-9]+:/[\x00-\x7F]*$')]
         ),
         'health': StringField(
             _('健康检查'),
             default='',
-            description= _('健康检查接口，使用http接口或者shell命令，示例：8080:/health或者 shell:python health.py'),
-            widget=BS3TextFieldWidget()
+            description= _('健康检查接口，使用http接口，示例：8080:/health'),
+            widget=BS3TextFieldWidget(),
+            validators=[Regexp('^[0-9]+:/[\x00-\x7F]*$')]
         ),
 
         'inference_config': StringField(
@@ -955,7 +969,7 @@ output %s
                 if '=' in e:
                     volume_mount = volume_mount.replace('{{' + e.split("=")[0] + '}}', e.split("=")[1])
 
-        ports = [int(port) for port in service.ports.split(',')]
+        ports = [int(port) for port in service.ports.replace('，',',').split(',')]
         gpu_num, _, _ = core.get_gpu(service.resource_gpu)
 
         pod_env = service.env
@@ -969,7 +983,7 @@ output %s
         pod_env += "\nRESOURCE_MEMORY=" + service.resource_memory
         pod_env += "\nRESOURCE_MIN_REPLICAS=" + str(service.min_replicas)
         pod_env += "\nRESOURCE_MAX_REPLICAS=" + str(service.max_replicas)
-        pod_env += "\nRESOURCE_GPU=" + str(gpu_num).split(',')[-1]
+        pod_env += "\nRESOURCE_GPU=" + str(gpu_num).replace('，',',').split(',')[-1]
         pod_env += "\nMODEL_PATH=" + service.model_path
         pod_env += "\nMODEL_NAME=" + service.model_name
 
@@ -1088,7 +1102,7 @@ output %s
                     namespace=namespace,
                     name=name,
                     host=host,
-                    ports=service.ports.split(','),
+                    ports=service.ports.replace('，',',').split(','),
                     canary=service.canary,
                     shadow=service.shadow
                 )
@@ -1193,7 +1207,7 @@ output %s
             if int(service.max_replicas) > int(service.min_replicas) and service.hpa:
                 try:
                     # 创建+绑定deployment
-                    print('create hpa')
+                    # print('create hpa')
                     k8s_client.create_hpa(
                         namespace=namespace,
                         name=name,
@@ -1262,7 +1276,7 @@ output %s
                         break
 
                 new_services.model_version=model_version
-                new_services.name = new_services.model_name+"-"+new_services.model_version.replace('v','').replace('.','')
+                new_services.name = (new_services.model_name.replace('/','-').replace(':','-').replace('.','-').strip('-')+"-"+new_services.model_version.replace('v','').replace('.',''))[:60]
                 new_services.created_on = datetime.datetime.now()
                 new_services.changed_on = datetime.datetime.now()
                 db.session.add(new_services)

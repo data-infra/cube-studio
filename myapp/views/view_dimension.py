@@ -94,7 +94,7 @@ Metadata_column_fields = {
         label= _('可选择项'),
         description= _('enum类型时，逗号分割多个可选择项，为空则为数据库记录已存在可选择项'),
         default='',
-        widget=BS3TextFieldWidget(),
+        widget=BS3TextFieldWidget()
     )
 }
 
@@ -198,7 +198,7 @@ class Dimension_table_ModelView_Api(MyappModelRestApi):
         ),
         "table_name": StringField(
             label= _('表名'),
-            description= _('远程数据库的表名'),
+            description= _('远程数据库的表名(小写字母、数字、- 组成)，最长50个字符'),
             widget=BS3TextFieldWidget(),
             default='',
             validators=[DataRequired(), Regexp("^[a-z][a-z0-9_\-]*[a-z0-9]$")]
@@ -630,7 +630,7 @@ class Dimension_remote_table_ModelView_Api(MyappModelRestApi):
                         default='',
                         description='',
                         widget=MySelect2Widget(can_input=True,conten2choices=False if columns[column_name].get('choices','') else True),
-                        choices=[[x,x] for x in columns[column_name].get('choices','').split(',')]
+                        choices=[[x,x] for x in columns[column_name].get('choices','').replace('，',',').split(',')]
                     )
                 else:
                     add_form_extra_fields[column_name] = StringField(

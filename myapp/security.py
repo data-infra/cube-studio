@@ -233,12 +233,7 @@ class MyUserRemoteUserModelView_Base():
             _("组织架构"),
             widget=BS3TextFieldWidget(),
             description=_("组织架构，自行填写"),
-        ),
-        "quota": StringField(
-            _("额度限制"),
-            widget=BS3TextFieldWidget(),
-            description=_('资源限额，额度填写方式 $集群名,$资源组名,$命名空间,$资源类型,$限制类型,$限制值，<br>其中$集群名可为all,dev，<br>$资源组名可为all,public，<br>$命名空间包含all,jupyter,pipeline,service,automl,aihub，<br>$资源类型包含cpu,memory,gpu，<br>$限制类型包含single,concurrent')
-        ),
+        )
     }
     edit_form_extra_fields = add_form_extra_fields
 
@@ -386,8 +381,9 @@ class MyappSecurityManager(SecurityManager):
         # if 'token' in request.headers:
         #     token = request.headers['token']
         if authorization_value:
-            # username 免认证
-            if len(authorization_value) < 40:
+            from myapp import conf
+            # username 免认证，设计到多平台调用时打开
+            if len(authorization_value) < 40: # 任务模板请求后端api调用  and conf.get('AUTH_PLATFORM_ACCESS',False):
                 username = authorization_value
                 if username:
                     user = self.find_user(username)
@@ -395,7 +391,6 @@ class MyappSecurityManager(SecurityManager):
                     return user
             else:  # token 认证
                 encoded_jwt = authorization_value.encode('utf-8')
-                from myapp import conf
                 payload = jwt.decode(encoded_jwt, conf.get('JWT_PASSWORD','cube-studio'), algorithms=['HS256'])
                 # if payload['iat'] > time.time():
                 #     return

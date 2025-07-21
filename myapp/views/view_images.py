@@ -62,19 +62,22 @@ class Repository_ModelView_Base():
             default='harbor.oa.com/cube-studio/',
             choices=[['harbor.oa.com/cube-studio/','harbor.oa.com/cube-studio/'],['ccr.ccs.tencentyun.com/cube-studio/','ccr.ccs.tencentyun.com/cube-studio/'],['registry.docker-cn.com','registry.docker-cn.com']],
             # description= _("镜像仓库地址")
-            description= _("镜像仓库地址，示例：")+conf.get('REPOSITORY_ORG','')
+            description= _("镜像仓库地址，示例：")+conf.get('REPOSITORY_ORG',''),
+            validators=[DataRequired(),Regexp('^[a-zA-Z0-9\-._:@\/]*$')]
         ),
         "user": StringField(
             _('用户名'),
             default='',
             widget=BS3TextFieldWidget(),
-            description= _("镜像仓库的用户名")
+            description= _("镜像仓库的用户名"),
+            validators=[DataRequired()]
         ),
         "password": StringField(
             _('密码'),
             default='',
             widget=BS3TextFieldWidget(),
-            description= _("镜像仓库的链接密码")
+            description= _("镜像仓库的链接密码"),
+            validators=[DataRequired()]
         )
     }
 
@@ -86,7 +89,8 @@ class Repository_ModelView_Base():
             _('名称'),
             default=g.user.username + "-",
             widget=BS3TextFieldWidget(),
-            description= _("仓库名称")
+            description= _("仓库名称"),
+            validators=[DataRequired()]
         )
 
         self.add_form_extra_fields['hubsecret'] = StringField(
@@ -181,12 +185,14 @@ class Images_ModelView_Base():
             description= _('镜像名称全称，例如ubuntu:20.04'),
             default='',
             widget=BS3TextFieldWidget(),
+            validators=[DataRequired(),Regexp('^[a-zA-Z0-9\-._:@\/]*$')]
         ),
         "entrypoint": StringField(
             _('启动命令'),
             description= _('镜像的入口命令，直接写成单行字符串，例如python xx.py，无需添加[]'),
             default='',
             widget=BS3TextFieldWidget(),
+            validators=[Regexp('^[\x00-\x7F]*$')]
         )
     }
 

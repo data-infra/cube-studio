@@ -90,8 +90,7 @@ appbuilder.add_api(ETL_Task_ModelView_Api)
 class ETL_Pipeline_Filter(MyappFilter):
     # @pysnooper.snoop()
     def apply(self, query, func):
-        user_roles = [role.name.lower() for role in list(self.get_user_roles())]
-        if "admin" in user_roles:
+        if g.user.is_admin():
             return query
 
         join_projects_id = security_manager.get_join_projects_id(db.session)
@@ -168,8 +167,7 @@ class ETL_Pipeline_ModelView_Base():
 
     # 检测是否具有编辑权限，只有creator和admin可以编辑
     def check_edit_permission(self, item):
-        user_roles = [role.name.lower() for role in list(get_user_roles())]
-        if "admin" in user_roles:
+        if g.user.is_admin():
             return True
         if g.user and g.user.username and hasattr(item, 'created_by'):
             if g.user.username == item.created_by.username:
@@ -399,8 +397,7 @@ class ETL_Pipeline_ModelView_Base():
                 response.status_code = 404
                 return response
 
-            user_roles = [role.name.lower() for role in g.user.roles]
-            if "admin" in user_roles:
+            if g.user.is_admin():
                 return user_fun(*args, **kwargs)
 
             join_projects_id = security_manager.get_join_projects_id(db.session)

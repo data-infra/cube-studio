@@ -300,7 +300,7 @@ class Dataset_ModelView_base():
                 if os.path.exists(local_path):
                     new_paths.append(path)
                 else:
-                    flash(path+"，文件不存在，保存时以去除", "error")
+                    flash(path+"，文件不存在，保存时已去除", "error")
             item.path = '\n'.join(new_paths)
 
 
@@ -335,8 +335,8 @@ class Dataset_ModelView_base():
         filename = request.form['filename']
         partition = request.form.get('partition', '')
 
-        print(request.form)
-        print(request.files)
+        # print(request.form)
+        # print(request.files)
         file = request.files['file']
         file_data = file.stream.read()
         data_dir = f'/data/k8s/kubeflow/dataset/{dataset.name}/{dataset.version}'

@@ -7,12 +7,13 @@ from myapp.models.model_team import Project, Project_User
 from wtforms import SelectField, StringField
 from myapp.utils import core
 from myapp import appbuilder, conf
+from markupsafe import Markup
 from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from flask_appbuilder.fieldwidgets import Select2Widget, BS3TextFieldWidget
 from myapp.exceptions import MyappException
 from myapp import db, security_manager
 from myapp.forms import MyBS3TextFieldWidget, MyBS3TextAreaFieldWidget, MySelect2Widget
-from wtforms.validators import DataRequired, Regexp, Length
+from wtforms.validators import DataRequired, Regexp, Length, regexp
 from flask import (
     flash,
     g
@@ -282,9 +283,26 @@ appbuilder.add_api(Project_ModelView_job_template_Api)
 class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
     route_base = '/project_modelview/org/api'
     datamodel = SQLAInterface(Project)
+    base_permissions = ['can_add', 'can_edit', 'can_delete', 'can_list', 'can_show']
+    base_order = ('id', 'desc')
+    order_columns = ['id']
+    cols_width = {
+        "name": {"type": "ellip1", "width": 100},
+        "describe": {"type": "ellip1", "width": 150},
+        "user": {"type": "ellip2", "width": 700},
+        "project_user":{"type": "ellip2", "width": 700},
+        "type": {"type": "ellip1", "width": 100},
+    }
+    add_columns = ['name', 'describe', 'expand']
+    search_columns=["name"]
+    edit_columns = add_columns
     project_type = 'org'
     base_filters = [["id", Project_Filter, project_type]]
-    list_columns = ['name', 'project_user', 'type']
+    spec_label_columns = {
+        "cluster_name": _('集群'),
+        "org":_("资源组")
+    }
+    list_columns = ['name', 'project_user','cluster_name','org']
     related_views = [Project_User_ModelView_Api, ]
     label_title = _('项目分组')
     edit_form_extra_fields = {
@@ -296,7 +314,7 @@ class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
         ),
         'expand': StringField(
             _('扩展'),
-            description= _('扩展参数。示例参数：<br>"cluster": "dev"<br>"org": "public"<br>"volume_mount": "kubeflow-user-workspace(pvc):/mnt/;/data/k8s/../group1(hostpath):/mnt1"<br>"SERVICE_EXTERNAL_IP":"xx.内网.xx.xx|xx.公网.xx.xx"'),
+            description= _('扩展参数。示例参数：<br>"cluster": "dev"<br>"org": "public"<br>"volume_mount": "kubeflow-user-workspace(pvc):/mnt/;/data/k8s/../group1(hostpath):/group1"<br>"SERVICE_EXTERNAL_IP":"xx.内网.xx.xx|xx.公网.xx.xx"'),
             widget=MyBS3TextAreaFieldWidget(),
             default=json.dumps({"cluster": "dev", "org" : "public"}, indent=4, ensure_ascii=False),
         )
@@ -316,21 +334,22 @@ class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
             'volume_mount': StringField(
                 label= _('挂载'),
                 default='kubeflow-user-workspace(pvc):/mnt/',
-                description= _('使用该项目组的所有任务会自动添加的挂载目录，kubeflow-user-workspace(pvc):/mnt/,/data/k8s/../group1(hostpath):/mnt1,nfs-test(storage):/nfs'),
+                description= _('<span style="word-break: break-all;">使用该项目组新增的所有pod会自动添加该挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2,$storage_name(storage):/$container_path3 <br>注意pvc会自动挂载对应目录下的个人username子目录。示例：<br>kubeflow-user-workspace(pvc):/mnt/,/data/k8s/kubeflow/group1(hostpath):/group1,nfs-test(storage):/nfs</span>'),
                 widget=BS3TextFieldWidget(),
-                validators=[]
+                validators=[Regexp('^[\x00-\x7F]*$')]
             ),
             'SERVICE_EXTERNAL_IP': StringField(
                 label = _('服务代理ip'),
                 default='',
                 description = _("服务的代理ip，xx.内网.xx.xx|xx.公网.xx.xx"),
                 widget=BS3TextFieldWidget(),
-                validators=[]
+                validators=[Regexp('^[0-9\.:]*$')]
             ),
-            "org": StringField(
+            "org": SelectField(
                 label = _('资源组'),
-                widget = BS3TextFieldWidget(),
+                widget = MySelect2Widget(can_input=True),
                 default='public',
+                choices=[[x, x] for x in ['public']],
                 description = _('使用该项目组的所有任务部署到的目的资源组，通过机器label org=xx决定'),
                 validators=[DataRequired()]
             )

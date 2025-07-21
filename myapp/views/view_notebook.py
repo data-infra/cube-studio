@@ -1,4 +1,5 @@
 import os
+import re
 
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
@@ -135,8 +136,9 @@ class Notebook_ModelView_Base():
         self.add_form_extra_fields['volume_mount'] = StringField(
             _('挂载'),
             default=notebook.project.volume_mount if notebook else '',
-            description= _('外部挂载，格式:$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2,4G(memory):/dev/shm,注意pvc会自动挂载对应目录下的个人username子目录'),
-            widget=BS3TextFieldWidget()
+            description= _('外部挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2<br>注意pvc会自动挂载对应目录下的个人username子目录') if g.user.is_admin() else _('外部挂载，格式: $ip/$path(nfs):/nfs，逗号分隔多个挂载'),
+            widget=BS3TextFieldWidget(),
+            validators=[Regexp('^[\x00-\x7F]*$')]
         )
         self.add_form_extra_fields['working_dir'] = StringField(
             _('工作目录'),
@@ -147,23 +149,23 @@ class Notebook_ModelView_Base():
         self.add_form_extra_fields['resource_memory'] = StringField(
             _('内存'),
             default=Notebook.resource_memory.default.arg,
-            description= _('内存的资源使用限制，示例：1G，20G'),
+            description= _('内存的资源使用配置，示例：1G，20G'),
             widget=BS3TextFieldWidget(),
             validators=[DataRequired(), Regexp("^.*G$")]
         )
         self.add_form_extra_fields['resource_cpu'] = StringField(
             _('cpu'),
             default=Notebook.resource_cpu.default.arg,
-            description= _('cpu的资源使用限制(单位：核)，示例：2'), widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
+            description= _('cpu的资源使用配置(单位：核)，示例：2'), widget=BS3TextFieldWidget(),
+            validators=[DataRequired(),Regexp("^[0-9]*$")]
         )
 
         self.add_form_extra_fields['resource_gpu'] = StringField(
             _('gpu'),
             default='0',
-            description= _('申请的gpu卡数目，示例:2，每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)，<span style="color:red;">虚拟化占用和共享模式占用仅企业版支持</span>'),
+            description= _('申请的gpu卡数目，示例:2，每个容器独占整卡。-1为共享占用方式，小数(0.1)为vgpu方式，申请具体的卡型号，可以类似 1(V100)'),
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
+            validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')]
         )
 
         columns = ['name', 'describe', 'images', 'resource_memory', 'resource_cpu', 'resource_gpu']
@@ -269,7 +271,6 @@ class Notebook_ModelView_Base():
     pre_add_web = set_column
 
     @expose('/entry/jupyter', methods=['GET', 'DELETE'])
-    # @pysnooper.snoop()
     def entry_jupyter(self):
         data=request.args
         project_name=data.get('project_name','public')
@@ -293,6 +294,12 @@ class Notebook_ModelView_Base():
         file_path = template_str(file_path)
         if f'/mnt/{g.user.username}' in file_path:
             file_path = file_path.replace(f'/mnt/{g.user.username}','')
+        # 如果是打不开的文本文件，就自动变为目录
+        file_name = file_path.split('/')[-1]
+        text_file_extensions = {'.txt', '.csv', '.json', '.xml', '.py', '.html', '.css', '.js', '.md'}
+        if '.' in file_name:
+            if file_name.strip('.')[0] not in text_file_extensions:
+                file_path = file_path.replace(file_name,'')
 
         images = data.get('images',f'{conf.get("REPOSITORY_ORG","ccr.ccs.tencentyun.com/cube-studio/")}notebook:jupyter-ubuntu22.04')
         project = db.session.query(Project).filter(Project.name==project_name).filter(Project.type=='org').first()

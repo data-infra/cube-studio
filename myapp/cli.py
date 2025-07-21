@@ -165,8 +165,6 @@ def init():
                     job_template.volume_mount = job_template_volume
                     job_template.accounts = job_template_account
                     job_template_expand['source'] = "github"
-                    if 'help_url' in job_template_expand:
-                        job_template_expand['help_url']=job_template_expand['help_url'] if re.match(r'^http',job_template_expand['help_url']) else (conf.get('GIT_URL', '').strip('/') + job_template_expand['help_url'])
                     job_template.expand = json.dumps(job_template_expand, indent=4, ensure_ascii=False) if job_template_expand else '{}'
                     job_template.created_by_fk = 1
                     job_template.changed_by_fk = 1
@@ -579,7 +577,7 @@ def init():
         if service is None and project:
             try:
                 service = InferenceService()
-                service.name = service_name
+                service.name = service_name.replace('_', '-')
                 service.label = service_describe
                 service.service_type = service_type
                 service.model_name = model_name
@@ -603,9 +601,6 @@ def init():
                 service.volume_mount = volume_mount
                 service.metrics = metrics
                 service.health = health
-                if "help_url" in expand:
-                    help_url = expand['help_url']
-                    expand["help_url"] = help_url if bool(re.match(r'^http', help_url)) else (conf.get('GIT_URL', '').strip('/') + help_url)
                 service.expand = json.dumps(expand, indent=4, ensure_ascii=False)
 
                 from myapp.views.view_inferenceserving import InferenceService_ModelView_base
