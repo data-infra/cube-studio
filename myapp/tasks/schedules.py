@@ -241,24 +241,24 @@ def delete_debug_docker(task):
         with session_scope(nullpool=True) as dbsession:
             try:
                 inferenceservices = dbsession.query(InferenceService).all()
-                for inferenceservic in inferenceservices:
+                for inferenceservice in inferenceservices:
                     try:
-                        name = 'debug-'+inferenceservic.name
+                        name = 'debug-'+inferenceservice.name
                         k8s_client.delete_deployment(namespace=namespace, name=name)
                         k8s_client.delete_configmap(namespace=namespace, name=name)
                         k8s_client.delete_service(namespace=namespace, name=name)
                         k8s_client.delete_istio_ingress(namespace=namespace, name=name)
-                        if inferenceservic.model_status=='debug':
-                            inferenceservic.model_status='offline'
+                        if inferenceservice.model_status=='debug':
+                            inferenceservice.model_status='offline'
                             dbsession.commit()
 
-                        name = 'test-' + inferenceservic.name
+                        name = 'test-' + inferenceservice.name
                         k8s_client.delete_deployment(namespace=namespace, name=name)
                         k8s_client.delete_configmap(namespace=namespace, name=name)
                         k8s_client.delete_service(namespace=namespace, name=name)
                         k8s_client.delete_istio_ingress(namespace=namespace, name=name)
-                        if inferenceservic.model_status == 'test':
-                            inferenceservic.model_status = 'offline'
+                        if inferenceservice.model_status == 'test':
+                            inferenceservice.model_status = 'offline'
                             dbsession.commit()
 
                     except Exception as e1:
@@ -270,33 +270,7 @@ def delete_debug_docker(task):
 
     push_message(conf.get('ADMIN_USER', '').split(','), 'debug pod 清理完毕')
 
-    # 删除 notebook 容器
-    logging.info('begin delete jupyter')
-    namespace = conf.get('NOTEBOOK_NAMESPACE','jupyter')
-    for cluster_name in clusters:
-        cluster = clusters[cluster_name]
-        k8s_client = K8s(cluster.get('KUBECONFIG',''))
-        pods = k8s_client.get_pods(namespace=namespace,labels={'pod-type':"jupyter"})
-        for pod in pods:
-            try:
-                k8s_client.v1.delete_namespaced_pod(pod['name'], namespace,grace_period_seconds=0)
-            except Exception as e:
-                logging.error(e)
-                logging.error('Traceback: %s', traceback.format_exc())
-            try:
-                k8s_client.v1.delete_namespaced_service(pod['name'], namespace, grace_period_seconds=0)
-            except Exception as e:
-                logging.error(e)
-                logging.error('Traceback: %s', traceback.format_exc())
-            try:
-                object_info = conf.get("CRD_INFO", {}).get('virtualservice', {})
-                k8s_client.delete_crd(group=object_info['group'], version=object_info['version'],plural=object_info['plural'], namespace=namespace,name=pod['name'])
-
-            except Exception as e:
-                logging.error(e)
-                logging.error('Traceback: %s', traceback.format_exc())
-
-    push_message(conf.get('ADMIN_USER', 'admin').split(','), 'jupter pod 清理完毕')
+    
 
     # 删除调试镜像的pod 和commit pod
     namespace = conf.get('NOTEBOOK_NAMESPACE','jupyter')
