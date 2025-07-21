@@ -1,4 +1,4 @@
-# docker buildx build --platform linux/amd64,linux/arm64 -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:base-python3.9-20250601 -f install/docker/Dockerfile-base . --push
+# docker buildx build --platform linux/amd64,linux/arm64 -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:base-python3.9-20250701 -f install/docker/Dockerfile-base . --push
 FROM ubuntu:22.04
 
 ENV TZ=Asia/Shanghai
@@ -42,6 +42,21 @@ COPY install/docker/requirements.txt /requirements.txt
 RUN pip install --upgrade setuptools pip && \
     pip install --ignore-installed -r /requirements.txt && \
     rm -rf /root/.cache/pip
+
+
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+    wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl && \
+    chmod +x kubectl && \
+    cp kubectl /usr/bin/ && \
+    mv kubectl /usr/local/bin/; \
+fi
+
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+    wget -O kubectl https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl-arm64 && \
+    chmod +x kubectl && \
+    cp kubectl /usr/bin/ && \
+    mv kubectl /usr/local/bin/; \
+fi
 
 WORKDIR /home/myapp
 
