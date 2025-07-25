@@ -29,6 +29,7 @@ class K8s():
             config.kube_config.load_kube_config(config_file=kubeconfig)
         else:
             config.load_incluster_config()
+        self.kubeconfig = file_path
         self.v1 = client.CoreV1Api()
         self.AppsV1Api = client.AppsV1Api()
         self.NetworkingV1Api = client.NetworkingV1Api()
@@ -156,9 +157,24 @@ class K8s():
         back_pods = []
         try:
             all_pods = []
-            # 如果只有命名空间
+            # 如果只有命名空间，这个查询就慢一点，所以使用缓存
             if (namespace and not service_name and not pod_name and not labels):
-                all_pods = self.v1.list_namespaced_pod(namespace=namespace).items or []
+                from myapp import cache
+                from myapp.tasks.async_task import get_k8s_resource
+                all_pods = cache.get(f'all_pods_{namespace}')
+                if not all_pods:
+                    all_pods = self.v1.list_namespaced_pod(namespace=namespace).items or []
+                    cache.set(f'all_pods_{namespace}', all_pods)
+                else:
+                    kwargs = {
+                        "kubeconfig": self.kubeconfig,
+                        "namespace": namespace,
+                        "ops_type": "pods"
+                    }
+                    get_k8s_resource.apply_async(kwargs=kwargs)
+
+
+
             # 如果有命名空间和pod名，就直接查询pod
             elif (namespace and pod_name):
                 pod = self.v1.read_namespaced_pod(name=pod_name, namespace=namespace,_request_timeout=5)
@@ -289,9 +305,23 @@ class K8s():
 
     # @pysnooper.snoop()
     def get_all_node_allocated_resources(self):
+        from myapp import cache
+        from myapp.tasks.async_task import get_k8s_resource
+
         nodes_resource = {}
         try:
-            pods = self.v1.list_pod_for_all_namespaces(watch=False).items or []
+            # 从缓存中读取一遍
+            pods = cache.get('all_pods')
+            if not pods:
+                pods = self.v1.list_pod_for_all_namespaces(watch=False).items or []
+                cache.set('all_pods',pods)
+            else:
+                kwargs = {
+                    "kubeconfig": self.kubeconfig,
+                    "namespace":"",
+                    "ops_type":"pods"
+                }
+                get_k8s_resource.apply_async(kwargs=kwargs)
 
             for pod in pods:
                 # 如果没有占用资源，这里就不计算
@@ -327,7 +357,7 @@ class K8s():
                 # print(node_resource)
                 node_resource['used_memory'] = int(node_resource['used_memory'])
                 node_resource['used_cpu'] = int(node_resource['used_cpu'])
-                node_resource['used_gpu'] = round(node_resource['used_gpu'], 1)
+                node_resource['used_gpu'] = round(float(node_resource['used_gpu']), 1)
 
         except Exception as e:
             logging.error('Traceback: %s', traceback.format_exc())
@@ -352,8 +382,23 @@ class K8s():
     # @pysnooper.snoop()
     def get_node(self, label=None, name=None, ip=None):
         try:
+            from myapp import cache
+            from myapp.tasks.async_task import get_k8s_resource
+
             back_nodes = []
-            all_node = self.v1.list_node(label_selector=label).items or []
+            all_node = cache.get('all_nodes')
+            if not all_node:
+                all_node = self.v1.list_node(label_selector=label).items or []
+                cache.set('all_nodes', all_node)
+            else:
+                kwargs = {
+                    "kubeconfig": self.kubeconfig,
+                    "namespace": "",
+                    "ops_type": "nodes",
+                    "label_selector":label,
+                }
+                get_k8s_resource.apply_async(kwargs=kwargs)
+
             # print(all_node)
             for node in all_node:
                 try:
@@ -840,6 +885,25 @@ class K8s():
                             {
                                 "name": volumn_name,
                                 "mountPath": mount
+                            }
+                        )
+
+                    if "(nfs)" in volume:
+                        ip_path = volume.replace('(nfs)', '').replace(' ', '')
+                        ip = ip_path.split('/')[0]
+                        path = ip_path.replace(ip,'')
+                        volumn_name = path.replace('_', '-').replace('/', '-').replace('.', '-').lower()[-60:].strip('-')
+                        k8s_volumes.append({
+                            "name": volumn_name,
+                            "nfs": {
+                                "server": ip,
+                                "path": path
+                            }
+                        })
+                        k8s_volume_mounts.append(
+                            {
+                                "name": volumn_name,
+                                "mountPath": mount,
                             }
                         )
 
@@ -2127,7 +2191,195 @@ class K8s():
             pass
         return {}
 
-        pass
+    # 创建命名空间
+    def create_namespace(self,name):
+        try:
+            # 定义命名空间对象
+            namespace = client.V1Namespace(
+                metadata=client.V1ObjectMeta(name=name)
+            )
+            # 创建命名空间
+            self.v1.create_namespace(body=namespace)
+            print(f"Namespace '{name}' created successfully.")
+        except client.exceptions.ApiException as e:
+            if e.status == 409:
+                print(f"Namespace '{name}' already exists.")
+            else:
+                print(f"Exception when creating namespace: {e}")
+
+    # 创建命名空间
+    def create_workspace_pv_pvc(self, namespace):
+
+        workspace_pv_json = {
+            "apiVersion": "v1",
+            "kind": "PersistentVolume",
+            "metadata": {
+                "name": f"{namespace}-kubeflow-user-workspace",
+                "labels": {
+                    f"{namespace}-pvname": f"{namespace}-kubeflow-user-workspace"
+                }
+            },
+            "spec": {
+                "capacity": {
+                    "storage": "500Gi"
+                },
+                "accessModes": [
+                    "ReadWriteMany"
+                ],
+                "hostPath": {
+                    "path": "/data/k8s/kubeflow/pipeline/workspace"
+                },
+                "persistentVolumeReclaimPolicy": "Retain",
+                "storageClassName": ""
+            }
+        }
+        workspace_pvc_json = {
+            "kind": "PersistentVolumeClaim",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": f"kubeflow-user-workspace",
+                "namespace": namespace
+            },
+            "spec": {
+                "accessModes": [
+                    "ReadWriteMany"
+                ],
+                "resources": {
+                    "requests": {
+                        "storage": "500Gi"
+                    }
+                },
+                "storageClassName": "",
+                "volumeName": f"{namespace}-kubeflow-user-workspace"
+            }
+        }
+
+        # 创建pv
+        try:
+            self.v1.create_persistent_volume(body=workspace_pv_json)
+        except:
+            pass
+        # 创建pv
+        try:
+            self.v1.create_namespaced_persistent_volume_claim(namespace=namespace, body=workspace_pvc_json)
+        except:
+            pass
+
+
+    # 删除空间下的账号
+    def delete_namespace_sa_rbac(self, name, namespace):
+        # 删除sa，rbac
+        try:
+            self.rbacvi.delete_namespaced_role_binding(namespace=namespace,name=name)
+        except Exception as e:
+            print(e)
+        try:
+            self.rbacvi.delete_namespaced_role(namespace=namespace,name=name)
+        except Exception as e:
+            print(e)
+        try:
+            self.v1.delete_namespaced_service_account(namespace=namespace,name=name)
+        except Exception as e:
+            print(e)
+
+
+    # 创建nni
+    def create_namespace_sa_rbac(self,name,namespace,apiGroups,resources,verbs):
+        # 创建 nni账号
+        # 创建automl空间的 nni 账号和权限
+        sa_json = {
+            "apiVersion": "v1",
+            "kind": "ServiceAccount",
+            "metadata": {
+                "name": name,
+                "namespace": namespace
+            }
+        }
+        role_json = {
+            "kind": "Role",
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "metadata": {
+                "name": name,
+                "namespace": namespace
+            },
+            "rules": [
+                {
+                    "apiGroups": apiGroups,
+                    "resources": resources,
+                    "verbs": verbs
+                }
+            ]
+        }
+        sa_role_json = {
+            "kind": "RoleBinding",
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "metadata": {
+                "name": name,
+                "namespace": namespace
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": name,
+                    "namespace": namespace
+                }
+            ],
+            "roleRef": {
+                "kind": "Role",
+                "name": name,
+                "apiGroup": "rbac.authorization.k8s.io"
+            }
+        }
+        try:
+            self.v1.create_namespaced_service_account(namespace=namespace, body=sa_json)
+        except:
+            pass
+        try:
+            self.rbacvi.create_namespaced_role(namespace=namespace, body=role_json)
+        except:
+            pass
+        try:
+            self.rbacvi.create_namespaced_role_binding(namespace=namespace, body=sa_role_json)
+        except Exception as e:
+            print(e)
+
+    # 获取节点的使用量指标，但是没有gpu相关的
+    # @pysnooper.snoop()
+    def get_metric(self):
+        from kubernetes.client import ApiClient
+        import urllib3
+
+        # 禁用SSL警告（如果是自签名证书）
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+        # 创建API客户端
+        api_client = ApiClient()
+
+        try:
+            # 获取节点metrics（添加verify_ssl=False如果使用自签名证书）
+            response = api_client.call_api(
+                '/apis/metrics.k8s.io/v1beta1/nodes',
+                'GET',
+                auth_settings=['BearerToken'],
+                _preload_content=False,
+                _return_http_data_only=True,
+            )
+
+            # 解析响应数据
+            data = json.loads(response.data)
+            for node in data['items']:
+                print(f"Node: {node['metadata']['name']}")
+                print(f"CPU Usage: {node['usage']['cpu']}")
+                print(f"Memory Usage: {node['usage']['memory']}")
+                print("------")
+
+        except Exception as e:
+            print(f"Error fetching metrics: {str(e)}")
+            # 检查metrics-server是否安装
+            print("请确保已安装metrics-server，可通过以下命令检查:")
+            print("kubectl get deployment metrics-server -n kube-system")
+
+
 class K8SStreamThread(threading.Thread):
 
     def __init__(self, ws, container_stream):

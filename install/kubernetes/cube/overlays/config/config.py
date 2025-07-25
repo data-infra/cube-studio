@@ -494,6 +494,14 @@ class CeleryConfig(object):
             'max_retries': 0,
             "reject_on_worker_lost": False
         },
+        # 异步查询k8s资源
+        'task.get_k8s_resource': {
+            'rate_limit': '1/s',
+            'soft_time_limit': 300,
+            "expires": 300,
+            'max_retries': 0,
+            "reject_on_worker_lost": False
+        },
         # 上传workflow信息
         'task.upload_workflow': {
             'rate_limit': '10/s',
@@ -890,7 +898,7 @@ CLUSTERS={
     "dev":{
         "NAME":"dev",
         "KUBECONFIG":'/home/myapp/kubeconfig/dev-kubeconfig',
-        # "SERVICE_DOMAIN": 'service.local.com',
+        "SERVICE_DOMAIN": 'service.local.com',
     }
 }
 

@@ -7,7 +7,7 @@ from myapp import app, conf
 from myapp.utils.py.py_k8s import K8s, K8SStreamThread
 from flask import g, flash, request, render_template, send_from_directory, send_file, make_response, Markup, jsonify, redirect
 import datetime, time
-from myapp import app, appbuilder, db, event_logger
+from myapp import app, appbuilder, db, event_logger,cache
 from .base import BaseMyappView
 from flask_appbuilder import CompactCRUDMixin, expose
 
@@ -176,11 +176,11 @@ class K8s_View(BaseMyappView):
             else:
                 kubeconfig = None
 
-            k8s = K8s(kubeconfig)
-            pods = k8s.get_pods(namespace=namespace, pod_name=pod_name)
+            k8s_client = K8s(kubeconfig)
+            pods = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
             if pods:
                 pod = pods[0]
-                pod['events'] = k8s.get_pod_event(namespace=namespace, pod_name=pod_name)
+                pod['events'] = k8s_client.get_pod_event(namespace=namespace, pod_name=pod_name)
                 return jsonify({
                     "status": 0,
                     "message": "",
@@ -199,25 +199,24 @@ class K8s_View(BaseMyappView):
             response.status_code = 500
             return response
 
-    terminating_pods = {
-        "time": None,
-        "data": {}
-    }
-
     # 返回获取terminating不掉的pod的信息
     @expose("/read/pod/terminating")
+    @expose("/read/pod/terminating/<namespace>")
     # @pysnooper.snoop()
     def read_terminating_pod(self, namespace='service'):
         try:
-            if not self.terminating_pods['time'] or (datetime.datetime.now() - self.terminating_pods['time']).total_seconds()>200:
+            terminating_pods = cache.get('terminating_pods')
+            if not terminating_pods:
+                terminating_pods={}
+
                 clusters = conf.get('CLUSTERS', {})
                 for cluster_name in clusters:
                     try:
-                        self.terminating_pods['data'][cluster_name] = {}  # 重置，重新查询
+                        terminating_pods[cluster_name] = {}  # 重置，重新查询
                         cluster = clusters[cluster_name]
                         k8s_client = K8s(cluster.get('KUBECONFIG', ''))
 
-                        events = [item.to_dict() for item in k8s_client.v1.list_namespaced_event(namespace=namespace).items]  # ,field_selector=f'source.host={ip}'
+                        events = [item.to_dict() for item in k8s_client.v1.list_namespaced_event(namespace=namespace,field_selector="type=Warning").items]  # ,field_selector=f'source.host={ip}'
                         # pod_names = [pod.metadata.name for pod in k8s_client.v1.list_namespaced_pod(namespace='service').items]
                         pods = k8s_client.get_pods(namespace=namespace)
                         pods_dict = {}
@@ -234,19 +233,19 @@ class K8s_View(BaseMyappView):
                                 # print(json.dumps(event,indent=4, ensure_ascii=False, default=str))
                                 pod_name = event.get('involved_object', {}).get('name', '')
                                 if pod_name in pod_names:
-                                    self.terminating_pods['data'][cluster_name][pod_name] = {
+                                    terminating_pods[cluster_name][pod_name] = {
                                         "namespace": namespace,
                                         "host": host,
-                                        "host"
                                         "begin": event['time'],
                                         "username": pods_dict.get(pod_name, {}).get("username", ''),
                                         "label": pods_dict.get(pod_name, {}).get("label", '')
                                     }
                     except Exception as e:
                         print(e)
-                self.terminating_pods['time'] = datetime.datetime.now()
 
-            return jsonify(self.terminating_pods['data'])
+                cache.set('terminating_pods', terminating_pods,timeout=300)
+
+            return jsonify(terminating_pods)
 
         except Exception as e:
             print(e)
@@ -294,8 +293,8 @@ class K8s_View(BaseMyappView):
         print(pod_url)
         kubeconfig = all_clusters[cluster_name].get('KUBECONFIG', '')
 
-        k8s = K8s(kubeconfig)
-        pod = k8s.get_pods(namespace=namespace, pod_name=pod_name)
+        k8s_client = K8s(kubeconfig)
+        pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
         if pod:
             pod = pod[0]
             if pod['status']=='Running' or pod['status']=='Succeeded':
@@ -304,7 +303,7 @@ class K8s_View(BaseMyappView):
             #     # 获取错误码
             #     flash('当前pod状态：%s' % pod['status'], category='warning')
             else:
-                events = k8s.get_pod_event(namespace=namespace, pod_name=pod_name)
+                events = k8s_client.get_pod_event(namespace=namespace, pod_name=pod_name)
                 if events:
                     event = events[-1]  # 获取最后一个
                     message = event.get('message','')

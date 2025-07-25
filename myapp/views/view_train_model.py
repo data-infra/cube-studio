@@ -56,7 +56,7 @@ class Training_Model_ModelView_Base():
     base_permissions = ['can_add', 'can_edit', 'can_delete', 'can_list', 'can_show']
     base_order = ('changed_on', 'desc')
     order_columns = ['id']
-    list_columns = ['project_url', 'name', 'version', 'model_metric', 'framework', 'api_type', 'pipeline_url',
+    list_columns = ['project', 'name', 'version', 'model_metric', 'framework', 'api_type', 'pipeline_url',
                     'creator', 'modified', 'deploy']
     fixed_columns = ['deploy']
     search_columns = ['created_by', 'project', 'name', 'version', 'framework', 'api_type', 'pipeline_id', 'run_id',
@@ -71,6 +71,7 @@ class Training_Model_ModelView_Base():
     edit_form_query_rel_fields = add_form_query_rel_fields
     cols_width = {
         "name": {"type": "ellip2", "width": 200},
+        "project": {"type": "ellip2", "width": 120},
         "project_url": {"type": "ellip2", "width": 200},
         "pipeline_url": {"type": "ellip2", "width": 300},
         "version": {"type": "ellip2", "width": 200},
@@ -166,6 +167,11 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
     #         ]
     #     )
     import pysnooper
+
+    def pre_add_web(self, item=None):
+        self.default_filter = {
+            "created_by": g.user.id
+        }
 
     # @pysnooper.snoop(watch_explode=('item'))
     def pre_add(self, item):

@@ -59,6 +59,7 @@ class Docker_ModelView_Base():
     edit_columns = add_columns
     search_columns = ['created_by', 'project']
     list_columns = ['project', 'describe', 'consecutive_build', 'image_history', 'debug']
+    fixed_columns = ['debug']
     cols_width = {
         "project": {"type": "ellip2", "width": 150},
         "describe": {"type": "ellip2", "width": 200},
@@ -80,9 +81,9 @@ class Docker_ModelView_Base():
             # 'volume_mount': StringField(
             #     label= _('挂载'),
             #     default='kubeflow-user-workspace(pvc):/mnt/',
-            #     description= _('构建镜像时添加的挂载'),
+            #     description= _('外部挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2<br>注意pvc会自动挂载对应目录下的个人username子目录'),
             #     widget=BS3TextFieldWidget(),
-            #     validators=[]
+            #     validators=[Regexp('^[\x00-\x7F]*$')]
             # ),
             'resource_memory': StringField(
                 label= _('内存'),
@@ -157,6 +158,7 @@ class Docker_ModelView_Base():
             "created_by": g.user.id
         }
 
+
     pre_update_web = pre_add_web
 
     def pre_add(self, item):
@@ -172,6 +174,8 @@ class Docker_ModelView_Base():
         # if image_org not in item.target_image or item.target_image==image_org:
         #     flash('目标镜像名称不符合规范','warning')
 
+        if not item.namespace:
+            item.namespace = item.project.notebook_namespace
         if item.expand:
             expand = json.loads(item.expand)
             expand['namespace'] = json.loads(item.project.expand).get('NOTEBOOK_NAMESPACE', conf.get('NOTEBOOK_NAMESPACE','jupyter'))
@@ -197,9 +201,10 @@ class Docker_ModelView_Base():
     # @pysnooper.snoop()
     def debug(self, docker_id):
         docker = db.session.query(Docker).filter_by(id=docker_id).first()
+
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(docker.project.cluster.get('KUBECONFIG', ''))
-        namespace = json.loads(docker.expand).get("namespace", conf.get('NOTEBOOK_NAMESPACE','jupyter'))
+        namespace = docker.project.notebook_namespace
         pod_name = "docker-%s-%s" % (docker.created_by.username, str(docker.id))
         pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
         if pod:
@@ -221,7 +226,8 @@ class Docker_ModelView_Base():
             image_pull_secrets = conf.get('HUBSECRET', [])
             user_repositorys = db.session.query(Repository).filter(Repository.created_by_fk == g.user.id).all()
             image_pull_secrets = list(set(image_pull_secrets + [rep.hubsecret for rep in user_repositorys]))
-
+            docker.namespace = namespace
+            db.session.commit()
             k8s_client.create_debug_pod(namespace,
                                         name=pod_name,
                                         command=command,
@@ -279,7 +285,7 @@ class Docker_ModelView_Base():
         if not cluster:
             cluster = docker.project.cluster['NAME']
         k8s_client = K8s(conf.get('CLUSTERS').get(cluster).get('KUBECONFIG', ''))
-        namespace = json.loads(docker.expand).get("namespace", conf.get('NOTEBOOK_NAMESPACE','jupyter'))
+        namespace = docker.namespace
         pod_name = "docker-%s-%s" % (docker.created_by.username, str(docker.id))
         k8s_client.delete_pods(namespace=namespace, pod_name=pod_name)
         pod_name = "docker-commit-%s-%s" % (docker.created_by.username, str(docker.id))
@@ -297,7 +303,7 @@ class Docker_ModelView_Base():
         docker = db.session.query(Docker).filter_by(id=docker_id).first()
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(docker.project.cluster.get('KUBECONFIG', ''))
-        namespace = json.loads(docker.expand).get("namespace", conf.get('NOTEBOOK_NAMESPACE','jupyter'))
+        namespace = docker.namespace
         pod_name = "docker-%s-%s" % (docker.created_by.username, str(docker.id))
         pod = None
         try:

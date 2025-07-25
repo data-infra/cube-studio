@@ -373,9 +373,23 @@ class Task_ModelView_Base():
         # 修改失败，直接换为原来的
         if item.volume_mount and ':' not in item.volume_mount:
             item.volume_mount = self.src_item_json.get('volume_mount', '')
-        # 规范文本内容
+
         if item.volume_mount:
-            item.volume_mount = ','.join([x.strip() for x in item.volume_mount.split(',') if x.strip()])
+            if conf.get('ENABLE_USER_VOLUME',False) and not g.user.is_admin():
+                volume_mounts_temp = re.split(',|;', item.volume_mount)
+                volume_mount_arr=[]
+                for volume_mount in volume_mounts_temp:
+                    match = re.search(r'\((.*?)\)', volume_mount)
+                    if match:
+                        volume_type = match.group(1)
+                        re_str = conf.get('ENABLE_USER_VOLUME_CONFIG', {}).get(volume_type, '')
+                        if re_str:
+                            if re.match(re_str, volume_mount):
+                                volume_mount_arr.append(volume_mount)
+
+                item.volume_mount = ','.join(volume_mount_arr).strip(',')
+            # 合并项目组的挂载
+            item.volume_mount = ','.join(list(set((item.volume_mount+","+item.project.volume_mount).strip().split(','))))
 
         if item.outputs:
             core.validate_json(item.outputs)
@@ -535,7 +549,9 @@ class Task_ModelView_Base():
         image_pull_secrets = list(set([task.job_template.images.repository.hubsecret]+image_pull_secrets + [rep.hubsecret for rep in user_repositorys]))
         if image_pull_secrets:
             task_env += 'HUBSECRET='+ ','.join(image_pull_secrets) + "\n"
-        print(resource_gpu)
+        # print(resource_gpu)
+        task.namespace=namespace
+        db.session.commit()
         k8s_client.create_debug_pod(namespace,
                                     name=pod_name,
                                     labels={"pipeline": task.pipeline.name, 'task': task.name, 'user': g.user.username, 'run-id': run_id, 'pod-type': "task"},
@@ -555,7 +571,8 @@ class Task_ModelView_Base():
                                     hostAliases=hostAliases,
                                     env=task_env,
                                     privileged=task.job_template.privileged,
-                                    accounts=task.job_template.accounts, username=task.pipeline.created_by.username,
+                                    accounts=task.job_template.accounts,
+                                    username=task.pipeline.created_by.username, # 人员离职需要可以
                                     hostPort=[hostPort+1,hostPort+2] if HostNetwork else []
                                     )
 
@@ -563,6 +580,13 @@ class Task_ModelView_Base():
     @expose("/debug/<task_id>", methods=["GET", "POST"])
     def debug(self, task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
+
+        # 只有管理员和创建者可以debug
+        if task.pipeline.created_by_fk!=g.user.id and not g.user.is_admin():
+            # 模板创建者可以调试模板
+            message = __('仅管理员或创建者，可debug该任务')
+            flash(message, 'warning')
+            return self.response(400, **{"status": 1, "result": {}, "message": message})
 
         # 逻辑节点不能进行调试
         if task.job_template.name == conf.get('LOGICAL_JOB'):
@@ -581,17 +605,23 @@ class Task_ModelView_Base():
 
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(task.pipeline.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('PIPELINE_NAMESPACE','pipeline')
+        new_namespace = task.pipeline.project.pipeline_namespace
+        old_namespace = task.namespace
+
         pod_name = "debug-" + task.pipeline.name.replace('_', '-') + "-" + task.name.replace('_', '-')
         pod_name = pod_name.lower()[:60].strip('-')
-        pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
+
+        if old_namespace!=new_namespace:
+            k8s_client.delete_pods(namespace=old_namespace, pod_name=pod_name)
+
+        pod = k8s_client.get_pods(namespace=new_namespace, pod_name=pod_name)
         # print(pod)
         if pod:
             pod = pod[0]
         # 有历史非运行态，直接删除
         # if pod and (pod['status']!='Running' and pod['status']!='Pending'):
         if pod and pod['status'] == 'Succeeded':
-            k8s_client.delete_pods(namespace=namespace, pod_name=pod_name)
+            k8s_client.delete_pods(namespace=new_namespace, pod_name=pod_name)
             time.sleep(2)
             pod = None
         # 没有历史或者没有运行态，直接创建
@@ -622,7 +652,7 @@ class Task_ModelView_Base():
                     task=task,
                     k8s_client=k8s_client,
                     run_id=run_id,
-                    namespace=namespace,
+                    namespace=new_namespace,
                     pod_name=pod_name,
                     image=image,
                     working_dir=working_dir,
@@ -636,7 +666,7 @@ class Task_ModelView_Base():
         try_num = 30
         message = __('启动时间过长，一分钟后刷新此页面')
         while (try_num > 0):
-            pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
+            pod = k8s_client.get_pods(namespace=new_namespace, pod_name=pod_name)
             # print(pod)
             if pod:
                 pod = pod[0]
@@ -645,7 +675,7 @@ class Task_ModelView_Base():
                 if pod['status'] == 'Running':
                     break
                 else:
-                    events = k8s_client.get_pod_event(namespace=namespace, pod_name=pod_name)
+                    events = k8s_client.get_pod_event(namespace=new_namespace, pod_name=pod_name)
                     # try:
                     #     message = '启动时间过长，一分钟后刷新此页面'+", status:"+pod['status']+", message:"+json.dumps(pod['status_more']['conditions'],indent=4,ensure_ascii=False)
                     # except Exception as e:
@@ -665,12 +695,19 @@ class Task_ModelView_Base():
             flash(message, 'warning')
             return self.response(400, **{"status": 1, "result": {}, "message": message})
 
-        return redirect("/k8s/web/debug/%s/%s/%s/%s" % (task.pipeline.project.cluster['NAME'], namespace, pod_name, pod_name))
+        return redirect("/k8s/web/debug/%s/%s/%s/%s" % (task.pipeline.project.cluster['NAME'], new_namespace, pod_name, pod_name))
 
     @expose("/run/<task_id>", methods=["GET", "POST"])
     # @pysnooper.snoop(watch_explode=('ops_args',))
     def run_task(self, task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
+
+        # 只有管理员和创建者可以debug
+        if task.pipeline.created_by_fk!=g.user.id and not g.user.is_admin():
+            # 模板创建者可以调试模板
+            message = __('仅管理员或创建者，可运行该任务')
+            flash(message, 'warning')
+            return self.response(400, **{"status": 1, "result": {}, "message": message})
 
         # 逻辑节点和python节点不能进行单任务运行
         if task.job_template.name == conf.get('LOGICAL_JOB'):
@@ -690,10 +727,11 @@ class Task_ModelView_Base():
 
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(task.pipeline.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('PIPELINE_NAMESPACE','pipeline')
+        new_namespace = task.pipeline.project.pipeline_namespace
+        old_namespace = task.namespace
         pod_name = "run-" + task.pipeline.name.replace('_', '-') + "-" + task.name.replace('_', '-')
         pod_name = pod_name.lower()[:60].strip('-')
-        pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
+        pod = k8s_client.get_pods(namespace=old_namespace, pod_name=pod_name)
         # print(pod)
         if pod:
             pod = pod[0]
@@ -701,13 +739,13 @@ class Task_ModelView_Base():
         if pod:
             run_id = pod['labels'].get("run-id", '')
             if run_id:
-                k8s_client.delete_workflow(all_crd_info=conf.get('CRD_INFO', {}), namespace=namespace, run_id=run_id)
+                k8s_client.delete_workflow(all_crd_info=conf.get('CRD_INFO', {}), namespace=old_namespace, run_id=run_id)
 
-            k8s_client.delete_pods(namespace=namespace, pod_name=pod_name)
+            k8s_client.delete_pods(namespace=old_namespace, pod_name=pod_name)
             delete_time = datetime.datetime.now()
             while pod:
                 time.sleep(2)
-                pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
+                pod = k8s_client.get_pods(namespace=old_namespace, pod_name=pod_name)
                 check_date = datetime.datetime.now()
                 if (check_date - delete_time).total_seconds() > 60:
                     message = __("超时，请稍后重试")
@@ -765,7 +803,7 @@ class Task_ModelView_Base():
                     task=task,
                     k8s_client=k8s_client,
                     run_id=run_id,
-                    namespace=namespace,
+                    namespace=new_namespace,
                     pod_name=pod_name,
                     image=json.loads(task.args).get('images',task.job_template.images.name),
                     working_dir=json.loads(task.args).get('workdir',task.job_template.workdir),
@@ -780,7 +818,7 @@ class Task_ModelView_Base():
 
         try_num = 5
         while (try_num > 0):
-            pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
+            pod = k8s_client.get_pods(namespace=new_namespace, pod_name=pod_name)
             # print(pod)
             if pod:
                 break
@@ -791,12 +829,12 @@ class Task_ModelView_Base():
             flash(message, 'warning')
             return self.response(400, **{"status": 1, "result": {}, "message": message})
 
-        return redirect("/k8s/web/log/%s/%s/%s" % (task.pipeline.project.cluster['NAME'], namespace, pod_name))
+        return redirect("/k8s/web/log/%s/%s/%s" % (task.pipeline.project.cluster['NAME'], new_namespace, pod_name))
 
     def delete_task_run(self, task):
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(task.pipeline.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('PIPELINE_NAMESPACE','pipeline')
+        namespace = task.namespace
         # 删除运行时容器
         pod_name = "run-" + task.pipeline.name.replace('_', '-') + "-" + task.name.replace('_', '-')
         pod_name = pod_name.lower()[:60].strip('-')
@@ -833,6 +871,14 @@ class Task_ModelView_Base():
     @expose("/clear/<task_id>", methods=["GET", "POST"])
     def clear_task(self, task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
+
+        # 只有管理员和创建者可以debug
+        if task.pipeline.created_by_fk!=g.user.id and not g.user.is_admin():
+            # 模板创建者可以调试模板
+            message = __('仅管理员或创建者，可清理该任务')
+            flash(message, 'warning')
+            return self.response(400, **{"status": 1, "result": {}, "message": message})
+
         self.delete_task_run(task)
         # flash(__("删除完成"), category='success')
         # self.update_redirect()
@@ -842,11 +888,11 @@ class Task_ModelView_Base():
     def log_task(self, task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
         from myapp.utils.py.py_k8s import K8s
-        k8s = K8s(task.pipeline.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('PIPELINE_NAMESPACE','pipeline')
+        k8s_client = K8s(task.pipeline.project.cluster.get('KUBECONFIG', ''))
+        namespace = task.namespace
         running_pod_name = "run-" + task.pipeline.name.replace('_', '-') + "-" + task.name.replace('_', '-')
         pod_name = running_pod_name.lower()[:60].strip('-')
-        pod = k8s.get_pods(namespace=namespace, pod_name=pod_name)
+        pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
         if pod:
             pod = pod[0]
             return redirect("/k8s/web/log/%s/%s/%s" % (task.pipeline.project.cluster['NAME'], namespace, pod_name))

@@ -23,7 +23,7 @@ from .base import (
     MyappFilter,
     MyappModelView,
 )
-
+from myapp import security_manager
 conf = app.config
 
 
@@ -119,8 +119,7 @@ class Repository_ModelView_Base():
         for kubeconfig in all_kubeconfig:
             try:
                 k8s = K8s(kubeconfig)
-                namespaces = conf.get('HUBSECRET_NAMESPACE',[])
-                for namespace in namespaces:
+                for namespace in security_manager.get_all_namespace(db.session):
                     try:
                         server = repo.server[:repo.server.index('/')] if '/' in repo.server else repo.server
                         # print(server)

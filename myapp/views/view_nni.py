@@ -427,11 +427,13 @@ class NNI_ModelView_Base():
             pass
 
         k8s_client = K8s(nni.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('AUTOML_NAMESPACE', 'automl')
+        namespace = nni.project.automl_namespace
 
         nnijob_json = self.make_nnijob(k8s_client,namespace,nni)
-        print(nnijob_json)
+        # print(nnijob_json)
         try:
+            nni.namespace=namespace
+            db.session.commit()
             k8s_client.v1.create_namespaced_pod(namespace=namespace,body=nnijob_json)
         except Exception as e:
             print(e)
@@ -512,7 +514,7 @@ class NNI_ModelView_Base():
             }
         }
         crd_info = conf.get('CRD_INFO')['virtualservice']
-        k8s_client.delete_istio_ingress(namespace=namespace, name=nni.name)
+        k8s_client.delete_istio_ingress(namespace=nni.namespace, name=nni.name)
 
         k8s_client.create_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],namespace=namespace, body=vs_json)
 
@@ -549,6 +551,7 @@ class NNI_ModelView_Base():
     # @pysnooper.snoop()
     def run(self, nni_id):
         nni = db.session.query(NNI).filter(NNI.id == nni_id).first()
+        namespace = nni.project.automl_namespace
 
         import yaml
         search_yaml = yaml.dump(json.loads(nni.parameters), allow_unicode=True).replace('\n','\n  ')
@@ -600,7 +603,6 @@ trainingService:
         # command = ['bash', '-c','nnictl create --config /mnt/%s/nni/%s/controll_template.yaml -p 8888 --foreground' % (nni.created_by.username, nni.name)]
 
         self.deploy_nni_service(nni)
-        namespace = conf.get('AUTOML_NAMESPACE', 'automl')
         # 记录部署行为
         expand = json.loads(nni.expand) if nni.expand else {}
         expand['status']='online'
@@ -643,9 +645,9 @@ trainingService:
     def log_task(self, nni_id):
         nni = db.session.query(NNI).filter_by(id=nni_id).first()
         from myapp.utils.py.py_k8s import K8s
-        k8s = K8s(nni.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('AUTOML_NAMESPACE','automl')
-        pod = k8s.get_pods(namespace=namespace, pod_name=nni.name+"-master-0")
+        k8s_client = K8s(nni.project.cluster.get('KUBECONFIG', ''))
+        namespace = nni.namespace
+        pod = k8s_client.get_pods(namespace=namespace, pod_name=nni.name+"-master-0")
         if pod:
             return redirect("/k8s/web/log/%s/%s/%s/nnijob" % (nni.project.cluster['NAME'], namespace, nni.name+"-master-0"))
 
@@ -657,7 +659,7 @@ trainingService:
         nni = db.session.query(NNI).filter_by(id=nni_id).first()
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(nni.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('AUTOML_NAMESPACE','automl')
+        namespace = nni.namespace
         try:
             # time.sleep(2)
             k8s_client.NetworkingV1Api.delete_namespaced_network_policy(namespace=namespace,name=nni.name)
@@ -673,7 +675,7 @@ trainingService:
     # @pysnooper.snoop()
     def pre_delete(self,nni,cluster=None):
         # 删除pod
-        namespace = conf.get('AUTOML_NAMESPACE', 'automl')
+        namespace = nni.namespace
         if not cluster:
             cluster = nni.project.cluster['NAME']
         k8s_client = K8s(conf.get('CLUSTERS').get(cluster).get('KUBECONFIG', ''))
@@ -710,6 +712,9 @@ trainingService:
 
     # @pysnooper.snoop()
     def pre_add(self, item):
+
+        if not item.namespace:
+            item.namespace = item.project.notebook_namespace
 
         if item.job_type is None:
             item.job_type = 'Job'

@@ -434,12 +434,12 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
         }
 
         # 修改的时候管理员可以在上面添加一些特殊的挂载配置，适应一些特殊情况
-        if g.user.is_admin():
-            self.edit_columns = self.columns+['volume_mount']
-            self.add_columns = self.columns+['volume_mount']  # 添加的时候没有挂载配置，使用项目中的挂载配置
-        else:
+        if not conf.get('ENABLE_USER_VOLUME',False) and not g.user.is_admin():
             self.edit_columns = self.columns
             self.add_columns = self.columns
+        else:
+            self.add_columns = self.columns + ['volume_mount']
+            self.edit_columns = self.columns + ['volume_mount']
 
     pre_update_web=pre_add_web
 
@@ -721,7 +721,7 @@ output %s
                 item.command = download_command + './onnxruntime_server --log_level info --model_path  %s' % model_path
 
         # if not item.name:
-        item.name = item.model_name + "-" + model_version
+        item.name = item.model_name.replace('/','-').replace(':','-').replace('.','-').strip('-') + "-" + model_version
 
         if len(item.name)>60:
             item.name = item.name[:60]
@@ -729,6 +729,8 @@ output %s
 
     # @pysnooper.snoop()
     def pre_add(self, item):
+        if not item.namespace:
+            item.namespace = item.project.notebook_namespace
         if not item.expand:
             item.expand= '{}'
         if item.sidecar:
@@ -739,6 +741,23 @@ output %s
             item.model_path = ''
         if not item.volume_mount:
             item.volume_mount = item.project.volume_mount
+        else:
+            if conf.get('ENABLE_USER_VOLUME',False) and not g.user.is_admin():
+                volume_mounts_temp = re.split(',|;', item.volume_mount)
+                volume_mount_arr=[]
+                for volume_mount in volume_mounts_temp:
+                    match = re.search(r'\((.*?)\)', volume_mount)
+                    if match:
+                        volume_type = match.group(1)
+                        re_str = conf.get('ENABLE_USER_VOLUME_CONFIG', {}).get(volume_type, '')
+                        if re_str:
+                            if re.match(re_str, volume_mount):
+                                volume_mount_arr.append(volume_mount)
+
+                item.volume_mount = ','.join(volume_mount_arr).strip(',')
+            # 合并项目组的挂载
+            item.volume_mount = ','.join(list(set((item.volume_mount+","+item.project.volume_mount).strip().split(','))))
+
 
         self.use_expand(item)
         item.resource_gpu = item.resource_gpu.upper() if item.resource_gpu else '0'
@@ -756,12 +775,11 @@ output %s
             pass
 
 
-    def delete_old_service(self, service_name, cluster):
+    def delete_old_service(self, service_name, cluster, namespaces):
         try:
             from myapp.utils.py.py_k8s import K8s
             k8s_client = K8s(cluster.get('KUBECONFIG', ''))
-            service_namespace = conf.get('SERVICE_NAMESPACE','service')
-            for namespace in [service_namespace, ]:
+            for namespace in [namespaces, ]:
                 for name in [service_name, 'debug-' + service_name, 'test-' + service_name]:
                     service_external_name = (name + "-external").lower()[:60].strip('-')
                     k8s_client.delete_deployment(namespace=namespace, name=name)
@@ -787,33 +805,40 @@ output %s
             flash(__("发现模型服务变更，启动清理服务")+'%s:%s'%(self.src_item_json.get('model_name',''),self.src_item_json.get('model_version','')),'success')
 
 
-        src_project_id = self.src_item_json.get('project_id', 0)
-        if src_project_id and src_project_id != item.project.id:
-            try:
+        if self.src_item_json:
+            # 如果项目组变了，就删除之前的
+            if str(self.src_item_json.get('project_id', '0')) != str(item.project.id):
                 from myapp.models.model_team import Project
-                src_project = db.session.query(Project).filter_by(id=int(src_project_id)).first()
-                if src_project and src_project.cluster['NAME'] != item.project.cluster['NAME']:
-                    # 如果集群变了，原有集群的已经部署的服务要clear掉
-                    service_name = self.src_item_json.get('name', '')
-                    if service_name:
-                        self.delete_old_service(service_name,src_project.cluster)
+                old_project = db.session.query(Project).filter_by(id=int(self.src_item_json.get('project_id', '0'))).first()
+                if old_project and old_project.cluster['NAME'] != item.project.cluster['NAME']:
+                    cluster = conf.get('CLUSTERS').get(old_project.cluster['NAME'])
+                    self.delete_old_service(service_name=self.src_item_json.get('name', ''), cluster=cluster, namespaces=item.namespace)
+                    flash(__('发现集群更换，启动清理服务'), 'success')
 
                 # 域名后缀如果不一样也要变了
-                if src_project and src_project.cluster['SERVICE_DOMAIN'] != item.project.cluster['SERVICE_DOMAIN']:
-                    item.host=item.host.replace(src_project.cluster['SERVICE_DOMAIN'],item.project.cluster['SERVICE_DOMAIN'])
-            except Exception as e:
-                print(e)
+                if old_project and old_project.cluster['SERVICE_DOMAIN'] != item.project.cluster['SERVICE_DOMAIN']:
+                    item.host = item.host.replace(old_project.cluster['SERVICE_DOMAIN'], item.project.cluster['SERVICE_DOMAIN'])
+
+            # 如果模型版本和模型名称变了，需要把之前的服务删除掉
+            elif self.src_item_json.get('name', '') and item.name != self.src_item_json.get('name', ''):
+                self.delete_old_service(service_name=self.src_item_json.get('name', ''), cluster=item.project.cluster, namespaces=item.namespace)
+                flash(__("发现模型服务变更，启动清理服务") + '%s:%s' % (self.src_item_json.get('model_name', ''), self.src_item_json.get('model_version', '')), 'success')
+
+        # 如果命名空间变了也要清理掉
+        if item.namespace != item.project.service_namespace:
+            flash('切换项目组命名空间改变，注意部署前先清理推理服务', 'info')
 
     # 事后无法读取到project属性
     def pre_delete(self, item):
-        self.delete_old_service(item.name, item.project.cluster)
+        self.delete_old_service(service_name=item.name, cluster=item.project.cluster,namespaces=item.namespace)
+
         flash(__('服务清理完成'), category='success')
 
     @expose('/clear/<service_id>', methods=['POST', "GET"])
     def clear(self, service_id):
         service = db.session.query(InferenceService).filter_by(id=service_id).first()
         if service:
-            self.delete_old_service(service.name, service.project.cluster)
+            self.delete_old_service(service_name=service.name, cluster=service.project.cluster, namespaces=service.namespace)
             service.model_status = 'offline'
             if not service.deploy_history:
                 service.deploy_history=''
@@ -841,7 +866,7 @@ output %s
     # @pysnooper.snoop(watch_explode=('deploy'))
     def update_service(self):
         args = request.get_json(silent=True) if request.get_json(silent=True) else {}
-        namespace = conf.get('SERVICE_NAMESPACE', 'service')
+
         args.update(request.args)
         service_id = int(args.get('service_id', 0))
         service_name = args.get('service_name', '')
@@ -867,6 +892,7 @@ output %s
                     .order_by(InferenceService.id.desc()).first()
 
         if service:
+            namespace = service.project.service_namespace
             status = 0
             message = 'success'
             if request.method == 'POST':
@@ -923,7 +949,7 @@ output %s
                 return redirect(conf.get('MODEL_URLS',{}).get('inferenceservice','/frontend/service/inferenceservice/inferenceservice_manager'))
 
 
-        namespace = conf.get('SERVICE_NAMESPACE', 'service')
+        namespace = service.project.service_namespace
 
         name = service.name
         command = service.command
@@ -933,7 +959,6 @@ output %s
             name = env + '-' + service.name
             command = 'sleep 43200'
             deployment_replicas = 1
-            # namespace=pre_namespace
 
         if env == 'test':
             name = env + '-' + service.name
@@ -994,8 +1019,8 @@ output %s
         if env == 'test' or env == 'debug':
             try:
                 # print('delete deployment')
-                k8s_client.delete_deployment(namespace=namespace, name=name)
-                k8s_client.delete_statefulset(namespace=namespace, name=name)
+                k8s_client.delete_deployment(namespace=service.namespace, name=name)
+                k8s_client.delete_statefulset(namespace=service.namespace, name=name)
             except Exception as e:
                 print(e)
         # 因为所有的服务流量通过ingress实现，所以没有isito的envoy代理
@@ -1027,6 +1052,8 @@ output %s
             pod_annotations = {
                 'project': service.project.name
             }
+            service.namespace=namespace
+            db.session.commit()
             k8s_client.create_deployment(
                 namespace=namespace,
                 name=name,
@@ -1286,154 +1313,6 @@ output %s
         except Exception as e:
             raise e
         return redirect(request.referrer)
-
-    # @pysnooper.snoop()
-    def echart_option(self, filters=None):
-        # print(filters)
-        global global_all_service_load
-        if not global_all_service_load:
-            global_all_service_load['check_time'] = None
-
-        option=global_all_service_load['data']
-        if not global_all_service_load['check_time'] or (datetime.datetime.now() - global_all_service_load['check_time']).total_seconds()>3600:
-            all_services = db.session.query(InferenceService).filter_by(model_status='online').all()
-
-            from myapp.utils.py.py_prometheus import Prometheus
-            prometheus = Prometheus(conf.get('PROMETHEUS', ''))
-            # prometheus = Prometheus('10.101.142.16:8081')
-            all_services_load = prometheus.get_istio_service_metric(namespace='service')
-            services_metrics = []
-            legend=['qps','cpu','memory','gpu']
-            today_time = int(datetime.datetime.strptime(datetime.datetime.now().strftime("%Y-%m-%d"),"%Y-%m-%d").timestamp())
-            time_during = 5 * 60
-            end_point = min(int(datetime.datetime.now().timestamp() - today_time)//time_during, 60*60*24//time_during)
-            start_point = max(end_point - 60, 0)
-
-            # @pysnooper.snoop()
-            def add_metric_data(metric, metric_name, service_name):
-                if metric_name == 'qps':
-                    metric = [[date_value[0], int(float(date_value[1]))] for date_value in metric if datetime.datetime.now().timestamp() > date_value[0] > today_time]
-                if metric_name == 'memory':
-                    metric = [[date_value[0], round(float(date_value[1]) / 1024 / 1024 / 1024, 2)] for date_value in metric if datetime.datetime.now().timestamp() > date_value[0] > today_time]
-                if metric_name == 'cpu' or metric_name == 'gpu':
-                    metric = [[date_value[0], round(float(date_value[1]), 2)] for date_value in metric if datetime.datetime.now().timestamp() > date_value[0] > today_time]
-
-                if metric:
-                    # 将时间戳转化为时间段分箱，按分钟分箱
-
-                    metric_binning = [[0] for x in range(60 * 60 * 24 // time_during)]  # 每5分钟一个分箱
-                    for date_value in metric:
-                        timestamp, value = date_value[0], date_value[1]
-                        metric_binning[(timestamp - today_time) // time_during].append(value)
-                    metric_binning = [int(sum(x) / len(x)) for x in metric_binning]
-
-                    # metric_binning = [[datetime.datetime.fromtimestamp(today_time+time_during*i+time_during).strftime('%Y-%m-%dT%H:%M:%S.000Z'),metric_binning[i]] for i in range(len(metric_binning)) if i<=end_point]
-                    metric_binning = [[(today_time+time_during*i+time_during)*1000,metric_binning[i]] for i in range(len(metric_binning)) if i<=end_point]
-
-                    services_metrics.append(
-                        {
-                            "name": service_name,
-                            "type": 'line',
-                            "smooth": True,
-                            "showSymbol": False,
-                            "data": metric_binning
-                        }
-                    )
-
-            for service in all_services:
-                # qps_metric = all_services_load['qps'].get(service.name,[])
-                # add_metric_data(qps_metric, 'qps',service.name)
-                #
-                # servie_pod_metrics = []
-                # for pod_name in all_services_load['memory']:
-                #     if service.name in pod_name:
-                #         pod_metric = all_services_load['memory'][pod_name]
-                #         servie_pod_metrics = servie_pod_metrics + pod_metric
-                # add_metric_data(servie_pod_metrics, 'memory', service.name)
-                #
-                # servie_pod_metrics = []
-                # for pod_name in all_services_load['cpu']:
-                #     if service.name in pod_name:
-                #         pod_metric = all_services_load['cpu'][pod_name]
-                #         servie_pod_metrics = servie_pod_metrics + pod_metric
-                # add_metric_data(servie_pod_metrics, 'cpu',service.name)
-
-                servie_pod_metrics = []
-                for pod_name in all_services_load['gpu']:
-                    if service.name in pod_name:
-                        pod_metric = all_services_load['gpu'][pod_name]
-                        servie_pod_metrics = servie_pod_metrics + pod_metric
-                add_metric_data(servie_pod_metrics, 'gpu', service.created_by.username + ":" + service.label)
-
-            # dataZoom: [
-            #     {
-            #         start: {{start_point}},
-            #         end: {{end_point}}
-            #     }
-            # ],
-            option = '''
-            {
-              "title": {
-                "text": 'GPU monitor'
-              },
-              "tooltip": {
-                "trigger": 'axis',
-                 "position": [10, 10]
-              },
-        
-              "legend": {
-                "data": {{ legend }}
-              },
-               
-              "grid": {
-                "left": '3%',
-                "right": '4%',
-                "bottom": '3%',
-                "containLabel": true
-              },
-              "xAxis": {
-                "type": "time",
-                "min": new Date('{{today}}'),
-                "max": new Date('{{tomorrow}}'),
-                "boundaryGap": false,
-                "timezone" : 'Asia/Shanghai', 
-              },
-              "yAxis": {
-                "type": "value",
-                "boundaryGap": false,
-                "axisLine":{       //y轴
-                  "show":false
-                },
-                "axisTick":{       //y轴刻度线
-                  "show":true
-                },
-                "splitLine": {     //网格线
-                  "show": true,
-                  "color": '#f1f2f6'
-                }
-              },
-              "series": {{services_metric}}
-            }
-    
-            '''
-            # print(services_metrics)
-            rtemplate = Environment(loader=BaseLoader, undefined=DebugUndefined).from_string(option)
-            option = rtemplate.render(
-                legend=legend,
-                services_metric=json.dumps(services_metrics, ensure_ascii=False, indent=4),
-                start_point=start_point,
-                end_point=end_point,
-                today=datetime.datetime.now().strftime('%Y/%m/%d'),
-                tomorrow=(datetime.datetime.now() + datetime.timedelta(days=1)).strftime('%Y/%m/%d'),
-            )
-            # global_all_service_load['check_time']=datetime.datetime.now()
-
-        global_all_service_load['data'] = option
-        # print(option)
-        # file = open('myapp/test.txt',mode='w')
-        # file.write(option)
-        # file.close()
-        return option
 
     # 划分数据历史版本
     # @pysnooper.snoop()

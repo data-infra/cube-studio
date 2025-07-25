@@ -148,6 +148,9 @@ axios.interceptors.response.use(
             if (error.response.status === 401) {
                 handleTips.trigger('登录超时，需要重新登录');
                 handleTips.gotoLogin();
+            }
+            if (error.response.status === 502) {
+                handleTips.trigger('网络连接中...');
             } else {
                 handleTips.trigger(errMsg);
             }

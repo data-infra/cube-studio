@@ -15,6 +15,7 @@ from flask_appbuilder.security.views import (
     RoleModelView,
     UserModelView
 )
+from markupsafe import Markup
 from werkzeug.security import generate_password_hash,check_password_hash
 from flask_appbuilder.security.sqla.models import assoc_user_role
 
@@ -896,10 +897,56 @@ class MyappSecurityManager(SecurityManager):
         else:
             return []
 
+    @classmethod
+    def get_all_namespace(self,session):
+        from myapp.models.model_team import Project
+        all_namespaces = []
+        projects = session.query(Project).all()
+        for project in projects:
+            all_namespaces.append(project.notebook_namespace)
+            all_namespaces.append(project.pipeline_namespace)
+            all_namespaces.append(project.service_namespace)
+            all_namespaces.append(project.automl_namespace)
 
+        all_namespaces = list(set(all_namespaces))
+        return all_namespaces
 
+    @classmethod
+    def get_all_notebook_namespace(self,session):
+        from myapp.models.model_team import Project
+        all_namespaces = []
+        projects = session.query(Project).all()
+        for project in projects:
+            all_namespaces.append(project.notebook_namespace)
+        all_namespaces = list(set(all_namespaces))
+        return all_namespaces
 
+    @classmethod
+    def get_all_pipeline_namespace(self,session):
+        from myapp.models.model_team import Project
+        all_namespaces = []
+        projects = session.query(Project).all()
+        for project in projects:
+            all_namespaces.append(project.pipeline_namespace)
+        all_namespaces = list(set(all_namespaces))
+        return all_namespaces
 
+    @classmethod
+    def get_all_service_namespace(self,session):
+        from myapp.models.model_team import Project
+        all_namespaces = []
+        projects = session.query(Project).all()
+        for project in projects:
+            all_namespaces.append(project.service_namespace)
+        all_namespaces = list(set(all_namespaces))
+        return all_namespaces
 
-
-
+    @classmethod
+    def get_all_automl_namespace(self,session):
+        from myapp.models.model_team import Project
+        all_namespaces = []
+        projects = session.query(Project).all()
+        for project in projects:
+            all_namespaces.append(project.automl_namespace)
+        all_namespaces = list(set(all_namespaces))
+        return all_namespaces

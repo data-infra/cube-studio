@@ -1912,7 +1912,7 @@ def split_url(url):
 # @pysnooper.snoop()
 def get_all_resource(cluster='all',namespace='all',exclude_pod=[]):
     from myapp.utils.py.py_k8s import K8s
-    from myapp import conf
+    from myapp import conf,security_manager,db
     if cluster=='all':
         clusters=conf.get('CLUSTERS')
     else:
@@ -1920,7 +1920,7 @@ def get_all_resource(cluster='all',namespace='all',exclude_pod=[]):
             cluster:conf.get('CLUSTERS').get(cluster,{})
         }
     if namespace=='all':
-        namespaces=conf.get('HUBSECRET_NAMESPACE',[])
+        namespaces=security_manager.get_all_namespace(db.session)
     else:
         namespaces=[namespace]
 

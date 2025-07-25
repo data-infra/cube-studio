@@ -116,7 +116,7 @@ class Dataset_ModelView_base():
         "ops_html": {"type": "ellip1", "width": 100},
     }
     features_demo = '''
-填写规则：
+rules：
 {
   "column1": {
     # feature type
@@ -127,7 +127,8 @@ class Dataset_ModelView_base():
 
   }
 }
-示例：
+
+example：
 {
     "id": {
         "_type": "Value",
@@ -148,14 +149,14 @@ class Dataset_ModelView_base():
             description= _('数据集英文名，(小写字母、数字、- 组成)，最长50个字符'),
             default='',
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired(), Regexp("^[a-z][a-z0-9_]*[a-z0-9]$"), ]
+            validators=[DataRequired(), Regexp("^[a-z][a-z0-9_]*[a-z0-9]$")]
         ),
         "version": StringField(
             label= _('版本'),
             description= _('数据集版本'),
             default='latest',
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired(), Regexp("[a-z0-9_\-]*"), ]
+            validators=[DataRequired(), Regexp("[a-z0-9_\-\.]*")]
         ),
         "subdataset": StringField(
             label= _('子数据集'),

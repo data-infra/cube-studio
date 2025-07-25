@@ -2,7 +2,7 @@ import copy
 import math
 from flask import Markup,g
 from jinja2 import Environment, BaseLoader, DebugUndefined
-from myapp import app, appbuilder, db
+from myapp import app, appbuilder, db, cache
 from flask import request
 from .baseFormApi import (
     MyappFormRestApi
@@ -17,31 +17,19 @@ from myapp import security_manager,db
 
 conf = app.config
 
-pipeline_resource_used = {
-    "check_time": None,
-    "data": {}
-}
-node_resource_used = {
-    "check_time": None,
-    "data": {}
-}
-global_cluster_load = {}
-
-
 # 机器学习首页资源弹窗
 # @pysnooper.snoop()
 def node_traffic():
-    if not node_resource_used['check_time'] or node_resource_used['check_time'] < (datetime.datetime.now() - datetime.timedelta(seconds=10)):
-
-        all_node_json = {}
+    all_node_json = cache.get("total_resource_node_traffic_data")
+    all_node_json = all_node_json if all_node_json else {}
+    if not all_node_json:
         clusters = conf.get('CLUSTERS', {})
         for cluster_name in clusters:
             try:
                 cluster = clusters[cluster_name]
                 k8s_client = K8s(cluster.get('KUBECONFIG', ''))
-
                 all_node = k8s_client.get_node()
-                all_node_resource = k8s_client.get_all_node_allocated_resources()
+                all_node_resource = k8s_client.get_all_node_allocated_resources()   # 这个非常耗时间
                 all_node_json[cluster_name] = {}
                 for node in all_node:
                     all_node_json[cluster_name][node['hostip']] = node
@@ -55,10 +43,8 @@ def node_traffic():
             except Exception as e:
                 print(e)
 
-        node_resource_used['data'] = all_node_json
-        node_resource_used['check_time'] = datetime.datetime.now()
+        cache.set("total_resource_node_traffic_data",all_node_json,timeout=10)
 
-    all_node_json = node_resource_used['data']
     # print(all_node_json)
     # 数据格式说明 dict:
     # 'delay': Integer 延时隐藏 单位: 毫秒 0为不隐藏
@@ -74,7 +60,7 @@ def node_traffic():
         td_html % __("集群"), td_html % __("资源组"), td_html % __("机器"), td_html % __("机型"), td_html % __("cpu占用率"), td_html % __("内存占用率"),
         td_html % __("AI加速卡"))
 
-    global global_cluster_load
+    global_cluster_load={}
     for cluster_name in all_node_json:
         global_cluster_load[cluster_name] = {
             "cpu_req": 0,
@@ -137,7 +123,7 @@ def node_traffic():
             gpu_mfrs='gpu'
             gpu_resource = conf.get('GPU_RESOURCE')
             for gpu_mfrs_temp in gpu_resource:
-                gpu_used_temp = round(nodes[ip].get(f'used_{gpu_mfrs_temp}',0), 2)
+                gpu_used_temp = round(float(nodes[ip].get(f'used_{gpu_mfrs_temp}',0)), 2)
                 gpu_total_temp = nodes[ip][gpu_mfrs_temp]
                 if gpu_total_temp>0.01:  # 存在指定卡型资源，就显示指定卡提供应简写
                     gpu_mfrs = gpu_mfrs_temp
@@ -165,6 +151,8 @@ def node_traffic():
             global_cluster_load[cluster_name]['gpu_req'] += round(float(gpu_used), 2)
             global_cluster_load[cluster_name]['gpu_all'] += round(float(gpu_total))
 
+    # 集群整体利用率的数据保持60s才过期
+    cache.set('total_resource_global_cluster_load',global_cluster_load,timeout=60)
     message = Markup('<div style="padding:20px"><table>%s</table></div>' % message)
 
     data = {
@@ -185,64 +173,74 @@ def node_traffic():
 # pipeline每个任务的资源占用情况
 # @pysnooper.snoop()
 def pod_resource():
-    if not pipeline_resource_used['check_time'] or pipeline_resource_used['check_time'] < (datetime.datetime.now() - datetime.timedelta(seconds=10)):
+    all_tasks_json = cache.get("total_resource_pod_resource_data")
+    all_tasks_json = all_tasks_json if all_tasks_json else {}
+
+    if not all_tasks_json:
         clusters = conf.get('CLUSTERS', {})
-        all_tasks_json = {}
         for cluster_name in clusters:
             cluster = clusters[cluster_name]
             try:
-                k8s_client = K8s(cluster.get('KUBECONFIG', ''))
                 # 获取pod的资源占用
                 all_tasks_json[cluster_name] = {}
                 # print(all_node_json)
-                for namespace in ['jupyter', 'pipeline', 'automl', 'service', 'aihub']:
-                    all_tasks_json[cluster_name][namespace] = {}
+                all_namespaces = security_manager.get_all_namespace(db.session)
+                all_namespaces.append('aihub')
+                all_namespaces=list(set(all_namespaces))
+                def get_namespace_task(namespace):
+                    k8s_client = K8s(cluster.get('KUBECONFIG', ''))
+                    result={}
                     all_pods = k8s_client.get_pods(namespace=namespace)
                     for pod in all_pods:
                         org = pod['node_selector'].get("org", 'unknown')
-                        if org not in all_tasks_json[cluster_name][namespace]:
-                            all_tasks_json[cluster_name][namespace][org] = {}
+                        if org not in result:
+                            result[org] = {}
                         if k8s_client.exist_hold_resource(pod):
-                            user = pod['labels'].get('user', pod['labels'].get('username', pod['labels'].get('run-rtx',pod['labels'].get('rtx-user','admin'))))
+                            user = pod['labels'].get('user', pod['labels'].get('username', pod['labels'].get('run-rtx', pod['labels'].get('rtx-user','admin'))))
                             if user:
                                 request_gpu = 0
                                 # 所有ai卡都算入xpu卡中
-                                for gpu_mfrs in list(conf.get('GPU_RESOURCE',{}).keys()):
-                                    request_gpu +=float(pod.get(gpu_mfrs,0))
+                                for gpu_mfrs in list(conf.get('GPU_RESOURCE', {}).keys()):
+                                    request_gpu += float(pod.get(gpu_mfrs, 0))
 
-                                all_tasks_json[cluster_name][namespace][org][pod['name']] = {}
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['username'] = user
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['host_ip'] = pod['host_ip']
+                                result[org][pod['name']] = {}
+                                result[org][pod['name']]['username'] = user
+                                result[org][pod['name']]['host_ip'] = pod['host_ip']
                                 # print(namespace,pod)
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['request_memory'] = pod['memory']
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['request_cpu'] = pod['cpu']
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['request_gpu'] = request_gpu
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['used_memory'] = '0'
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['used_cpu'] = '0'
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['used_gpu'] = '0'
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['label'] = pod['labels']
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['annotations'] = pod['annotations']
+                                result[org][pod['name']]['request_memory'] = pod['memory']
+                                result[org][pod['name']]['request_cpu'] = pod['cpu']
+                                result[org][pod['name']]['request_gpu'] = request_gpu
+                                result[org][pod['name']]['used_memory'] = '0'
+                                result[org][pod['name']]['used_cpu'] = '0'
+                                result[org][pod['name']]['used_gpu'] = '0'
+                                result[org][pod['name']]['label'] = pod['labels']
+                                result[org][pod['name']]['annotations'] = pod['annotations']
 
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['start_time'] = pod['start_time'].strftime('%Y-%m-%d %H:%M:%S')
+                                result[org][pod['name']]['start_time'] = pod['start_time'].strftime('%Y-%m-%d %H:%M:%S')
                                 # print(namespace,org,pod['name'])
 
                     # 获取pod的资源使用
                     all_pods_metrics = k8s_client.get_pod_metrics(namespace=namespace)
                     # print(all_pods_metrics)
                     for pod in all_pods_metrics:
-                        for org in all_tasks_json[cluster_name][namespace]:
-                            if pod['name'] in all_tasks_json[cluster_name][namespace][org]:
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['used_memory'] = pod['memory']
-                                all_tasks_json[cluster_name][namespace][org][pod['name']]['used_cpu'] = pod['cpu']
+                        for org in result:
+                            if pod['name'] in result[org]:
+                                result[org][pod['name']]['used_memory'] = pod['memory']
+                                result[org][pod['name']]['used_cpu'] = pod['cpu']
                                 # print(namespace,org,pod['name'])
                                 break
+                    return result
+
+                for namespace in all_namespaces:
+                    all_tasks_json[cluster_name][namespace] = get_namespace_task(namespace=namespace)
+
                     # print(all_tasks_json)
             except Exception as e:
                 print(e)
-        pipeline_resource_used['data'] = all_tasks_json
-        pipeline_resource_used['check_time'] = datetime.datetime.now()
 
-    all_tasks_json = pipeline_resource_used['data']
+        cache.set("total_resource_pod_resource_data",all_tasks_json,timeout=10)
+
+
     all_pod_resource = []
     for cluster_name in all_tasks_json:
         cluster_config = conf.get('CLUSTERS', {}).get(cluster_name, {})
@@ -278,16 +276,16 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
     order_columns = ["cpu", "memory", "start_time"]
     primary_key = 'pod_info'
     cols_width = {
-        "cluster": {"type": "ellip2", "width": 100},
-        "resource_group": {"type": "ellip2", "width": 100},
+        "cluster": {"type": "ellip2", "width": 80},
+        "resource_group": {"type": "ellip2", "width": 80},
         "project": {"type": "ellip2", "width": 100},
         "namespace": {"type": "ellip2", "width": 100},
-        "node": {"type": "ellip2", "width": 150},
+        "node": {"type": "ellip2", "width": 130},
         "pod": {"type": "ellip2", "width": 300},
         "username": {"type": "ellip2", "width": 100},
-        "cpu": {"type": "ellip2", "width": 100},
-        "memory": {"type": "ellip2", "width": 100},
-        "gpu": {"type": "ellip2", "width": 100},
+        "cpu": {"type": "ellip2", "width": 70},
+        "memory": {"type": "ellip2", "width": 70},
+        "gpu": {"type": "ellip2", "width": 70},
         "start_time":{"type": "ellip2", "width": 200},
     }
     label_columns = {
@@ -301,7 +299,7 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
         "node": _("节点(资源使用)"),
         "cpu": _("cpu"),
         "memory": _("内存"),
-        "gpu": _("AI卡使用"),
+        "gpu": _("AI卡"),
         "start_time":_("创建时间")
     }
     ops_link = [
@@ -343,11 +341,10 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
 
     # @pysnooper.snoop()
     def echart_option(self, filters=None):
-        global global_cluster_load
-
+        global_cluster_load = cache.get('total_resource_global_cluster_load')
         if not global_cluster_load:
-            node_resource_used['check_time'] = None
             node_traffic()
+            global_cluster_load = cache.get('total_resource_global_cluster_load')
 
         from myapp.utils.py.py_prometheus import Prometheus
         prometheus = Prometheus(conf.get('PROMETHEUS', 'prometheus-k8s.monitoring:9090'))
@@ -431,7 +428,8 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
     # @pysnooper.snoop()
     def muldelete(self, items):
         pod_resource()
-        all_task_resource = pipeline_resource_used['data']
+        all_task_resource = cache.get("total_resource_pod_resource_data")
+        all_task_resource = all_task_resource if all_task_resource else {}
         clusters = conf.get('CLUSTERS', {})
         for item in items:
             try:

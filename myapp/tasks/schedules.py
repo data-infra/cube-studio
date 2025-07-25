@@ -31,6 +31,7 @@ from myapp.models.model_notebook import Notebook
 from myapp.models.model_serving import InferenceService
 from myapp.views.view_pipeline import run_pipeline,dag_to_pipeline
 from sqlalchemy import or_
+from myapp import security_manager
 
 class Pusherror(Exception):
     pass
@@ -184,30 +185,30 @@ def delete_notebook(task):
     # 删除jupyter
     logging.info('============= begin run delete_notebook task')
     timeout = int(conf.get('ENABLE_JUPYTER_EXPIRY', conf.get("CRD_INFO", {}).get('notebook', {}).get('timeout',60 * 60 * 24 * 3)))
-    namespace = conf.get('NOTEBOOK_NAMESPACE','jupyter')
     with session_scope(nullpool=True) as dbsession:
         # 删除vscode的pod
         try:
-            alert_time = datetime.datetime.now() - datetime.timedelta(seconds=timeout) + datetime.timedelta(days=1)
-            # notebooks = dbsession.query(Notebook).filter(Notebook.changed_on < alert_time).all()   # 需要删除或者需要通知续期的notebook
+            for namespace in security_manager.get_all_notebook_namespace(dbsession):
+                alert_time = datetime.datetime.now() - datetime.timedelta(seconds=timeout) + datetime.timedelta(days=1)
+                # notebooks = dbsession.query(Notebook).filter(Notebook.changed_on < alert_time).all()   # 需要删除或者需要通知续期的notebook
 
-            # 获取过期的gpu notebook  删除
-            notebooks = dbsession.query(Notebook).filter(Notebook.changed_on < alert_time).filter(Notebook.resource_gpu!='0').all()
-            for notebook in notebooks:
-                if notebook.changed_on < (datetime.datetime.now() - datetime.timedelta(seconds=timeout)):
-                    k8s_client = K8s(notebook.project.cluster.get('KUBECONFIG',''))
-                    vscode_pods = k8s_client.get_pods(namespace=namespace,pod_name=notebook.name)
-                    if vscode_pods:
-                        vscode_pod=vscode_pods[0]
-                        # logging.info(vscode_pod)
-                        k8s_client.delete_pods(namespace=namespace, pod_name=vscode_pod['name'])
-                        user = vscode_pod['labels'].get('user', '')
-                        if user:
-                            pass
-                            push_message([user], __('您的notebook %s已清理释放资源，如果需要可reset后重新使用。') % vscode_pod['name'])
-                else:
-                    message = __('您的notebook %s即将过期，如要继续使用，请尽快续期，每次有效期3天\n') % notebook.name
-                    push_message([notebook.created_by.username], message)
+                # 获取过期的gpu notebook  删除
+                notebooks = dbsession.query(Notebook).filter(Notebook.changed_on < alert_time).filter(Notebook.resource_gpu!='0').all()
+                for notebook in notebooks:
+                    if notebook.changed_on < (datetime.datetime.now() - datetime.timedelta(seconds=timeout)):
+                        k8s_client = K8s(notebook.project.cluster.get('KUBECONFIG',''))
+                        vscode_pods = k8s_client.get_pods(namespace=namespace,pod_name=notebook.name)
+                        if vscode_pods:
+                            vscode_pod=vscode_pods[0]
+                            # logging.info(vscode_pod)
+                            k8s_client.delete_pods(namespace=namespace, pod_name=vscode_pod['name'])
+                            user = vscode_pod['labels'].get('user', '')
+                            if user:
+                                pass
+                                push_message([user], __('您的notebook %s已清理释放资源，如果需要可reset后重新使用。') % vscode_pod['name'])
+                    else:
+                        message = __('您的notebook %s即将过期，如要继续使用，请尽快续期，每次有效期3天\n') % notebook.name
+                        push_message([notebook.created_by.username], message)
 
         except Exception as e:
             logging.error(e)
@@ -218,31 +219,39 @@ def delete_notebook(task):
 def delete_debug_docker(task):
     logging.info('============= begin run delete_debug_docker task')
     clusters = conf.get('CLUSTERS',{})
+    from myapp import security_manager
     # 删除完成的任务
     for cluster_name in clusters:
         cluster = clusters[cluster_name]
-        notebook_namespace = conf.get('NOTEBOOK_NAMESPACE','jupyter')
-        pipeline_namespace = conf.get('PIPELINE_NAMESPACE','pipeline')
-        k8s_client = K8s(cluster.get('KUBECONFIG',''))
-        k8s_client.delete_pods(namespace=notebook_namespace,status='Succeeded')
-        pipeline_pods = k8s_client.get_pods(pipeline_namespace)
-        for pod in pipeline_pods:
-            if pod['name'][0:6]=='debug-' or pod['name'][0:4]=='run-':
-                run_id = pod['labels'].get('run-id', '')
-                if run_id:
-                    k8s_client.delete_workflow(all_crd_info=conf.get("CRD_INFO", {}), namespace=pipeline_namespace,run_id=run_id)
-                    k8s_client.delete_pods(namespace=pipeline_namespace, labels={"run-id": run_id})
+        k8s_client = K8s(cluster.get('KUBECONFIG', ''))
+        with session_scope(nullpool=True) as dbsession:
+            try:
+                for notebook_namespace in security_manager.get_all_notebook_namespace(dbsession):
+                    k8s_client.delete_pods(namespace=notebook_namespace, status='Succeeded')
+                for pipeline_namespace in security_manager.get_all_pipeline_namespace(dbsession):
+                    pipeline_pods = k8s_client.get_pods(pipeline_namespace)
+                    for pod in pipeline_pods:
+                        if pod['name'][0:6]=='debug-' or pod['name'][0:4]=='run-':
+                            run_id = pod['labels'].get('run-id', '')
+                            if run_id:
+                                k8s_client.delete_workflow(all_crd_info=conf.get("CRD_INFO", {}), namespace=pipeline_namespace,run_id=run_id)
+                                k8s_client.delete_pods(namespace=pipeline_namespace, labels={"run-id": run_id})
+            except Exception as e:
+                logging.error(e)
+                logging.error('Traceback: %s', traceback.format_exc())
 
     # 删除debug和test的服务
     for cluster_name in clusters:
         cluster = clusters[cluster_name]
-        namespace = conf.get('SERVICE_NAMESPACE','service')
-        k8s_client = K8s(cluster.get('KUBECONFIG',''))
+        k8s_client = K8s(cluster.get('KUBECONFIG', ''))
+
         with session_scope(nullpool=True) as dbsession:
             try:
                 inferenceservices = dbsession.query(InferenceService).all()
+
                 for inferenceservice in inferenceservices:
                     try:
+                        namespace = inferenceservice.namespace if inferenceservice.namespace else inferenceservice.project.service_namespace
                         name = 'debug-'+inferenceservice.name
                         k8s_client.delete_deployment(namespace=namespace, name=name)
                         k8s_client.delete_configmap(namespace=namespace, name=name)
@@ -268,18 +277,16 @@ def delete_debug_docker(task):
                 logging.error(e)
                 logging.error('Traceback: %s', traceback.format_exc())
 
-    push_message(conf.get('ADMIN_USER', '').split(','), 'debug pod 清理完毕')
-
-    
+    push_message(conf.get('ADMIN_USER', '').split(','), datetime.datetime.now().strftime('%Y-%m-%d')+' debug 的推理服务 pod 清理完毕')
 
     # 删除调试镜像的pod 和commit pod
-    namespace = conf.get('NOTEBOOK_NAMESPACE','jupyter')
     for cluster_name in clusters:
         cluster = clusters[cluster_name]
         k8s_client = K8s(cluster.get('KUBECONFIG',''))
-        k8s_client.delete_pods(namespace=namespace,labels={'pod-type':"docker"})
+        for namespace in security_manager.get_all_notebook_namespace(dbsession):
+            k8s_client.delete_pods(namespace=namespace,labels={'pod-type':"docker"})
 
-    push_message(conf.get('ADMIN_USER', 'admin').split(','), __('docker 调试构建 pod 清理完毕'))
+    push_message(conf.get('ADMIN_USER', 'admin').split(','), datetime.datetime.now().strftime('%Y-%m-%d')+' docker 调试构建 pod 清理完毕')
 
 
 # 推送微信消息
@@ -642,6 +649,35 @@ def delete_old_data(task):
             logging.error(e)
             logging.error('Traceback: %s', traceback.format_exc())
 
+    # 删除过期的log
+    with session_scope(nullpool=True) as dbsession:
+        try:
+            from myapp.models.log import Log
+            logs = dbsession.session.query(Log).filter(Log.dttm<(datetime.datetime.now()-datetime.timedelta(days=360))).all()
+            dbsession.delete(logs)
+            dbsession.commit()
+        except Exception as e:
+            pass
+
+    # 删除过期的workflow
+    with session_scope(nullpool=True) as dbsession:
+        try:
+            from myapp.models.model_job import Workflow
+            workflows = dbsession.session.query(Workflow).filter(Workflow.change_time < (datetime.datetime.now() - datetime.timedelta(days=100)).strftime('%Y-%m-%d %H:%M:%S')).all()
+            dbsession.delete(workflows)
+            dbsession.commit()
+        except Exception as e:
+            pass
+
+    # 删除过期的定时运行记录
+    with session_scope(nullpool=True) as dbsession:
+        try:
+            from myapp.models.model_job import RunHistory
+            runhistorys = dbsession.session.query(RunHistory).filter(RunHistory.created_on < (datetime.datetime.now() - datetime.timedelta(days=360))).all()
+            dbsession.delete(runhistorys)
+            dbsession.commit()
+        except Exception as e:
+            pass
 # 获取训练时长
 # @pysnooper.snoop()
 def get_run_time(workflow):

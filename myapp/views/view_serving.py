@@ -64,6 +64,7 @@ class Service_ModelView_base():
         "host":_("首页路径")
     }
     list_columns = ['project', 'name_url', 'host_url', 'ip', 'deploy', 'creator', 'modified']
+    fixed_columns = ['deploy']
     cols_width = {
         "name_url": {"type": "ellip2", "width": 200},
         "host_url": {"type": "ellip2", "width": 400},
@@ -71,9 +72,8 @@ class Service_ModelView_base():
         "deploy": {"type": "ellip2", "width": 130},
         "modified": {"type": "ellip2", "width": 150}
     }
-    search_columns = ['created_by', 'project', 'name', 'label', 'images', 'resource_memory', 'resource_cpu', 'resource_gpu', 'volume_mount', 'host']
+    search_columns = ['created_by', 'project', 'name', 'label', 'images', 'host']
 
-    edit_columns = ['project', 'name', 'label', 'images', 'working_dir', 'command', 'env', 'resource_memory', 'resource_cpu', 'resource_gpu', 'replicas', 'ports', 'volume_mount' ]
     base_order = ('id', 'desc')
     order_columns = ['id']
     label_title = _('云原生服务')
@@ -120,13 +120,12 @@ class Service_ModelView_base():
         self.add_form_extra_fields['host'] = host_field
 
         # 修改的时候管理员可以在上面添加一些特殊的挂载配置，适应一些特殊情况
-        if g.user.is_admin():
-            self.edit_columns = self.columns+['volume_mount']
-            self.add_columns = self.columns+['volume_mount']  # 添加的时候没有挂载配置，使用项目中的挂载配置
-        else:
+        if not conf.get('ENABLE_USER_VOLUME', False) and not g.user.is_admin():
             self.edit_columns = self.columns
             self.add_columns = self.columns
-
+        else:
+            self.add_columns = self.columns + ['volume_mount']
+            self.edit_columns = self.columns + ['volume_mount']
 
     pre_update_web = set_column
     pre_add_web = set_column
@@ -134,34 +133,60 @@ class Service_ModelView_base():
     def pre_add(self, item):
         if not item.volume_mount:
             item.volume_mount = item.project.volume_mount
+        else:
+            if conf.get('ENABLE_USER_VOLUME',False) and not g.user.is_admin():
+                volume_mounts_temp = re.split(',|;', item.volume_mount)
+                volume_mount_arr=[]
+                for volume_mount in volume_mounts_temp:
+                    match = re.search(r'\((.*?)\)', volume_mount)
+                    if match:
+                        volume_type = match.group(1)
+                        re_str = conf.get('ENABLE_USER_VOLUME_CONFIG', {}).get(volume_type, '')
+                        if re_str:
+                            if re.match(re_str, volume_mount):
+                                volume_mount_arr.append(volume_mount)
+
+                item.volume_mount = ','.join(volume_mount_arr).strip(',')
+            # 合并项目组的挂载
+            item.volume_mount = ','.join(list(set((item.volume_mount+","+item.project.volume_mount).strip().split(','))))
 
         item.resource_gpu = item.resource_gpu.upper() if item.resource_gpu else '0'
 
-    def delete_old_service(self, service_name, cluster):
+    def delete_old_service(self, service_name, cluster, namespace):
         service_external_name = (service_name + "-external").lower()[:60].strip('-')
         from myapp.utils.py.py_k8s import K8s
         k8s = K8s(cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('SERVICE_NAMESPACE','service')
         k8s.delete_deployment(namespace=namespace, name=service_name)
         k8s.delete_service(namespace=namespace, name=service_name)
         k8s.delete_service(namespace=namespace, name=service_external_name)
         k8s.delete_istio_ingress(namespace=namespace, name=service_name)
 
     def pre_update(self, item):
-        # 修改了名称的话，要把之前的删掉
-        if self.src_item_json.get('name', '') != item.name:
-            self.delete_old_service(self.src_item_json.get('name', ''), item.project.cluster)
-            flash(__('检测到修改名称，旧服务已清理完成'), category='warning')
         self.pre_add(item)
 
+        if self.src_item_json:
+            # 如果项目组变了，就删除之前的
+            if str(self.src_item_json.get('project_id', '1')) != str(item.project.id):
+                from myapp.models.model_team import Project
+                old_project = db.session.query(Project).filter_by(id=int(self.src_item_json.get('project_id', '1'))).first()
+                if old_project and old_project.cluster['NAME'] != item.project.cluster['NAME']:
+                    cluster = conf.get('CLUSTERS').get(old_project.cluster['NAME'])
+                    self.delete_old_service(service_name=self.src_item_json.get('name', ''), cluster=cluster, namespace=item.namespace)
+                    flash(__('发现集群更换，启动清理服务'), 'success')
+
+            # 如果模型版本和模型名称变了，需要把之前的服务删除掉
+            elif self.src_item_json.get('name', '') and item.name != self.src_item_json.get('name', ''):
+                self.delete_old_service(service_name=self.src_item_json.get('name', ''), cluster=item.project.cluster, namespace=item.namespace)
+                flash(__('检测到修改名称，旧服务已清理完成'), category='warning')
+
     def pre_delete(self, item):
-        self.delete_old_service(item.name, item.project.cluster)
+        self.delete_old_service(service_name=item.name, cluster=item.project.cluster, namespace=item.namespace)
         flash(__('服务清理完成'), category='success')
 
     @expose('/clear/<service_id>', methods=['POST', "GET"])
     def clear(self, service_id):
         service = db.session.query(Service).filter_by(id=service_id).first()
-        self.delete_old_service(service.name, service.project.cluster)
+        self.delete_old_service(service_name=service.name, cluster=service.project.cluster,namespace=service.namespace)
         expand = json.loads(service.expand) if service.expand else {}
         expand['status']='offline'
         service.expand = json.dumps(expand)
@@ -177,9 +202,9 @@ class Service_ModelView_base():
         image_pull_secrets = list(set(image_pull_secrets + [rep.hubsecret for rep in user_repositorys]))
 
         service = db.session.query(Service).filter_by(id=service_id).first()
+        namespace = service.project.service_namespace
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(service.project.cluster.get('KUBECONFIG', ''))
-        namespace = conf.get('SERVICE_NAMESPACE')
 
         # 对挂载做一下渲染替换，可以替换用户名，也可以替换环境变量
         volume_mount = service.volume_mount.replace("{{creator}}", service.created_by.username)
@@ -220,7 +245,8 @@ class Service_ModelView_base():
                                      username=service.created_by.username,
                                      ports=[int(port) for port in service.ports.replace('，',',').split(',')]
                                      )
-
+        service.namespace=namespace
+        db.session.commit()
         ports = [int(port) for port in service.ports.replace('，',',').split(',')]
 
         k8s_client.create_service(
@@ -299,7 +325,7 @@ class Service_ModelView_base():
         expand['status']='online'
         service.expand = json.dumps(expand)
         db.session.commit()
-        flash(__('服务部署完成'), category='success')
+        flash(__('服务部署完成，可点击服务名称，查看服务启动进度。服务启动完成后，点击ip或域名访问'), category='success')
         return redirect(conf.get("MODEL_URLS", {}).get("service", '/'))
 
 

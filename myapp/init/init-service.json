@@ -48,18 +48,6 @@
       "help_url": "/docs/example/service.md"
     }
   },
-  "jaeger": {
-    "project_name": "public",
-    "service_name": "jaeger",
-    "service_describe": "jaeger链路追踪",
-    "image_name": "jaegertracing/all-in-one:1.29",
-    "command": "",
-    "env": "",
-    "ports": "16686,5775",
-    "expand": {
-      "help_url": "/docs/example/service.md"
-    }
-  },
   "postgresql-ui": {
     "project_name": "public",
     "service_name": "postgresql-ui",

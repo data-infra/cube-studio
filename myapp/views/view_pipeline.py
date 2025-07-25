@@ -94,7 +94,7 @@ def make_workflow_yaml(pipeline,workflow_label,hubsecret_list,dag_templates,cont
             },
             "name": name,
             "labels": workflow_label,
-            "namespace": json.loads(pipeline.project.expand).get('PIPELINE_NAMESPACE', conf.get('PIPELINE_NAMESPACE'))
+            "namespace": pipeline.project.pipeline_namespace
         },
         "spec": {
             "ttlStrategy": {
@@ -549,7 +549,7 @@ def run_pipeline(pipeline, workflow_json):
     crd_name = workflow_json.get('metadata', {}).get('name', '')
     from myapp.utils.py.py_k8s import K8s
     k8s_client = K8s(cluster.get('KUBECONFIG', ''))
-    namespace = workflow_json.get('metadata', {}).get("namespace", conf.get('PIPELINE_NAMESPACE'))
+    namespace = workflow_json.get('metadata', {}).get("namespace", pipeline.project.pipeline_namespace)
     crd_info = conf.get('CRD_INFO', {}).get('workflow', {})
     try:
         workflow_obj = k8s_client.get_one_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],namespace=namespace, name=crd_name)
@@ -558,6 +558,8 @@ def run_pipeline(pipeline, workflow_json):
             time.sleep(1)
 
         crd = k8s_client.create_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],namespace=namespace, body=workflow_json)
+        pipeline.namespace=namespace
+        db.session.commit()
     except Exception as e:
         print(e)
 
@@ -724,7 +726,7 @@ class Pipeline_ModelView_Base():
         try:
             from myapp.utils.py.py_k8s import K8s
             k8s_client = K8s(task.pipeline.project.cluster.get('KUBECONFIG', ''))
-            namespace = task.pipeline.namespace
+            namespace = task.namespace
             # 删除运行时容器
             pod_name = "run-" + task.pipeline.name.replace('_', '-') + "-" + task.name.replace('_', '-')
             pod_name = pod_name.lower()[:60].strip('-')
@@ -864,7 +866,7 @@ class Pipeline_ModelView_Base():
             item.global_env = '\n'.join(pipeline_global_env)
 
         item.name = item.name.replace('_', '-')[0:54].lower().strip('-')
-        item.namespace = json.loads(item.project.expand).get('PIPELINE_NAMESPACE', conf.get('PIPELINE_NAMESPACE','pipeline'))
+        item.namespace = item.project.pipeline_namespace
         # item.alert_status = ','.join(item.alert_status)
         self.pipeline_args_check(item)
         item.create_datetime = datetime.datetime.now()
@@ -904,9 +906,7 @@ class Pipeline_ModelView_Base():
                 pipeline_global_env[index] = '='.join(env)
             item.global_env = '\n'.join(pipeline_global_env)
 
-
         item.name = item.name.replace('_', '-')[0:54].lower()
-        item.namespace = json.loads(item.project.expand).get('PIPELINE_NAMESPACE', conf.get('PIPELINE_NAMESPACE','pipeline'))
         # item.alert_status = ','.join(item.alert_status)
         self.merge_upstream(item)
         self.pipeline_args_check(item)
@@ -948,6 +948,7 @@ class Pipeline_ModelView_Base():
         db.session.commit()
         if __("(废弃)") not in pipeline.describe:
             pipeline.describe += __("(废弃)")
+
         pipeline.schedule_type = 'once'
         pipeline.expand = ""
         pipeline.dag_json = "{}"
@@ -979,7 +980,6 @@ class Pipeline_ModelView_Base():
         db.session.commit()
         db.session.query(RunHistory).filter_by(pipeline_id=pipeline.id).delete(synchronize_session=False)
         db.session.commit()
-
 
     @expose("/my/list/")
     def my(self):
@@ -1047,8 +1047,7 @@ class Pipeline_ModelView_Base():
                 response.status_code = 404
                 return response
 
-            user_roles = [role.name.lower() for role in g.user.roles]
-            if "admin" in user_roles:
+            if g.user.is_admin():
                 return user_fun(*args, **kwargs)
 
             join_projects_id = security_manager.get_join_projects_id(db.session)
@@ -1209,19 +1208,8 @@ class Pipeline_ModelView_Base():
     @expose("/web/pod/<pipeline_id>", methods=["GET"])
     def web_pod(self, pipeline_id):
         pipeline = db.session.query(Pipeline).filter_by(id=pipeline_id).first()
-        return redirect(f'/k8s/web/search/{pipeline.project.cluster["NAME"]}/{conf.get("PIPELINE_NAMESPACE","pipeline")}/{pipeline.name.replace("_", "-").lower()}')
-
-        # data = {
-        #     "url": "//" + pipeline.project.cluster.get('HOST', request.host) + conf.get('K8S_DASHBOARD_CLUSTER') + '#/search?namespace=%s&q=%s' % (conf.get('PIPELINE_NAMESPACE'), pipeline.name.replace('_', '-').lower()),
-        #     "target":"div.kd-chrome-container.kd-bg-background",
-        #     "delay":500,
-        #     "loading": True
-        # }
-        # # 返回模板
-        # if pipeline.project.cluster['NAME'] == conf.get('ENVIRONMENT'):
-        #     return self.render_template('link.html', data=data)
-        # else:
-        #     return self.render_template('external_link.html', data=data)
+        namespace = pipeline.namespace
+        return redirect(f'/k8s/web/search/{pipeline.project.cluster["NAME"]}/{namespace}/{pipeline.name.replace("_", "-").lower()}')
 
     @expose("/web/runhistory/<pipeline_id>", methods=["GET"])
     def web_runhistory(self,pipeline_id):

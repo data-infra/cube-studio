@@ -43,6 +43,7 @@ def replace_git(content):
 def init():
     try:
         """Inits the Myapp application"""
+        # 添加所有接口的权限示例记录
         appbuilder.add_permissions(update_perms=True)  # update_perms为true才会检测新权限
         security_manager.sync_role_definitions()
     except Exception as e:

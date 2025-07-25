@@ -4,9 +4,9 @@ FROM ubuntu:22.04
 ENV TZ=Asia/Shanghai
 ENV DEBIAN_FRONTEND=noninteractive
 ARG PYTHON_VERSION=python3.9
-
-# 取值 amd64、arm64、arm/v6、arm/v7、ppc64le、s390x。
-# ARG TARGETARCH=amd64
+ARG TARGETARCH
+# 取值 amd64、arm64、arm/v6、arm/v7、ppc64le、s390x。 不可声明默认值
+# ARG TARGETARCH
 # 替换源
 # COPY install/docker/sources.list.${TARGETARCH} /etc/apt/sources.list
 # COPY install/docker/pip.conf /root/.pip/pip.conf
@@ -45,17 +45,11 @@ RUN pip install --upgrade setuptools pip && \
 
 
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
-    wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl && \
-    chmod +x kubectl && \
-    cp kubectl /usr/bin/ && \
-    mv kubectl /usr/local/bin/; \
+    wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl -O /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl; \
 fi
 
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
-    wget -O kubectl https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl-arm64 && \
-    chmod +x kubectl && \
-    cp kubectl /usr/bin/ && \
-    mv kubectl /usr/local/bin/; \
+    wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl-arm64 -O /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl; \
 fi
 
 WORKDIR /home/myapp
