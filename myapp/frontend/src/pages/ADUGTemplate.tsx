@@ -199,7 +199,8 @@ export default function TaskListManager(props?: IAppMenuItem) {
                 defaultValue: item.default === '' ? undefined : item.default,
                 multiple: item['ui-type'] && item['ui-type'] === 'select2',
                 options: (item.values || []).map((item: any) => ({ label: item.value, value: item.id, children: item.children })),
-                data: { ...item }
+                data: { ...item },
+                rows: Number(item.rows || 5)
             }
             return res
         })

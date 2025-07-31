@@ -58,7 +58,8 @@ export interface IDynamicFormConfigItem {
     description?: any
     multiple?: boolean,
     list?: IDynamicFormConfigItem[]
-    data: Record<string, any>
+    data: Record<string, any>,
+    rows: number
 }
 
 export type TDynamicFormType = 'input' | 'textArea' | 'select' | 'datePicker' | 'rangePicker' | 'radio' | 'checkout' | 'match-input' | 'input-select' | 'fileUpload' | 'cascader' | 'json'
@@ -366,7 +367,7 @@ export default function DynamicForm(props: IProps) {
             </>}
             {...itemProps}
         >
-            <JsonEditor readOnly={config.disable} placeholder={config.placeHolder || `${t('请选择')}${config.label}`} />
+            <JsonEditor rows={config.rows} readOnly={config.disable} placeholder={config.placeHolder || `${t('请选择')}${config.label}`} />
         </Form.Item>
     }
     const renderSelect = (config: IDynamicFormConfigItem, itemProps: Record<string, any>) => {
