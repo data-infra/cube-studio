@@ -83,7 +83,7 @@
   },
   "drop-duplicates": {
     "project_name": "特征处理",
-    "image_name": "ccr.ccs.tencentyun.com/cube-studio/data-process:20230501",
+    "image_name": "python:3.9",
     "gitpath": "/job-template/job/data-process",
     "image_describe": "去除重复样本",
     "job_template_name": "drop-duplicates",
@@ -102,7 +102,7 @@
   },
   "drop-missing": {
     "project_name": "特征处理",
-    "image_name": "ccr.ccs.tencentyun.com/cube-studio/data-process:20230501",
+    "image_name": "python:3.9",
     "gitpath": "/job-template/job/data-process",
     "image_describe": "删除缺失率过高的值",
     "job_template_name": "drop-missing",
@@ -121,7 +121,7 @@
   },
   "drop-stablize": {
     "project_name": "特征处理",
-    "image_name": "ccr.ccs.tencentyun.com/cube-studio/data-process:20230501",
+    "image_name": "python:3.9",
     "gitpath": "/job-template/job/data-process",
     "image_describe": "去除值过于单一的变量",
     "job_template_name": "drop-stablize",
@@ -2927,7 +2927,7 @@
   },
   "vision-image-blur": {
     "project_name": "图像处理",
-    "image_name": "ccr.ccs.tencentyun.com/cube-studio/vision-process:20240601",
+    "image_name": "python:3.9",
     "gitpath": "/job-template/job/vision-process",
     "image_describe": "视觉算法类的数据处理",
     "job_template_name": "vision-image-blur",
@@ -2948,7 +2948,7 @@
   },
   "vision-image-resize": {
     "project_name": "图像处理",
-    "image_name": "ccr.ccs.tencentyun.com/cube-studio/vision-process:20240601",
+    "image_name": "python:3.9",
     "gitpath": "/job-template/job/vision-process",
     "image_describe": "视觉算法类的数据处理",
     "job_template_name": "vision-image-resize",
@@ -2969,7 +2969,7 @@
   },
   "vision-image-normalize": {
     "project_name": "图像处理",
-    "image_name": "ccr.ccs.tencentyun.com/cube-studio/vision-process:20240601",
+    "image_name": "python:3.9",
     "gitpath": "/job-template/job/vision-process",
     "image_describe": "视觉算法类的数据处理",
     "job_template_name": "vision-image-normalize",
@@ -2990,7 +2990,7 @@
   },
   "vision-image-cropping": {
     "project_name": "图像处理",
-    "image_name": "ccr.ccs.tencentyun.com/cube-studio/vision-process:20240601",
+    "image_name": "python:3.9",
     "gitpath": "/job-template/job/vision-process",
     "image_describe": "视觉算法类的数据处理",
     "job_template_name": "vision-image-cropping",
@@ -3011,7 +3011,7 @@
   },
   "vision-image-equalize": {
     "project_name": "图像处理",
-    "image_name": "ccr.ccs.tencentyun.com/cube-studio/vision-process:20240601",
+    "image_name": "python:3.9",
     "gitpath": "/job-template/job/vision-process",
     "image_describe": "视觉算法类的数据处理",
     "job_template_name": "vision-image-equalize",
@@ -3032,7 +3032,7 @@
   },
   "vision-image-cvtcolor": {
     "project_name": "图像处理",
-    "image_name": "ccr.ccs.tencentyun.com/cube-studio/vision-process:20240601",
+    "image_name": "python:3.9",
     "gitpath": "/job-template/job/vision-process",
     "image_describe": "视觉算法类的数据处理",
     "job_template_name": "vision-image-cvtcolor",
@@ -3053,7 +3053,7 @@
   },
   "vision-image-augmentation": {
     "project_name": "图像处理",
-    "image_name": "ccr.ccs.tencentyun.com/cube-studio/vision-process:20240601",
+    "image_name": "python:3.9",
     "gitpath": "/job-template/job/vision-process",
     "image_describe": "视觉算法类的数据处理",
     "job_template_name": "vision-image-augmentation",
