@@ -27,7 +27,14 @@ RUN mkdir ./frontend ./static
 
 # 拷贝dist包文件
 COPY ./myapp/static/appbuilder/frontend ./frontend
+COPY ./myapp/chatgpt-web/distChat ./frontend/distChat
 COPY ./myapp/static ./static
+# 安全风险去除
+RUN rm -rf frontend/manifest.json frontend/robots.txt
+
+RUN find frontend -name ".DS_Store" -type f -delete
+RUN find static -name ".DS_Store" -type f -delete
+
 RUN chmod -R 777 frontend
 RUN chmod -R 777 static
 # 拷贝nginx配置文件
