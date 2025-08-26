@@ -141,10 +141,9 @@ class Project_Filter(MyappFilter):
 
 
 # query joined project
+# @pysnooper.snoop()
 def filter_join_org_project():
     query = db.session.query(Project)
-    # user_roles = [role.name.lower() for role in list(get_user_roles())]
-    # if "admin" in user_roles:
     if g.user.is_admin():
         return query.filter(Project.type == 'org').order_by(Project.id.desc())
 
@@ -379,6 +378,8 @@ class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
             response['permissions']=['can_add', 'can_edit', 'can_delete', 'can_list', 'can_show']
         else:
             response['permissions'] = ['can_list', 'can_show']
+
+appbuilder.add_api(Project_ModelView_org_Api)
 
 class Project_ModelView_Api(Project_ModelView_Base, MyappModelRestApi):
     datamodel = SQLAInterface(Project)
