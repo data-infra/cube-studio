@@ -83,6 +83,8 @@ def check_notebook_commit(task,notebook_id,target_image):  # 在页面中测试�
                 else:
                     break
 
+                now_time = datetime.datetime.now()
+
         except Exception as e:
             logging.error(e)
 

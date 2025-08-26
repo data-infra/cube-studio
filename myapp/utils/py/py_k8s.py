@@ -71,17 +71,45 @@ class K8s():
 
         return hold_resource
 
+    def get_username(self,labels):
+        username = ''
+        if labels:
+            username = labels.get('run-rtx', '')
+            if not username:
+                username = labels.get('user', '')
+            if not username:
+                username = labels.get('rtx-user', '')
+            if not username:
+                username = labels.get('run-username', '')
+            if not username:
+                username = labels.get('username', '')
+        return username
+
     # v1pod格式转为json格式
     def pod_model2dict(self,pod):
         # print(pod)
         metadata = pod.metadata
         status = pod.status.phase if pod and hasattr(pod, 'status') and hasattr(pod.status, 'phase') else ''
-        # Pending Running Succeeded Failed Unknown
-        # 辅助状态 ContainerCreating CrashLoopBackOff ImagePullBackOff ErrImagePull  Terminating
-        # 如果是running 也分为重启运行中
-        if status.lower() == 'running':
-            status = 'Running' if [x.status for x in pod.status.conditions if
-                                   x.type == 'Ready' and x.status == 'True'] else 'CrashLoopBackOff'
+        pod_substatus = status
+        # status:Pending Running Succeeded Failed Unknown
+        # pod_status:辅助状态 ContainerCreating CrashLoopBackOff ImagePullBackOff ErrImagePull  Terminating
+        message=[]
+        containerStatuses = pod.status.container_statuses[0].state.to_dict() if pod.status.container_statuses else {}
+        if containerStatuses:
+            all_container_status = [x for x in list(containerStatuses.values()) if x and 'reason' in x and x['reason']]
+            if all_container_status:
+                pod_substatus = all_container_status[0]['reason']
+        if pod.metadata.deletion_timestamp:
+            pod_substatus='Terminating'
+        if status=='Pending':
+            message = [condition.message for condition in pod.status.conditions if condition.type=='PodScheduled' and str(condition.status).lower()=='false' and condition.message]
+        if status=='Running':
+            container_statuse = pod.status.container_statuses[0].state.to_dict() if pod.status.container_statuses else {}
+            message = [x['message'] for x in list(container_statuse.values()) if x and 'message' in x]
+        if status=='Running' and not message:
+            message = [condition.message for condition in pod.status.conditions if condition.type == 'Ready' and str(condition.status).lower() == 'false' and condition.message]
+            if message:
+                pod_substatus = 'Starting'
 
         containers = pod.spec.containers
         # mem = [container.resources.requests for container in containers]
@@ -89,6 +117,10 @@ class K8s():
                   container.resources and container.resources.requests]
         cpu = [self.to_cpu(container.resources.requests.get('cpu', '0')) for container in containers if
                container.resources and container.resources.requests]
+        limit_memory = [self.to_memory_GB(container.resources.limits.get('memory', '0G')) for container in containers if
+                  container.resources and container.resources.limits]
+        limit_cpu = [self.to_cpu(container.resources.limits.get('cpu', '0')) for container in containers if
+               container.resources and container.resources.limits]
 
         # gpu = [int(container.resources.requests.get('nvidia.com/gpu', '0')) for container in containers if container.resources and container.resources.requests]
         vgpu = [float(container.resources.requests.get('nvidia.com/gpucores', '0')) / 100 for container in containers if
@@ -120,60 +152,66 @@ class K8s():
         if pod.spec.node_selector:
             node_selector.update(pod.spec.node_selector)
 
-        username = ''
-        if pod.metadata.labels:
-            username = pod.metadata.labels.get('run-rtx', '')
-            if not username:
-                username = pod.metadata.labels.get('user', '')
-            if not username:
-                username = pod.metadata.labels.get('rtx-user', '')
-            if not username:
-                username = pod.metadata.labels.get('run-username', '')
-            if not username:
-                username = pod.metadata.labels.get('username', '')
+        username = self.get_username(pod.metadata.labels)
+        images=[]
+        if pod.spec.init_containers:
+            images+=[container.image for container in pod.spec.init_containers]
+        if pod.spec.containers:
+            images+=[container.image for container in pod.spec.containers]
 
         temp = {
             'name': metadata.name,
+            "images": images,
             "username": username,
             'host_ip': pod.status.host_ip if pod.status.host_ip else '',
             'pod_ip': pod.status.pod_ip,
             'status': status,  # 每个容器都正常才算正常
+            "pod_substatus":pod_substatus,
             'status_more': pod.status.to_dict(),  # 无法json序列化
             'node_name': pod.spec.node_name,
             "labels": metadata.labels if metadata.labels else {},
             "annotations": metadata.annotations if metadata.annotations else {},
             "memory": sum(memory),
             "cpu": sum(cpu),
+            "limit_memory": sum(limit_memory),
+            "limit_cpu": sum(limit_cpu),
             # "gpu": sum(gpu) + sum(vgpu),
             "start_time": (metadata.creation_timestamp + datetime.timedelta(hours=8)).replace(tzinfo=None),  # 时间格式
-            "node_selector": node_selector
+            "container_start_time": (pod.status.start_time + datetime.timedelta(hours=8)).replace(tzinfo=None) if pod.status.start_time else None,
+            "node_selector": node_selector,
+            "restart_count": max([container_statuse.restart_count for container_statuse in pod.status.container_statuses]) if pod.status.container_statuses else 0,
+            "message":message,
+            "containers": [x.name for x in pod.spec.containers]
         }
         temp.update(ai_resource)
         return temp
 
     # @pysnooper.snoop()
-    def get_pods(self, namespace=None, service_name=None, pod_name=None, labels={},status=None):
+    def get_pods(self, namespace=None, service_name=None, pod_name=None, labels={},status=None,cache=False):
         # print(namespace)
         back_pods = []
         try:
             all_pods = []
             # 如果只有命名空间，这个查询就慢一点，所以使用缓存
             if (namespace and not service_name and not pod_name and not labels):
-                from myapp import cache
-                from myapp.tasks.async_task import get_k8s_resource
-                all_pods = cache.get(f'all_pods_{namespace}')
-                if not all_pods:
-                    all_pods = self.v1.list_namespaced_pod(namespace=namespace).items or []
-                    cache.set(f'all_pods_{namespace}', all_pods)
+                if cache:
+                    from myapp import cache
+                    from myapp.tasks.async_task import get_k8s_resource
+                    all_pods = cache.get(f'all_pods_{namespace}')
+                    if not all_pods:
+                        all_pods = self.v1.list_namespaced_pod(namespace=namespace).items or []
+                        cache.set(f'all_pods_{namespace}', all_pods)
+                    else:
+                        kwargs = {
+                            "kubeconfig": self.kubeconfig,
+                            "namespace": namespace,
+                            "ops_type": "pods"
+                        }
+                        get_k8s_resource.apply_async(kwargs=kwargs)
                 else:
-                    kwargs = {
-                        "kubeconfig": self.kubeconfig,
-                        "namespace": namespace,
-                        "ops_type": "pods"
-                    }
-                    get_k8s_resource.apply_async(kwargs=kwargs)
-
-
+                    all_pods = self.v1.list_namespaced_pod(namespace=namespace).items or []
+                    from myapp import cache
+                    cache.set(f'all_pods_{namespace}', all_pods)
 
             # 如果有命名空间和pod名，就直接查询pod
             elif (namespace and pod_name):
@@ -193,33 +231,11 @@ class K8s():
                             if pod:
                                 all_pods.append(pod)
             elif (namespace and status):
-                # if status.lower()=='running':
-                #     all_endpoints = self.v1.list_namespaced_endpoints(namespace=namespace).items or [] # 先查询入口点，
-                #     subsets = all_endpoints.subsets
-                #     if subsets:
-                #         addresses = subsets[0].addresses  # 只取第一个子网
-                #         for address in addresses:
-                #             pod_name_temp = address.target_ref.name
-                #             pod = self.v1.read_namespaced_pod(name=pod_name_temp, namespace=namespace, _request_timeout=5)
-                #             all_pods.append(pod)
-                # else:
-                src_pods = self.v1.list_namespaced_pod(namespace).items or []
-                for pod in src_pods:
-                    if pod.status and pod.status.phase == status:
-                        all_pods.append(pod)
-
-
+                all_pods = self.v1.list_namespaced_pod(namespace=namespace,field_selector = "status.phase="+status).items or []
             elif (namespace and labels):
-                src_pods = self.v1.list_namespaced_pod(namespace).items or []
-                for pod in src_pods:
-                    pod_labels = pod.metadata.labels
-                    is_des_pod = True
-                    for key in labels:
-                        if key not in pod_labels or pod_labels[key] != labels[key]:
-                            is_des_pod = False
-                            break
-                    if is_des_pod:
-                        all_pods.append(pod)
+                if type(labels)==dict:
+                    labels=",".join([f"{k}={v}" for k, v in labels.items()])
+                all_pods = self.v1.list_namespaced_pod(namespace,label_selector=labels).items or []
 
             for pod in all_pods:
                 temp=self.pod_model2dict(pod)
@@ -291,7 +307,7 @@ class K8s():
             return []
         all_pods = self.get_pods(namespace=namespace, pod_name=pod_name, service_name=service_name, labels=labels) or []
         if status:
-            all_pods = [pod for pod in all_pods if pod['status'] == status]
+            all_pods = [pod for pod in all_pods if pod['status'] in status]
         try:
             for pod in all_pods:
                 self.v1.delete_namespaced_pod(pod['name'], namespace, grace_period_seconds=0)
@@ -304,24 +320,29 @@ class K8s():
         return all_pods
 
     # @pysnooper.snoop()
-    def get_all_node_allocated_resources(self):
-        from myapp import cache
-        from myapp.tasks.async_task import get_k8s_resource
+    def get_all_node_allocated_resources(self,cache=False):
 
         nodes_resource = {}
         try:
-            # 从缓存中读取一遍
-            pods = cache.get('all_pods')
-            if not pods:
-                pods = self.v1.list_pod_for_all_namespaces(watch=False).items or []
-                cache.set('all_pods',pods)
+            if cache:
+                from myapp import cache
+                from myapp.tasks.async_task import get_k8s_resource
+                # 从缓存中读取一遍
+                pods = cache.get('all_pods')
+                if not pods:
+                    pods = self.v1.list_pod_for_all_namespaces(watch=False).items or []
+                    cache.set('all_pods',pods)
+                else:
+                    kwargs = {
+                        "kubeconfig": self.kubeconfig,
+                        "namespace":"",
+                        "ops_type":"pods"
+                    }
+                    get_k8s_resource.apply_async(kwargs=kwargs)
             else:
-                kwargs = {
-                    "kubeconfig": self.kubeconfig,
-                    "namespace":"",
-                    "ops_type":"pods"
-                }
-                get_k8s_resource.apply_async(kwargs=kwargs)
+                pods = self.v1.list_pod_for_all_namespaces(watch=False).items or []
+                from myapp import cache
+                cache.set('all_pods', pods)
 
             for pod in pods:
                 # 如果没有占用资源，这里就不计算
@@ -380,24 +401,28 @@ class K8s():
 
     # 获取指定label的nodeip列表
     # @pysnooper.snoop()
-    def get_node(self, label=None, name=None, ip=None):
+    def get_node(self, label=None, name=None, ip=None,cache=False):
         try:
-            from myapp import cache
-            from myapp.tasks.async_task import get_k8s_resource
-
             back_nodes = []
-            all_node = cache.get('all_nodes')
-            if not all_node:
-                all_node = self.v1.list_node(label_selector=label).items or []
-                cache.set('all_nodes', all_node)
+            if cache:
+                from myapp import cache
+                from myapp.tasks.async_task import get_k8s_resource
+                all_node = cache.get('all_nodes')
+                if not all_node:
+                    all_node = self.v1.list_node(label_selector=label).items or []
+                    cache.set('all_nodes', all_node)
+                else:
+                    kwargs = {
+                        "kubeconfig": self.kubeconfig,
+                        "namespace": "",
+                        "ops_type": "nodes",
+                        "label_selector":label,
+                    }
+                    get_k8s_resource.apply_async(kwargs=kwargs)
             else:
-                kwargs = {
-                    "kubeconfig": self.kubeconfig,
-                    "namespace": "",
-                    "ops_type": "nodes",
-                    "label_selector":label,
-                }
-                get_k8s_resource.apply_async(kwargs=kwargs)
+                all_node = self.v1.list_node(label_selector=label).items or []
+                from myapp import cache
+                cache.set('all_nodes', all_node)
 
             # print(all_node)
             for node in all_node:
@@ -439,7 +464,7 @@ class K8s():
                         back_nodes.append(back_node)
                 except Exception as e1:
                     print(e1)
-
+            cache.set('all_nodes_num', len(back_nodes))
             return back_nodes
         except Exception as e:
             print(e)
@@ -1062,14 +1087,14 @@ class K8s():
             resources_requests['cpu'] = requests_cpu.strip()
             resources_limits['cpu'] = limits_cpu.strip()
 
-        gpu_num, gpu_type, resource_name = self.get_gpu(resource_gpu)
+        gpu_num, gpu_type, gpu_resource_name = self.get_gpu(resource_gpu)
 
         # 整卡占用
         if gpu_num >= 1:
             gpu_num = int(gpu_num)
-            if resource_name:
-                resources_requests[resource_name] = str(int(gpu_num))
-                resources_limits[resource_name] = str(int(gpu_num))
+            if gpu_resource_name:
+                resources_requests[gpu_resource_name] = str(int(gpu_num))
+                resources_limits[gpu_resource_name] = str(int(gpu_num))
 
         if 0==gpu_num:
             # 没要gpu的容器，就要加上可视gpu为空，不然gpu镜像能看到和使用所有gpu
@@ -1147,9 +1172,14 @@ class K8s():
                  scheduler_name='default-scheduler', node_name='', health=None, annotations={}, hostPort=[],resource_rdma=0,sidecar=[]):
         if not labels:
             labels={}
+
+        from myapp import conf
+        if scheduler_name=='default-scheduler' and (resource_gpu=='0' or resource_gpu==''):
+            scheduler_name = conf.get('GPU_SCHEDULERNAME','default-scheduler')
         if scheduler_name == 'kube-batch':
             annotations['scheduling.k8s.io/group-name'] = name
-
+        if scheduler_name == 'volcano':
+            annotations['scheduling.k8s.io/group-name'] = 'my-podgroup'
 
         image_pull_secrets = [client.V1LocalObjectReference(image_pull_secret) for image_pull_secret in image_pull_secrets]
         affinity = None
@@ -1231,7 +1261,7 @@ class K8s():
     def create_debug_pod(self, namespace, name, labels, command, args, volume_mount, working_dir, node_selector,
                          resource_memory, resource_cpu, resource_gpu, image_pull_policy, image_pull_secrets, image,
                          hostAliases, env, privileged, accounts, username, scheduler_name='default-scheduler',
-                         node_name='',annotations={},hostPort=[],resource_rdma=0,sidecar=[]):
+                         node_name='',annotations={},hostPort=[],resource_rdma=0,sidecar=[],health=None):
         try:
             self.v1.delete_namespaced_pod(name=name, namespace=namespace, grace_period_seconds=0)
             # time.sleep(1)
@@ -1268,7 +1298,8 @@ class K8s():
             node_name=node_name,
             hostPort=hostPort,
             resource_rdma=resource_rdma,
-            sidecar=sidecar
+            sidecar=sidecar,
+            health=health
         )
         # print(pod)
         pod = self.v1.create_namespaced_pod(namespace, pod)

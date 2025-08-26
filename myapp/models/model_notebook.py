@@ -121,28 +121,10 @@ class Notebook(Model,AuditMixinNullable,MyappModelBase):
             # 优化，可以考虑整体查询，然后放cache里面
             pods = k8s_client.get_pods(namespace=self.namespace,pod_name=self.name)
             if pods and len(pods)>0:
-                message=''
-                status = pods[0]['status']
-                if status.lower()=='pending':
-                    event = k8s_client.get_pod_event(namespace=self.namespace, pod_name=self.name)
-                    if event:
-                        message=event[-1].get('message','')
-
-                if g.user.is_admin():
-                    k8s_dash_url = f'/k8s/web/search/{self.cluster["NAME"]}/{self.namespace}/{self.name}'
-                    if message:
-                        url = Markup(f'<a target=_blank style="color:#008000;" type=tips addedValue="{message}" href="{k8s_dash_url}">{status}</a>')
-                    else:
-                        url = Markup(f'<a target=_blank style="color:#008000;" href="{k8s_dash_url}">{status}</a>')
-                    return url
-
-                if message:
-                    status = f'''
-<div type=tips addedValue='{message}'>
-    {status}
-</div>
-'''
-                return status
+                status = pods[0]['pod_substatus']
+                k8s_dash_url = f'/k8s/web/search/{self.cluster["NAME"]}/{self.namespace}/{self.name}'
+                url = Markup(f'<a target=_blank style="color:#008000;" href="{k8s_dash_url}">{status}</a>')
+                return url
 
         except Exception as e:
             print(e)

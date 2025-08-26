@@ -152,7 +152,7 @@ class Prometheus():
         # print(params)
 
         try:
-            res = requests.get(url=self.query_range_path, params=params)
+            res = requests.get(url=self.query_range_path, params=params,timeout=5)
             metrics = json.loads(res.content.decode('utf8', 'ignore'))
             if metrics['status'] == 'success':
                 metrics = metrics['data']['result']
@@ -180,7 +180,7 @@ class Prometheus():
         # print(params)
         try:
 
-            res = requests.get(url=self.query_range_path, params=params)
+            res = requests.get(url=self.query_range_path, params=params,timeout=5)
             metrics = json.loads(res.content.decode('utf8', 'ignore'))
             if metrics['status'] == 'success':
                 metrics = metrics['data']['result']
@@ -198,6 +198,7 @@ class Prometheus():
         except Exception as e:
             print(e)
 
+        # gpu的资源利用率
         gpu_expr = "avg by (pod) (DCGM_FI_DEV_GPU_UTIL)"
 
         params = {
@@ -210,7 +211,7 @@ class Prometheus():
         # print(params)
         try:
 
-            res = requests.get(url=self.query_range_path, params=params)
+            res = requests.get(url=self.query_range_path, params=params,timeout=5)
             metrics = json.loads(res.content.decode('utf8', 'ignore'))
             if metrics['status'] == 'success':
                 metrics = metrics['data']['result']
@@ -250,7 +251,7 @@ class Prometheus():
         # print(params)
 
         try:
-            res = requests.get(url=self.query_range_path, params=params)
+            res = requests.get(url=self.query_range_path, params=params,timeout=5)
             metrics = json.loads(res.content.decode('utf8', 'ignore'))
             if metrics['status'] == 'success':
                 metrics = metrics['data']['result']
@@ -278,7 +279,7 @@ class Prometheus():
         # print(params)
         try:
 
-            res = requests.get(url=self.query_range_path, params=params)
+            res = requests.get(url=self.query_range_path, params=params,timeout=5)
             metrics = json.loads(res.content.decode('utf8', 'ignore'))
             if metrics['status'] == 'success':
                 metrics = metrics['data']['result']
@@ -309,7 +310,7 @@ class Prometheus():
         # print(params)
         try:
 
-            res = requests.get(url=self.query_range_path, params=params)
+            res = requests.get(url=self.query_range_path, params=params,timeout=5)
             metrics = json.loads(res.content.decode('utf8', 'ignore'))
             if metrics['status'] == 'success':
                 metrics = metrics['data']['result']
@@ -351,7 +352,7 @@ class Prometheus():
         # print(params)
 
         try:
-            res = requests.get(url=self.query_range_path, params=params)
+            res = requests.get(url=self.query_range_path, params=params,timeout=5)
             metrics = json.loads(res.content.decode('utf8', 'ignore'))
             if metrics['status'] == 'success':
                 metrics = metrics['data']['result']
@@ -376,7 +377,7 @@ class Prometheus():
         # print(params)
         try:
 
-            res = requests.get(url=self.query_range_path, params=params)
+            res = requests.get(url=self.query_range_path, params=params,timeout=5)
             metrics = json.loads(res.content.decode('utf8', 'ignore'))
             if metrics['status'] == 'success':
                 metrics = metrics['data']['result']
@@ -399,7 +400,7 @@ class Prometheus():
         }
         # print(params)
         try:
-            res = requests.get(url=self.query_range_path, params=params)
+            res = requests.get(url=self.query_range_path, params=params,timeout=5)
             metrics = json.loads(res.content.decode('utf8', 'ignore'))
             if metrics['status'] == 'success':
                 metrics = metrics['data']['result']

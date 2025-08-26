@@ -28,7 +28,7 @@ from myapp.models.model_job import (
     Task
 )
 from myapp.models.model_notebook import Notebook
-from myapp.models.model_serving import InferenceService
+from myapp.models.model_serving import InferenceService, Service
 from myapp.views.view_pipeline import run_pipeline,dag_to_pipeline
 from sqlalchemy import or_
 from myapp import security_manager
@@ -220,14 +220,21 @@ def delete_debug_docker(task):
     logging.info('============= begin run delete_debug_docker task')
     clusters = conf.get('CLUSTERS',{})
     from myapp import security_manager
-    # 删除完成的任务
+    # 删除完成的任务和notebook
     for cluster_name in clusters:
         cluster = clusters[cluster_name]
         k8s_client = K8s(cluster.get('KUBECONFIG', ''))
         with session_scope(nullpool=True) as dbsession:
             try:
+                # 清理损坏的notebook
                 for notebook_namespace in security_manager.get_all_notebook_namespace(dbsession):
-                    k8s_client.delete_pods(namespace=notebook_namespace, status='Succeeded')
+                    terminated_pods = k8s_client.get_pods(namespace=notebook_namespace)
+                    terminated_pods = [pod for pod in terminated_pods if pod['status']!='Running']
+                    notebooks = dbsession.query(Notebook).filter(Notebook.name.in_([pod["name"] for pod in terminated_pods])).all()
+                    from myapp.views.view_notebook import Notebook_ModelView_Base
+                    note_view = Notebook_ModelView_Base()
+                    note_view.base_muldelete(notebooks)
+                # 清理debug和run的task
                 for pipeline_namespace in security_manager.get_all_pipeline_namespace(dbsession):
                     pipeline_pods = k8s_client.get_pods(pipeline_namespace)
                     for pod in pipeline_pods:
@@ -241,45 +248,68 @@ def delete_debug_docker(task):
                 logging.error('Traceback: %s', traceback.format_exc())
 
     # 删除debug和test的服务
+    with session_scope(nullpool=True) as dbsession:
+        try:
+            inferenceservices = dbsession.query(InferenceService).all()
+            from myapp.views.view_inferenceserving import InferenceService_ModelView_base
+            inference_view = InferenceService_ModelView_base()
+            for inferenceservice in inferenceservices:
+                try:
+                    if inferenceservice.model_status in ['debug','test']:
+                        inference_view.delete_old_service(service_name=inferenceservice.name, cluster=inferenceservice.project.cluster, namespaces=inferenceservice.namespace)
+                        inference_view.model_status = 'offline'
+                        dbsession.commit()
+
+                except Exception as e1:
+                    logging.error(e1)
+
+        except Exception as e:
+            logging.error(e)
+            logging.error('Traceback: %s', traceback.format_exc())
+
+    push_message(conf.get('ADMIN_USER', '').split(','), datetime.datetime.now().strftime('%Y-%m-%d')+' debug 的推理服务 pod 清理完毕')
+
+
+    # 删除长时间非正常运行的服务
     for cluster_name in clusters:
         cluster = clusters[cluster_name]
         k8s_client = K8s(cluster.get('KUBECONFIG', ''))
 
         with session_scope(nullpool=True) as dbsession:
             try:
-                inferenceservices = dbsession.query(InferenceService).all()
+                for service_namespace in security_manager.get_all_service_namespace(dbsession):
+                    error_pods = k8s_client.get_pods(namespace=service_namespace)
+                    error_pods = [pod for pod in error_pods if pod['pod_substatus'] != 'Running' and pod['restart_count']>1000]
+                    error_services = [pod["labels"].get('app','') for pod in error_pods if pod["labels"].get('pod-type','')=='service']
+                    error_inferences = [pod["labels"].get('app', '') for pod in error_pods if pod["labels"].get('pod-type', '') == 'inference']
+                    error_services = list(set(error_services))
+                    error_inferences = list(set(error_inferences))
+                    services = dbsession.query(Service).filter(Service.name.in_(error_services)).all()
+                    inferences = dbsession.query(InferenceService).filter(InferenceService.name.in_(error_inferences)).all()
+                    from myapp.views.view_serving import Service_ModelView_base
+                    service_view = Service_ModelView_base()
+                    for service in services:
+                        service_view.delete_old_service(service_name=service.name, cluster=service.project.cluster,namespace=service.namespace)
+                        expand = json.loads(service.expand) if service.expand else {}
+                        expand['status'] = 'offline'
+                        service.expand = json.dumps(expand)
+                        dbsession.commit()
 
-                for inferenceservice in inferenceservices:
-                    try:
-                        namespace = inferenceservice.namespace if inferenceservice.namespace else inferenceservice.project.service_namespace
-                        name = 'debug-'+inferenceservice.name
-                        k8s_client.delete_deployment(namespace=namespace, name=name)
-                        k8s_client.delete_configmap(namespace=namespace, name=name)
-                        k8s_client.delete_service(namespace=namespace, name=name)
-                        k8s_client.delete_istio_ingress(namespace=namespace, name=name)
-                        if inferenceservice.model_status=='debug':
-                            inferenceservice.model_status='offline'
-                            dbsession.commit()
-
-                        name = 'test-' + inferenceservice.name
-                        k8s_client.delete_deployment(namespace=namespace, name=name)
-                        k8s_client.delete_configmap(namespace=namespace, name=name)
-                        k8s_client.delete_service(namespace=namespace, name=name)
-                        k8s_client.delete_istio_ingress(namespace=namespace, name=name)
-                        if inferenceservice.model_status == 'test':
-                            inferenceservice.model_status = 'offline'
-                            dbsession.commit()
-
-                    except Exception as e1:
-                        logging.error(e1)
+                    from myapp.views.view_inferenceserving import InferenceService_ModelView_base
+                    inference_view = InferenceService_ModelView_base()
+                    for inference in inferences:
+                        inference_view.delete_old_service(service_name=inference.name, cluster=inference.project.cluster,namespaces=inference.namespace)
+                        inference.model_status = 'offline'
+                        dbsession.commit()
 
             except Exception as e:
                 logging.error(e)
                 logging.error('Traceback: %s', traceback.format_exc())
 
-    push_message(conf.get('ADMIN_USER', '').split(','), datetime.datetime.now().strftime('%Y-%m-%d')+' debug 的推理服务 pod 清理完毕')
+    push_message(conf.get('ADMIN_USER', '').split(','), datetime.datetime.now().strftime('%Y-%m-%d')+' 错误的推理服务清理完毕')
 
-    # 删除调试镜像的pod 和commit pod
+
+    # 删除调试镜像的pod 和 commit pod
     for cluster_name in clusters:
         cluster = clusters[cluster_name]
         k8s_client = K8s(cluster.get('KUBECONFIG',''))
@@ -940,11 +970,11 @@ def watch_pod_utilization(task=None):
                 if pod['start_time'] > (datetime.datetime.now() - datetime.timedelta(days=2)) and pod['name'] in service_pods_metrics and pod['username']:
                     try:
                         if pod['cpu'] > 5 and service_pods_metrics[pod['name']]['cpu'] < pod['cpu'] / 5:
-                            push_message([pod['username']] + conf.get('ADMIN_USER', 'admin').split(','),f'集群 {cluster_name} 用户 {pod["username"]} pod {pod["name"]}资源cpu使用率过低，最新2天最大使用率为{round(service_pods_metrics[pod["name"]]["cpu"],2)}，但申请值为{pod["cpu"]}，请及时清理或修改申请值')
+                            push_message(list(set([pod['username']] + conf.get('ADMIN_USER', 'admin').split(','))),f'集群 {cluster_name} 用户 {pod["username"]} pod {pod["name"]}资源cpu使用率过低，最新2天最大使用率为{round(float(service_pods_metrics[pod["name"]]["cpu"]),2)}，但申请值为{pod["cpu"]}，请及时清理或修改申请值')
 
                         # 虚拟gpu服务不考虑
                         if int(pod.get('gpu', 0)) >= 1 and service_pods_metrics[pod['name']]['gpu'] < 0.15:
-                            push_message([pod['username']] + conf.get('ADMIN_USER', 'admin').split(','),f'集群 {cluster_name} 用户 {pod["username"]} pod {pod["name"]}资源gpu使用率过低，最新2天最大使用率为{round(service_pods_metrics[pod["name"]]["gpu"],2)}，但申请值为{pod["gpu"]}，请及时清理或修改申请值')
+                            push_message(list(set([pod['username']] + conf.get('ADMIN_USER', 'admin').split(','))),f'集群 {cluster_name} 用户 {pod["username"]} pod {pod["name"]}资源gpu使用率过低，最新2天最大使用率为{round(float(service_pods_metrics[pod["name"]]["gpu"]),2)}，但申请值为{pod["gpu"]}，请及时清理或修改申请值')
                             pass
                     except Exception as e:
                         logging.error(e)

@@ -185,8 +185,10 @@ class Service(Model,AuditMixinNullable,MyappModelBase,service_common):
                 # 查看k8s的pod是否read了
                 k8s_client = K8s(self.project.cluster.get('KUBECONFIG', ''))
                 all_endpoints = k8s_client.v1.read_namespaced_endpoints(namespace=self.namespace, name=self.name,_request_timeout=5)  # 先查询入口点，
-                if all_endpoints:
-                    return True
+                if all_endpoints.subsets:
+                    addresses = [subset.addresses for subset in all_endpoints.subsets if subset.addresses]
+                    if len(addresses)>0:
+                        return True
             except Exception as e:
                 print(e)
 
@@ -329,10 +331,11 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
                 # 查看k8s的pod是否read了
                 k8s_client = K8s(self.project.cluster.get('KUBECONFIG', ''))
                 all_endpoints = k8s_client.v1.read_namespaced_endpoints(namespace=self.namespace,name=self.name,_request_timeout=5)  # 先查询入口点，
-                if all_endpoints:
-                    return True
-                else:
-                    return False
+                if all_endpoints.subsets:
+                    addresses = [subset.addresses for subset in all_endpoints.subsets if subset.addresses]
+                    if len(addresses) > 0:
+                        return True
+                return False
             except Exception as e:
                 print(e)
 
