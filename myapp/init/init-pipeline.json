@@ -500,7 +500,7 @@
           "--model_version": "v2025.03.01.1",
           "--model_path": "/mnt/{{creator}}/pipeline/example/deepseek/result/exported_model",
           "--service_type": "vllm",
-          "--images": "vllm/vllm-openai:latest",
+          "--images": "vllm/vllm-openai:v0.8.5.post1",
           "--working_dir": "",
           "--command": "python3 -m vllm.entrypoints.openai.api_server --trust-remote-code --max-model-len 8192 --model $KUBEFLOW_MODEL_PATH --host 0.0.0.0 --port 8000 --dtype float16 --tensor-parallel-size $RESOURCE_GPU --served-model-name $KUBEFLOW_MODEL_NAME",
           "--env": "HF_ENDPOINT=https://hf-mirror.com",
@@ -559,6 +559,7 @@
           "--num_train_epochs": "5",
           "--max_samples": "500",
           "--max_grad_norm": "1",
+          "--quantization_bit": "none",
           "--fp16": "true",
           "--merge_lora": "true"
         }
