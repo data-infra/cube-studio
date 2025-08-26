@@ -175,7 +175,7 @@ class InferenceService_ModelView_base():
 
     base_filters = [["id", InferenceService_Filter, lambda: []]]
 
-    service_type_choices = ['serving','ml-server', 'tfserving', 'torch-server', 'triton-server', 'vllm', 'vllm-distributed', 'ollama', 'mindie', 'mindie-distributed']
+    service_type_choices = ['serving', 'tfserving', 'torch-server', 'triton-server','ml-server(企业版)',  'vllm(企业版)', 'vllm-distributed(企业版)', 'ollama(企业版)', 'mindie(企业版)', 'mindie-distributed(企业版)']
     spec_label_columns = {
         "inference_host_url": _("域名:需要泛域名支持，调试时域名(debug.xx.xx.xx.xx)")
     }
