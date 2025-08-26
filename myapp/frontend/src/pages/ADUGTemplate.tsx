@@ -273,8 +273,6 @@ export default function TaskListManager(props?: IAppMenuItem) {
                             const typeValue = topElement?.getAttribute('type');
                             const addedValue = topElement?.getAttribute('addedValue');
 
-                            console.log('type:', typeValue);
-                            console.log('addedValue:', addedValue);
                             if (typeValue && addedValue){
                                 if (typeValue === 'tips'){
                                     return <Tooltip title={<span className="tips-content" dangerouslySetInnerHTML={{ __html: addedValue}}></span>} placement="topLeft">
@@ -334,8 +332,6 @@ export default function TaskListManager(props?: IAppMenuItem) {
                             const typeValue = topElement?.getAttribute('type');
                             const addedValue = topElement?.getAttribute('addedValue');
 
-                            console.log('type:', typeValue);
-                            console.log('addedValue:', addedValue);
                             if (typeValue && addedValue){
                                 if (typeValue === 'tips'){
                                     return <Tooltip title={<span className="tips-content" dangerouslySetInnerHTML={{ __html: addedValue}}></span>} placement="topLeft">
@@ -633,7 +629,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                 config: createDyFormConfig(currentData, label_columns, description_columns)
                             }
                         })
-                        const formReset = add_columns.filter((item) => item.default !== '').map(column => ({ [column.name]: column.default })).reduce((pre, next) => ({ ...pre, ...next }), {})
+                        const formReset = add_columns.map(column => ({ [column.name]: column.default })).reduce((pre, next) => ({ ...pre, ...next }), {})
 
                         setDynamicFormDataAdd(formReset)
                         setDynamicFormConfigAdd(formConfigAdd)
@@ -758,7 +754,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
             });
 
         }).catch(err => {
-            console.log(err);
+            console.error(err);
         }).finally(() => {
             setLoading(false)
             setLoadingAdd(false)
@@ -835,7 +831,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                 setSorterParam(sorter)
             })
             .catch((error) => {
-                console.log(error);
+                console.error(error);
             })
             .finally(() => setLoading(false));
     };
@@ -1009,8 +1005,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                     config: createDyFormConfig(currentData, label_columns, description_columns)
                                 }
                             })
-                            const formReset = add_columns.filter((item) => item.default !== '').map(column => ({ [column.name]: column.default })).reduce((pre, next) => ({ ...pre, ...next }), {})
-
+                            const formReset = add_columns.map(column => ({ [column.name]: column.default })).reduce((pre, next) => ({ ...pre, ...next }), {})
                             form.setFieldsValue(formReset)
                             setDynamicFormConfigAdd(formConfigAdd)
                             setDynamicFormGroupConfigAdd(formGroupConfigAdd)

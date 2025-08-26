@@ -204,13 +204,13 @@ export default function DynamicForm(props: IProps) {
         // ].filter(item => !!item) as Rule[]
 
         let extraContent: any = null
-
+        // console.log('111'+config.name+"2222"+config.defaultValue+'333')
         return <Form.Item
             key={`dynamicForm_${config.name}`}
             label={config.label}
             name={config.name}
             rules={config.rules}
-            initialValue={config.defaultValue}
+            initialValue={config.defaultValue || ""}
             extra={<>
                 {config.data.tips ? <Tooltip
                     className="mr8"
@@ -293,7 +293,7 @@ export default function DynamicForm(props: IProps) {
             label={config.label}
             name={config.name}
             rules={config.rules}
-            initialValue={config.defaultValue}
+            initialValue={config.defaultValue || ""}
             extra={<>
                 {config.data.tips ? <Tooltip
                     className="mr8"
@@ -326,7 +326,7 @@ export default function DynamicForm(props: IProps) {
             label={config.label}
             name={config.name}
             rules={config.rules}
-            initialValue={config.defaultValue}
+            initialValue={config.defaultValue || ""}
             extra={<>
                 {config.data.tips ? <Tooltip
                     className="mr8"
@@ -351,7 +351,7 @@ export default function DynamicForm(props: IProps) {
             label={config.label}
             name={config.name}
             rules={config.rules}
-            initialValue={config.defaultValue}
+            initialValue={config.defaultValue || ""}
             extra={<>
                 {config.data.tips ? <Tooltip
                     className="mr8"
@@ -380,7 +380,7 @@ export default function DynamicForm(props: IProps) {
             label={config.label}
             name={config.name}
             rules={config.rules}
-            initialValue={config.defaultValue}
+            initialValue={config.defaultValue || ""}
             extra={<>
                 {config.data.tips ? <Tooltip
                     className="mr8"
@@ -500,7 +500,7 @@ export default function DynamicForm(props: IProps) {
     // 多级选择器
     const renderCascader = (config: IDynamicFormConfigItem, itemProps: Record<string, any>) => {
         const options = config.options || []
-        console.log(options)
+        // console.log(options)
         return <Form.Item
             key={`dynamicForm_${config.name}`}
             label={config.label}

@@ -12,7 +12,7 @@ export interface ResponseFormat<T = any> {
     status: number
 }
 
-console.log(getI18n())
+// console.log(getI18n())
 
 const axios = Axios.create({
     timeout: 600000,
@@ -140,7 +140,7 @@ axios.interceptors.response.use(
 
             if (data && Object.prototype.toString.call(data.msg || data.message) === '[object Object]') {
                 errMsg = JSON.stringify(data.msg || data.message)
-                console.log('errMsg', errMsg)
+                console.error('errMsg', errMsg)
             } if (data && Object.prototype.toString.call(data) === '[object String]') {
                 errMsg = data
             }
