@@ -23,6 +23,7 @@ pip install pytest datasets numpy transformers decorator tensorboard sentencepie
 # pip install torch -U
 
 #启动ssh-server
+apt install -y openssh-server
 mkdir -p /var/run/sshd && /usr/sbin/sshd -D &
 mkdir -p model checkpoint
 # 先熟悉启动方式 https://colossalai.org/zh-Hans/docs/basics/launch_colossalai/

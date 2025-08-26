@@ -31,7 +31,7 @@ class YOLOV8_Model(Model,LabelStudio_ML_Backend):
     field="机器视觉"  # [机器视觉，听觉，自然语言，多模态，大模型]
     scenes="图像识别"
     status='online'
-    images = 'ccr.ccs.tencentyun.com/cube-studio/yolov8:2024.10'
+    images = 'ccr.ccs.tencentyun.com/cube-studio/yolov8:2025.06'
     version='v20241001'
     pic='example.jpg'  # 离线图片，作为模型的样式图，330*180尺寸比例
     # 和train函数的输入参数对应，并且会对接显示到pipeline的模板参数中
@@ -134,7 +134,7 @@ class YOLOV8_Model(Model,LabelStudio_ML_Backend):
             boxes = result.boxes
             orig_height, orig_width = boxes.orig_shape[0], boxes.orig_shape[1]
             xywhns = boxes.xywhn.tolist()
-            xywhns = [[round(box[0], 6), round(box[1], 6), round(box[2], 6), round(box[3], 6)] for box in xywhns]
+            xywhns = [[round(float(box[0]), 6), round(float(box[1]), 6), round(float(box[2]), 6), round(float(box[3]), 6)] for box in xywhns]
             # 把类型序号换成label名称
             cls = boxes.cls.tolist()
             cls = [names[index] for index in cls]

@@ -22,13 +22,9 @@ huggingface-cli download --resume-download THUDM/chatglm3-6b --local-dir THUDM/c
 mkdir -p THUDM/glm-4-9b-chat
 huggingface-cli download --resume-download THUDM/glm-4-9b-chat --local-dir THUDM/glm-4-9b-chat --local-dir-use-symlinks False
 
-# 下载qwen1.5
-mkdir -p Qwen/Qwen1.5-7B-Chat
-huggingface-cli download --resume-download Qwen/Qwen1.5-7B-Chat --local-dir Qwen/Qwen1.5-7B-Chat --local-dir-use-symlinks False
-
-# 下载qwen2
-mkdir -p Qwen/Qwen2.5-7B-Instruct
-huggingface-cli download --resume-download Qwen/Qwen2.5-7B-Instruct --local-dir Qwen/Qwen2.5-7B-Instruct --local-dir-use-symlinks False
+# 下载qwen3
+mkdir -p Qwen/Qwen3-8B
+huggingface-cli download --resume-download Qwen/Qwen3-8B-Instruct --local-dir Qwen/Qwen3-8B --local-dir-use-symlinks False
 
 # 下载 lmsys/vicuna-13b-v1.5
 mkdir -p lmsys/vicuna-7b-v1.5
