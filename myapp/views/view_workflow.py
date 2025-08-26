@@ -5,6 +5,7 @@ import time
 
 import flask
 import pandas
+from flask_appbuilder.baseviews import expose_api
 
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from myapp.utils import core
@@ -77,12 +78,14 @@ class Workflow_ModelView_Base():
     fixed_columns = ['log', 'stop']
     search_columns = ['status', 'labels', 'name', 'cluster', 'annotations', 'spec', 'status_more', 'username', 'create_time']
     cols_width = {
-        "project": {"type": "ellip2", "width": 100},
+        "project": {"type": "ellip2", "width": 120},
         "pipeline_url": {"type": "ellip2", "width": 300},
+        "cluster": {"type": "ellip2", "width": 50},
         "create_time": {"type": "ellip2", "width": 200},
         "change_time": {"type": "ellip2", "width": 200},
-        "final_status": {"type": "ellip1", "width": 250},
-        "elapsed_time":{"type": "ellip1", "width": 150},
+        "final_status": {"type": "ellip1", "width": 120},
+        "status": {"type": "ellip1", "width": 100},
+        "elapsed_time":{"type": "ellip1", "width": 70},
         "log": {"type": "ellip1", "width": 70},
         "stop": {"type": "ellip1", "width": 70},
     }
@@ -172,7 +175,7 @@ class Workflow_ModelView_Base():
         )
 
     @event_logger.log_this
-    @expose("/stop/<crd_id>")
+    @expose_api(description="停止workflow",url="/stop/<crd_id>")
     def stop(self, crd_id):
         workflow = db.session.query(self.datamodel.obj).filter_by(id=crd_id).first()
         # 只有管理员和创建者可以
@@ -475,9 +478,9 @@ class Workflow_ModelView_Base():
         fill_child(self, dag_config, workflow_name)
         return layout_config, dag_config, self.node_detail_config, workflow_obj
 
-    @expose("/web/log/<cluster_name>/<namespace>/<workflow_name>/<pod_name>", methods=["GET", ])
-    @expose("/web/log_node/<cluster_name>/<namespace>/<workflow_name>/<pod_name>", methods=["GET", ])
-    @expose("/web/log/<cluster_name>/<namespace>/<workflow_name>/<pod_name>/<file_name>", methods=["GET", ])
+    @expose_api(description="workflow的执行进度",url="/web/log/<cluster_name>/<namespace>/<workflow_name>/<pod_name>", methods=["GET", ])
+    @expose_api(description="workflow的执行进度",url="/web/log_node/<cluster_name>/<namespace>/<workflow_name>/<pod_name>", methods=["GET", ])
+    @expose_api(description="workflow的执行进度",url="/web/log/<cluster_name>/<namespace>/<workflow_name>/<pod_name>/<file_name>", methods=["GET", ])
     def log_node(self, cluster_name, namespace, workflow_name, pod_name,file_name='main.log'):
         log = self.get_minio_content(f'{workflow_name}/{pod_name}/{file_name}')
         if '/web/log/' in request.path:
@@ -566,7 +569,7 @@ class Workflow_ModelView_Base():
             content = ansi_escape.sub('', content)
         return content
 
-    @expose("/web/node_detail/<cluster_name>/<namespace>/<workflow_name>/<node_name>", methods=["GET", ])
+    @expose_api(description="任务实例的信息",url="/web/node_detail/<cluster_name>/<namespace>/<workflow_name>/<node_name>", methods=["GET", ])
     # @pysnooper.snoop()
     def web_node_detail(self,cluster_name,namespace,workflow_name,node_name):
         layout_config, dag_config,node_detail_config,workflow = self.get_dag(cluster_name, namespace, workflow_name,node_name)
@@ -895,7 +898,7 @@ class Workflow_ModelView_Base():
         }
         )
 
-    @expose("/web/dag/<cluster_name>/<namespace>/<workflow_name>", methods=["GET", ])
+    @expose_api(description="任务流实例的信息",url="/web/dag/<cluster_name>/<namespace>/<workflow_name>", methods=["GET", ])
     # @pysnooper.snoop()
     def web_dag(self, cluster_name, namespace, workflow_name):
         layout_config, dag_config, node_detail_config, workflow = self.get_dag(cluster_name, namespace, workflow_name)
@@ -915,7 +918,7 @@ class Workflow_ModelView_Base():
             }
         )
 
-    @expose("/web/layout/<cluster_name>/<namespace>/<workflow_name>", methods=["GET", ])
+    @expose_api(description="workflow实例运行进度",url="/web/layout/<cluster_name>/<namespace>/<workflow_name>", methods=["GET", ])
     def web_layout(self, cluster_name, namespace, workflow_name):
         layout_config, dag_config, node_detail_config, workflow = self.get_dag(cluster_name, namespace, workflow_name)
         layout_config['title'] = f"{cluster_name} {namespace} {workflow_name} {layout_config['start_time']} {layout_config['finish_time']}"

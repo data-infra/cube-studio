@@ -2,6 +2,8 @@ import math
 import random
 import re
 
+from flask_appbuilder.baseviews import expose_api
+
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
@@ -214,68 +216,14 @@ class Task_ModelView_Base():
         core.validate_str(item.name, 'name')
         core.validate_json(item.args)
         task_args = json.loads(item.args)
+        task_args = {
+            key:(task_args[key].strip(' ') if type(task_args[key])==str else task_args[key]) for key in task_args
+        }
         job_args = json.loads(item.job_template.args)
         item.args = json.dumps(core.validate_task_args(task_args, job_args), indent=4, ensure_ascii=False)
 
         if item.volume_mount and ":" not in item.volume_mount:
             raise MyappException('volume_mount is not valid, must contain : or null')
-
-    # @pysnooper.snoop(watch_explode=('item'))
-    # 多级子参数的合并，目前不需要
-    def merge_args(self, item, action):
-
-        logging.info(item)
-
-        # 将字段合并为字典
-        # @pysnooper.snoop()
-        def nest_once(inp_dict):
-            out = {}
-            if isinstance(inp_dict, dict):
-                for key, val in inp_dict.items():
-                    if '.' in key:
-                        keys = key.split('.')
-                        sub_dict = out
-                        for sub_key_index in range(len(keys)):
-                            sub_key = keys[sub_key_index]
-                            # 下面还有字典的情况
-                            if sub_key_index != len(keys) - 1:
-                                if sub_key not in sub_dict:
-                                    sub_dict[sub_key] = {}
-                            else:
-                                sub_dict[sub_key] = val
-                            sub_dict = sub_dict[sub_key]
-
-                    else:
-                        out[key] = val
-            return out
-
-        args_json_column = {}
-        # 根据参数生成args字典。一层嵌套的形式
-        for arg in item.__dict__:
-            if arg[:5] == 'args.':
-                task_attr_value = getattr(item, arg)
-                # 如果是add
-                # 用户没做任何修改，比如文件未做修改或者输入为空，那么后端采用不修改的方案
-                if task_attr_value == None and action == 'update':  # 必须不是None
-                    # logging.info(item.args)
-                    src_attr = arg[5:].split('.')  # 多级子属性
-                    sub_src_attr = json.loads(item.args)
-                    for sub_key in src_attr:
-                        sub_src_attr = sub_src_attr[sub_key].strip(' ') if sub_key in sub_src_attr else ''
-                    args_json_column[arg] = sub_src_attr
-                elif task_attr_value == None and action == 'add':  # 必须不是None
-                    args_json_column[arg] = ''
-                else:
-                    args_json_column[arg] = task_attr_value
-
-        # 如果是合并成的args
-        if args_json_column:
-            # 将一层嵌套的参数形式，改为多层嵌套的json形似
-            des_merge_args = nest_once(args_json_column)
-            item.args = json.dumps(des_merge_args.get('args', {}))
-        # 如果是原始完成的args
-        elif not item.args:
-            item.args = '{}'
 
     # 在web界面上添加一个图标
     # @pysnooper.snoop()
@@ -328,7 +276,8 @@ class Task_ModelView_Base():
                 item.volume_mount = item.job_template.volume_mount
         item.resource_memory = core.check_resource_memory(item.resource_memory)
         item.resource_cpu = core.check_resource_cpu(item.resource_cpu)
-        self.merge_args(item, 'add')
+        if not item.args:
+            item.args = '{}'
         self.task_args_check(item)
         item.create_datetime = datetime.datetime.now()
         item.change_datetime = datetime.datetime.now()
@@ -388,8 +337,10 @@ class Task_ModelView_Base():
                                 volume_mount_arr.append(volume_mount)
 
                 item.volume_mount = ','.join(volume_mount_arr).strip(',')
+
             # 合并项目组的挂载
-            item.volume_mount = ','.join(list(set((item.volume_mount+","+item.project.volume_mount).strip().split(','))))
+            item.volume_mount = core.merge_volume_mount(item.pipeline.project.volume_mount,item.volume_mount)
+
 
         if item.outputs:
             core.validate_json(item.outputs)
@@ -403,7 +354,8 @@ class Task_ModelView_Base():
         # item.resource_memory=core.check_resource_memory(item.resource_memory,self.src_resource_memory)
         # item.resource_cpu = core.check_resource_cpu(item.resource_cpu,self.src_resource_cpu)
 
-        self.merge_args(item, 'update')
+        if not item.args:
+            item.args = '{}'
         self.task_args_check(item)
         item.change_datetime = datetime.datetime.now()
         gpu_num, _, _ = core.get_gpu(item.resource_gpu)
@@ -461,16 +413,18 @@ class Task_ModelView_Base():
         task_env = task.job_template.env + "\n" if task.job_template.env else ''
 
         HostNetwork = json.loads(task.job_template.expand).get("HostNetwork", False) if task.job_template.expand else False
-        # hostPort = 40000 + (task.id * 1000) % 10000
         byte_string = run_id.encode('utf-8')
         import hashlib
         # 计算字节串的哈希值
         hash_object = hashlib.sha256(byte_string)
         hash_value = int(hash_object.hexdigest(), 16)
         # 将哈希值映射到指定范围
-        hostPort = 40000 + 10*(hash_value % 1000)
+        hostPort = 40000 + 2*(hash_value % 1000)
+        meet_ports = core.get_not_black_port(hostPort)
 
-
+        if HostNetwork:
+            task_env += 'PORT1=' + str(meet_ports[1])+ "\n"
+            task_env += 'PORT2=' + str(meet_ports[2])+ "\n"
 
         _, _, resource_name = core.get_gpu(task.resource_gpu)
 
@@ -536,9 +490,9 @@ class Task_ModelView_Base():
 
         volume_mount = task.volume_mount
 
-        resource_cpu = task.job_template.get_env('TASK_RESOURCE_CPU') if task.job_template.get_env('TASK_RESOURCE_CPU') else task.resource_cpu
-        resource_gpu = task.job_template.get_env('TASK_RESOURCE_GPU') if task.job_template.get_env('TASK_RESOURCE_GPU') else task.resource_gpu
-        resource_memory = task.job_template.get_env('TASK_RESOURCE_MEMORY') if task.job_template.get_env('TASK_RESOURCE_MEMORY') else task.resource_memory
+        resource_cpu = task.job_template.get_env('TASK_RESOURCE_CPU') if task.job_template.get_env('TASK_RESOURCE_CPU') and 'run-' in run_id else task.resource_cpu
+        resource_gpu = task.job_template.get_env('TASK_RESOURCE_GPU') if task.job_template.get_env('TASK_RESOURCE_GPU') and 'run-' in run_id else task.resource_gpu
+        resource_memory = task.job_template.get_env('TASK_RESOURCE_MEMORY') if task.job_template.get_env('TASK_RESOURCE_MEMORY') and 'run-' in run_id else task.resource_memory
         hostAliases=conf.get('HOSTALIASES')
         if task.job_template.hostAliases:
             hostAliases += "\n" + task.job_template.hostAliases
@@ -554,7 +508,7 @@ class Task_ModelView_Base():
         db.session.commit()
         k8s_client.create_debug_pod(namespace,
                                     name=pod_name,
-                                    labels={"pipeline": task.pipeline.name, 'task': task.name, 'user': g.user.username, 'run-id': run_id, 'pod-type': "task"},
+                                    labels={'app':task.pipeline.name,"pipeline": task.pipeline.name, 'task': task.name, 'user': g.user.username, 'run-id': run_id, 'pod-type': "task"},
                                     annotations={'project':task.pipeline.project.name},
                                     command=command,
                                     args=new_args,
@@ -577,7 +531,7 @@ class Task_ModelView_Base():
                                     )
 
     # @event_logger.log_this
-    @expose("/debug/<task_id>", methods=["GET", "POST"])
+    @expose_api(description="单个任务debug",url="/debug/<task_id>", methods=["GET", "POST"])
     def debug(self, task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
 
@@ -697,7 +651,7 @@ class Task_ModelView_Base():
 
         return redirect("/k8s/web/debug/%s/%s/%s/%s" % (task.pipeline.project.cluster['NAME'], new_namespace, pod_name, pod_name))
 
-    @expose("/run/<task_id>", methods=["GET", "POST"])
+    @expose_api(description="单个任务run",url="/run/<task_id>", methods=["GET", "POST"])
     # @pysnooper.snoop(watch_explode=('ops_args',))
     def run_task(self, task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
@@ -868,7 +822,7 @@ class Task_ModelView_Base():
                 k8s_client.delete_pods(namespace=namespace, labels={"run-id": run_id})
                 time.sleep(2)
 
-    @expose("/clear/<task_id>", methods=["GET", "POST"])
+    @expose_api(description="单个任务clear",url="/clear/<task_id>", methods=["GET", "POST"])
     def clear_task(self, task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
 
@@ -884,7 +838,7 @@ class Task_ModelView_Base():
         # self.update_redirect()
         return redirect('/pipeline_modelview/api/web/%s' % str(task.pipeline.id))
 
-    @expose("/log/<task_id>", methods=["GET", "POST"])
+    @expose_api(description="单个任务查看日志",url="/log/<task_id>", methods=["GET", "POST"])
     def log_task(self, task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
         from myapp.utils.py.py_k8s import K8s

@@ -1,5 +1,7 @@
 import re
 
+from flask_appbuilder.baseviews import expose_api
+
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
@@ -185,7 +187,7 @@ class Project_ModelView_job_template_Api(Project_ModelView_Base, MyappModelRestA
     datamodel = SQLAInterface(Project)
     base_permissions = ['can_add', 'can_edit', 'can_delete', 'can_list', 'can_show']
     base_order = ('id', 'desc')
-    order_columns = ['name']
+    order_columns = ['id']
     cols_width = {
         "name": {"type": "ellip1", "width": 100},
         "describe": {"type": "ellip1", "width": 150},
@@ -295,8 +297,7 @@ class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
                 label = _('服务代理ip'),
                 default='',
                 description = _("服务的代理ip，xx.内网.xx.xx|xx.公网.xx.xx"),
-                widget=BS3TextFieldWidget(),
-                validators=[Regexp('^[0-9\.:]*$')]
+                widget=BS3TextFieldWidget()
             ),
             "org": SelectField(
                 label = _('资源组'),
@@ -378,31 +379,6 @@ class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
             response['permissions']=['can_add', 'can_edit', 'can_delete', 'can_list', 'can_show']
         else:
             response['permissions'] = ['can_list', 'can_show']
-
-class Project_ModelView_train_model_Api(Project_ModelView_Base, MyappModelRestApi):
-    route_base = '/project_modelview/model/api'
-    datamodel = SQLAInterface(Project)
-    project_type = 'model'
-    label_title = _('模型分组')
-    base_filters = [["id", Project_Filter, project_type]]
-    edit_form_extra_fields = {
-        'type': StringField(
-            _('模型分组'),
-            description='',
-            widget=MyBS3TextFieldWidget(value=project_type, readonly=1),
-            default=project_type,
-        )
-    }
-    add_form_extra_fields = edit_form_extra_fields
-    def post_add(self, item):
-        if not item.type:
-            item.type = self.project_type
-        db.session.commit()
-
-
-
-appbuilder.add_api(Project_ModelView_org_Api)
-
 
 class Project_ModelView_Api(Project_ModelView_Base, MyappModelRestApi):
     datamodel = SQLAInterface(Project)

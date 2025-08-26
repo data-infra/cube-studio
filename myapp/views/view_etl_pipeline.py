@@ -1,3 +1,5 @@
+from flask_appbuilder.baseviews import expose_api
+
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
@@ -271,7 +273,7 @@ class ETL_Pipeline_ModelView_Base():
         pass
 
     # 获取pipeline配置信息，包括快捷菜单，运行按钮，公共配置参数，任务流dag_json
-    @expose("/config/<etl_pipeline_id>", methods=("GET", 'POST'))
+    @expose_api(description="获取pipeline配置信息，包括快捷菜单，运行按钮，公共配置参数，任务流dag_json",url="/config/<etl_pipeline_id>", methods=("GET", 'POST'))
     def pipeline_config(self, etl_pipeline_id):
         print(etl_pipeline_id)
         pipeline = db.session.query(ETL_Pipeline).filter_by(id=etl_pipeline_id).first()
@@ -365,8 +367,8 @@ class ETL_Pipeline_ModelView_Base():
 
         return jsonify(config)
 
-    @expose("/template/list/")
-    @expose("/template/list/<etl_pipeline_id>")
+    @expose_api(description="etl的模板列表",url="/template/list/")
+    @expose_api(description="etl的某个任务流的模板列表",url="/template/list/<etl_pipeline_id>")
     # @pysnooper.snoop(
     def template_list(self, etl_pipeline_id=None):  # 这里根据引擎返回不同的模板列表
         if not etl_pipeline_id:
@@ -412,7 +414,7 @@ class ETL_Pipeline_ModelView_Base():
         return wraps
 
     # # @event_logger.log_this
-    @expose("/submit_etl_pipeline/<etl_pipeline_id>", methods=["GET", "POST"])
+    @expose_api(description="提交etl任务",url="/submit_etl_pipeline/<etl_pipeline_id>", methods=["GET", "POST"])
     def submit_etl_pipeline(self, etl_pipeline_id):
         print(etl_pipeline_id)
         url = '/etl_pipeline_modelview/api/web/' + etl_pipeline_id
@@ -437,7 +439,7 @@ class ETL_Pipeline_ModelView_Base():
         url = conf.get('MODEL_URLS', {}).get('etl_task')
         return redirect(url)
 
-    @expose("/web/<etl_pipeline_id>", methods=["GET"])
+    @expose_api(description="etl编排界面",url="/web/<etl_pipeline_id>", methods=["GET"])
     def web(self, etl_pipeline_id):
         etl_pipeline = db.session.query(ETL_Pipeline).filter_by(id=etl_pipeline_id).first()
 

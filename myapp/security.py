@@ -285,10 +285,14 @@ class MyUserRemoteUserModelView_Base():
         user.first_name = user.username
         user.last_name = ''
         user.active=True
+        user.password = generate_password_hash(user.password)
 
+    # @pysnooper.snoop()
     def pre_update(self,user):
         user.first_name = user.username
         user.last_name = ''
+        if 'pbkdf2:sha256:' not in user.password:
+            user.password = generate_password_hash(user.password)
 
 class MyUserRemoteUserModelView(MyUserRemoteUserModelView_Base,UserModelView):
     datamodel = SQLAInterface(MyUser)
@@ -339,6 +343,8 @@ class UserInfoEditView(SimpleFormView):
         form = self.form.refresh(request.form)
         item = self.appbuilder.sm.get_user_by_id(g.user.id)
         form.populate_obj(item)
+        if 'pbkdf2:sha256:' not in item.password:
+            item.password = generate_password_hash(item.password)
         self.appbuilder.sm.update_user(item)
         flash(as_unicode(self.message), "info")
 

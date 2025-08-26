@@ -1,6 +1,8 @@
 import base64
 import math
 
+from flask_appbuilder.baseviews import expose_api
+
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
@@ -527,6 +529,7 @@ def dag_to_pipeline(pipeline, dbsession, workflow_label=None, **kwargs):
     workflow_label['save-time'] = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
     workflow_label['pipeline-id'] = str(pipeline.id)
     workflow_label['pipeline-name'] = str(pipeline.name)
+    workflow_label['app'] = str(pipeline.name)
     workflow_label['run-id'] = global_envs.get('KFJ_RUN_ID', '')  # 以此来绑定运行时id，不能用kfp的run—id。那个是传到kfp以后才产生的。
     workflow_label['cluster'] = pipeline.project.cluster['NAME']
 
@@ -981,7 +984,7 @@ class Pipeline_ModelView_Base():
         db.session.query(RunHistory).filter_by(pipeline_id=pipeline.id).delete(synchronize_session=False)
         db.session.commit()
 
-    @expose("/my/list/")
+    @expose_api(description="我的pipeline列表",url="/my/list/")
     def my(self):
         try:
             user_id = g.user.id
@@ -995,7 +998,7 @@ class Pipeline_ModelView_Base():
             print(e)
             return json_response(message=str(e), status=-1, result={})
 
-    @expose("/demo/list/")
+    @expose_api(description="示例pipeline列表",url="/demo/list/")
     def demo(self):
         try:
             pipelines = db.session.query(Pipeline).filter(Pipeline.parameter.contains('"demo": "true"')).all()
@@ -1094,12 +1097,20 @@ class Pipeline_ModelView_Base():
                 print(e)
 
     # @event_logger.log_this
-    @expose("/run_pipeline/<pipeline_id>", methods=["GET", "POST"])
+    @expose_api(description="运行指定pipeline",url="/run_pipeline/<pipeline_id>", methods=["GET", "POST"])
     @check_pipeline_perms
     # @pysnooper.snoop()
     def run_pipeline(self, pipeline_id):
         # print(pipeline_id)
         pipeline = db.session.query(Pipeline).filter_by(id=pipeline_id).first()
+
+        # 只有管理员和创建者可以debug
+        if pipeline.created_by_fk!=g.user.id and not g.user.is_admin():
+            # 模板创建者可以调试模板
+            message = __('仅管理员或创建者，可运行该任务流')
+            flash(message, 'warning')
+            return self.response(400, **{"status": 1, "result": {}, "message": message})
+
         pipeline.delete_old_task()
         tasks = db.session.query(Task).filter_by(pipeline_id=pipeline_id).all()
         if not tasks:
@@ -1148,7 +1159,7 @@ class Pipeline_ModelView_Base():
 
 
     # # @event_logger.log_this
-    @expose("/web/<pipeline_id>", methods=["GET"])
+    @expose_api(description="打开任务流编排界面",url="/web/<pipeline_id>", methods=["GET"])
     # @pysnooper.snoop()
     def web(self, pipeline_id):
         pipeline = db.session.query(Pipeline).filter_by(id=pipeline_id).first()
@@ -1178,7 +1189,7 @@ class Pipeline_ModelView_Base():
         # return self.render_template('link.html', data=data)
 
     # # @event_logger.log_this
-    @expose("/web/log/<pipeline_id>", methods=["GET"])
+    @expose_api(description="打开任务流调试跟踪界面",url="/web/log/<pipeline_id>", methods=["GET"])
     def web_log(self, pipeline_id):
         pipeline = db.session.query(Pipeline).filter_by(id=pipeline_id).first()
         namespace = pipeline.namespace
@@ -1194,7 +1205,7 @@ class Pipeline_ModelView_Base():
 
 
     # # @event_logger.log_this
-    @expose("/web/monitoring/<pipeline_id>", methods=["GET"])
+    @expose_api(description="打开任务流资源监控界面",url="/web/monitoring/<pipeline_id>", methods=["GET"])
     def web_monitoring(self, pipeline_id):
         pipeline = db.session.query(Pipeline).filter_by(id=int(pipeline_id)).first()
 
@@ -1205,19 +1216,19 @@ class Pipeline_ModelView_Base():
         #     return redirect('/pipeline_modelview/api/web/%s' % pipeline.id)
 
     # # @event_logger.log_this
-    @expose("/web/pod/<pipeline_id>", methods=["GET"])
+    @expose_api(description="打开任务流的pod界面",url="/web/pod/<pipeline_id>", methods=["GET"])
     def web_pod(self, pipeline_id):
         pipeline = db.session.query(Pipeline).filter_by(id=pipeline_id).first()
         namespace = pipeline.namespace
         return redirect(f'/k8s/web/search/{pipeline.project.cluster["NAME"]}/{namespace}/{pipeline.name.replace("_", "-").lower()}')
 
-    @expose("/web/runhistory/<pipeline_id>", methods=["GET"])
+    @expose_api(description="打开任务流的定时记录界面",url="/web/runhistory/<pipeline_id>", methods=["GET"])
     def web_runhistory(self,pipeline_id):
         url = conf.get('MODEL_URLS', {}).get('runhistory', '') + '?filter=' + urllib.parse.quote(json.dumps([{"key": "pipeline", "value": int(pipeline_id)}], ensure_ascii=False))
         # print(url)
         return redirect(url)
 
-    @expose("/web/workflow/<pipeline_id>", methods=["GET"])
+    @expose_api(description="打开任务流的调试跟踪界面",url="/web/workflow/<pipeline_id>", methods=["GET"])
     def web_workflow(self,pipeline_id):
         url = conf.get('MODEL_URLS', {}).get('workflow', '') + '?filter=' + urllib.parse.quote(json.dumps([{"key": "labels", "value": '"pipeline-id": "%s"'%pipeline_id}], ensure_ascii=False))
         # print(url)
@@ -1264,7 +1275,7 @@ class Pipeline_ModelView_Base():
         return new_pipeline
 
     # # @event_logger.log_this
-    @expose("/copy_pipeline/<pipeline_id>", methods=["GET", "POST"])
+    @expose_api(description="复制任务流",url="/copy_pipeline/<pipeline_id>", methods=["GET", "POST"])
     def copy_pipeline(self, pipeline_id):
         # print(pipeline_id)
         message = ''

@@ -1,6 +1,7 @@
 import math
 import re
 
+from flask_appbuilder.baseviews import expose_api
 from kubernetes.client import ApiException
 
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
@@ -214,7 +215,7 @@ class NNI_ModelView_Base():
     )
     edit_form_extra_fields['working_dir'] = StringField(
         _('工作目录'),
-        description= _('代码所在目录，nni代码、配置和log都将在/mnt/${username}/nni/目录下进行。<a target="_blank" href="/notebook_modelview/api/entry/jupyter?file_path=/mnt/{{creator}}/">打开目录</a>'),
+        description= _('代码所在目录，nni代码、配置和log都将在/mnt/${username}/nni/目录下进行。')+core.open_jupyter(_('打开目录'),'working_dir'),
         default=datamodel.obj.working_dir.default.arg,
         widget=BS3TextFieldWidget(),
         validators=[Regexp('^[\x00-\x7F]*$')]
@@ -531,7 +532,7 @@ class NNI_ModelView_Base():
     # 生成实验
     # @pysnooper.snoop()
     @event_logger.log_this
-    @expose('/stop/<nni_id>', methods=['GET', 'POST'])
+    @expose_api(description="停止超参搜索",url='/stop/<nni_id>', methods=['GET', 'POST'])
     # @pysnooper.snoop()
     def stop(self, nni_id):
         nni = db.session.query(NNI).filter(NNI.id == nni_id).first()
@@ -547,7 +548,7 @@ class NNI_ModelView_Base():
 
     # 生成实验
     # @pysnooper.snoop()
-    @expose('/run/<nni_id>', methods=['GET', 'POST'])
+    @expose_api(description="停启动超参搜索",url='/run/<nni_id>', methods=['GET', 'POST'])
     # @pysnooper.snoop()
     def run(self, nni_id):
         nni = db.session.query(NNI).filter(NNI.id == nni_id).first()
@@ -641,7 +642,7 @@ trainingService:
     def validate_parameters(self, parameters, algorithm):
         return parameters
 
-    @expose("/log/<nni_id>", methods=["GET", "POST"])
+    @expose_api(description="查看超参搜索pod日志",url="/log/<nni_id>", methods=["GET", "POST"])
     def log_task(self, nni_id):
         nni = db.session.query(NNI).filter_by(id=nni_id).first()
         from myapp.utils.py.py_k8s import K8s
@@ -654,7 +655,7 @@ trainingService:
         flash(__("未检测到当前搜索实验正在运行的容器"), category='success')
         return redirect(conf.get('MODEL_URLS', {}).get('nni', ''))
 
-    @expose("/web/<nni_id>", methods=["GET", "POST"])
+    @expose_api(description="查看超参搜索运行界面",url="/web/<nni_id>", methods=["GET", "POST"])
     def web_task(self, nni_id):
         nni = db.session.query(NNI).filter_by(id=nni_id).first()
         from myapp.utils.py.py_k8s import K8s
@@ -714,7 +715,7 @@ trainingService:
     def pre_add(self, item):
 
         if not item.namespace:
-            item.namespace = item.project.notebook_namespace
+            item.namespace = item.project.automl_namespace
 
         if item.job_type is None:
             item.job_type = 'Job'

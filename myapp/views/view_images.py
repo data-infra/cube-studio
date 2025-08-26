@@ -1,6 +1,8 @@
 import os
 import re
 
+from flask_appbuilder.baseviews import expose_api
+
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
@@ -152,6 +154,7 @@ appbuilder.add_api(Repository_ModelView_Api)
 
 class Images_ModelView_Base():
     label_title = _('镜像')
+    route_base = '/images_modelview/api'
     datamodel = SQLAInterface(Images)
 
     list_columns = ['project','images_url', 'creator', 'modified']
@@ -209,7 +212,7 @@ class Images_ModelView_Base():
 
 class Images_ModelView_Api(Images_ModelView_Base, MyappModelRestApi):
     datamodel = SQLAInterface(Images)
-    route_base = '/images_modelview/api'
+
 
 
 appbuilder.add_api(Images_ModelView_Api)

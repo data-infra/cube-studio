@@ -1,3 +1,4 @@
+from flask_appbuilder.baseviews import expose_api
 from wtforms.ext.sqlalchemy.fields import QuerySelectField
 
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
@@ -197,7 +198,7 @@ class Docker_ModelView_Base():
                 flash(__('发现基础镜像更换，已帮你删除之前启动的debug容器'), 'success')
 
     # @event_logger.log_this
-    @expose("/debug/<docker_id>", methods=["GET", "POST"])
+    @expose_api(description="容器debug",url="/debug/<docker_id>", methods=["GET", "POST"])
     # @pysnooper.snoop()
     def debug(self, docker_id):
         docker = db.session.query(Docker).filter_by(id=docker_id).first()
@@ -263,7 +264,7 @@ class Docker_ModelView_Base():
             try_num = try_num - 1
             time.sleep(2)
         if try_num == 0:
-            pod_url = conf.get('K8S_DASHBOARD_CLUSTER','') + '#/search?namespace=%s&q=%s' % (namespace, pod_name)
+            pod_url = f'/web/search/{conf.get("ENVIRONMENT")}/{namespace}/{pod_name}'
             # event = k8s_client.get_pod_event(namespace=namespace,pod_name=pod_name)
 
             message = __('拉取镜像时间过长，一分钟后刷新此页面，或者打开链接：')+'<a href="%s">' % pod_url+__('查看pod信息')+'</a>'
@@ -277,7 +278,7 @@ class Docker_ModelView_Base():
         return redirect(f'/k8s/web/debug/{conf.get("ENVIRONMENT")}/{namespace}/{pod_name}/{pod_name}')
 
     # @event_logger.log_this
-    @expose("/delete_pod/<docker_id>", methods=["GET", "POST"])
+    @expose_api(description="清理在线调试镜像",url="/delete_pod/<docker_id>", methods=["GET", "POST"])
     # @pysnooper.snoop()
     def delete_pod(self, docker_id,cluster=None):
         docker = db.session.query(Docker).filter_by(id=docker_id).first()
@@ -297,7 +298,7 @@ class Docker_ModelView_Base():
         self.delete_pod(docker_id=item.id)
 
     # @event_logger.log_this
-    @expose("/save/<docker_id>", methods=["GET", "POST"])
+    @expose_api(description="保存在线调试镜像",url="/save/<docker_id>", methods=["GET", "POST"])
     # @pysnooper.snoop(watch_explode='status')
     def save(self, docker_id):
         docker = db.session.query(Docker).filter_by(id=docker_id).first()
@@ -391,7 +392,7 @@ class Docker_ModelView_Base():
         return redirect("/k8s/web/log/%s/%s/%s" % (docker.project.cluster.get('NAME', ''), namespace, pod_name))
 
 
-    @expose('/entry/docker', methods=['GET', 'DELETE'])
+    @expose_api(description="创建在线调试镜像",url='/entry/docker', methods=['GET', 'DELETE'])
     def entry_docker(self):
         return redirect('/frontend/dev/images/docker?isVisableAdd=true')
 

@@ -1,6 +1,8 @@
 import os
 import re
 
+from flask_appbuilder.baseviews import expose_api
+
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
@@ -67,13 +69,13 @@ class Notebook_ModelView_Base():
     list_columns = ['project', 'ide_type_html', 'name_url', 'status', 'describe','reset', 'resource', 'renew', 'save']
     show_columns = ['project', 'name', 'namespace', 'describe', 'images', 'working_dir', 'env', 'volume_mount','resource_memory', 'resource_cpu', 'resource_gpu', 'expand']
     cols_width = {
-        "project": {"type": "ellip2", "width": 150},
+        "project": {"type": "ellip2", "width": 120},
         "ide_type_html": {"type": "ellip2", "width": 200},
-        "name_url": {"type": "ellip2", "width": 200},
+        "name_url": {"type": "ellip2", "width": 150},
         "describe": {"type": "ellip2", "width": 180},
-        "resource": {"type": "ellip2", "width": 300},
-        "status": {"type": "ellip2", "width": 100},
-        "renew": {"type": "ellip2", "width": 200},
+        "resource": {"type": "ellip2", "width": 270},
+        "status": {"type": "ellip2", "width": 140},
+        "renew": {"type": "ellip2", "width": 150},
         "save": {"type": "ellip2", "width": 200},
         "ops_html": {"type": "ellip2", "width": 130}
     }
@@ -227,7 +229,7 @@ class Notebook_ModelView_Base():
 
                 item.volume_mount = ','.join(volume_mount_arr).strip(',')
             # 合并项目组的挂载
-            item.volume_mount = ','.join(list(set((item.volume_mount+","+item.project.volume_mount).strip().split(','))))
+            item.volume_mount = core.merge_volume_mount(item.project.volume_mount,item.volume_mount)
 
 
 
@@ -264,7 +266,7 @@ class Notebook_ModelView_Base():
             self.reset_notebook(item)
         except Exception as e:
             print(e)
-            flash(__('start fail, please manually reset: ')+str(e), 'warning')
+            flash(__('start fail, please reset notebook: ')+str(e), 'warning')
             return
 
         flash(__('自动reset 一分钟后生效'), 'info')
@@ -296,7 +298,7 @@ class Notebook_ModelView_Base():
     pre_update_web = set_column
     pre_add_web = set_column
 
-    @expose('/entry/jupyter', methods=['GET', 'DELETE'])
+    @expose_api(description="创建打开jupyter",url='/entry/jupyter', methods=['GET', 'DELETE'])
     def entry_jupyter(self):
         data=request.args
         project_name=data.get('project_name','public')
@@ -306,6 +308,8 @@ class Notebook_ModelView_Base():
         resource_cpu = data.get('resource_cpu',"10")
         volume_mount = data.get('volume_mount','kubeflow-user-workspace(pvc):/mnt')
         file_path = data.get('file_path', '')   # 一定要是文件在 notebook的容器目录
+        if 'http://' in file_path or 'https://' in file_path:
+            file_path = '/mnt/{{creator}}'
 
         def template_str(src_str):
             from jinja2 import Environment, BaseLoader, DebugUndefined
@@ -322,12 +326,12 @@ class Notebook_ModelView_Base():
             file_path = file_path.replace(f'/mnt/{g.user.username}','')
         # 如果是打不开的文本文件，就自动变为目录
         file_name = file_path.split('/')[-1]
-        text_file_extensions = {'.txt', '.csv', '.json', '.xml', '.py', '.html', '.css', '.js', '.md'}
+        text_file_extensions = {'ipynb', 'py', 'R', 'txt', 'csv', 'json', 'xml', 'py', 'html', 'css', 'js', 'md', 'yaml', 'yml', 'html', 'jpg', 'jpeg', 'png', 'sh'}
         if '.' in file_name:
-            if file_name.strip('.')[0] not in text_file_extensions:
+            if file_name.split('.')[-1] not in text_file_extensions:
                 file_path = file_path.replace(file_name,'')
 
-        images = data.get('images',f'{conf.get("REPOSITORY_ORG","ccr.ccs.tencentyun.com/cube-studio/")}notebook:jupyter-ubuntu22.04')
+        images = data.get('images',f'{conf.get("REPOSITORY_ORG","ccr.ccs.tencentyun.com/cube-studio/")}notebook-enterprise:jupyter-ubuntu-cpu-pro')
         project = db.session.query(Project).filter(Project.name==project_name).filter(Project.type=='org').first()
         notebook = db.session.query(Notebook).filter(Notebook.name==name).first()
         if not project:
@@ -404,7 +408,7 @@ class Notebook_ModelView_Base():
                 namespace=namespace,
                 name=name,
                 username=notebook.created_by.username,
-                ports=[port, ],
+                ports=[port],
                 selector=labels
             )
         try:
@@ -593,6 +597,7 @@ class Notebook_ModelView_Base():
 
         command = None
         workingDir = None
+        health=None
         volume_mount = notebook.volume_mount
         # 端口+0是jupyterlab  +1是sshd   +2 +3 是预留的用户自己启动应用占用的端口
         port_str = conf.get('NOTEBOOK_PORT','10000+10*ID').replace('ID', str(notebook.id))
@@ -760,9 +765,10 @@ class Notebook_ModelView_Base():
         if SERVICE_EXTERNAL_IP and SERVICE_EXTERNAL_IP[0]!='127.0.0.1':
             SERVICE_EXTERNAL_IP = [ip.split('|')[0].strip().split(':')[0] for ip in SERVICE_EXTERNAL_IP]
             ports = [port]
-            # if notebook.ide_type=='bigdata':
-            for index in range(1, 4):
-                ports.append(meet_ports[index])
+            ports.append(meet_ports[1])   # 给每个notebook多开一个端口，ssh的端口
+
+            # for index in range(1, 4):
+            #     ports.append(meet_ports[index])
 
             # ports = list(set(ports))  # 这里会乱序
             service_ports = [[meet_ports[index], port] for index, port in enumerate(ports)]
@@ -778,7 +784,7 @@ class Notebook_ModelView_Base():
             )
 
     # @event_logger.log_this
-    @expose('/reset/<notebook_id>', methods=['GET', 'POST'])
+    @expose_api(description="重置在线ide",url='/reset/<notebook_id>', methods=['GET', 'POST'])
     def reset(self, notebook_id):
 
         notebook = db.session.query(Notebook).filter_by(id=notebook_id).first()
@@ -794,7 +800,7 @@ class Notebook_ModelView_Base():
         return redirect(conf.get('MODEL_URLS', {}).get('notebook', ''))
 
     # @event_logger.log_this
-    @expose('/renew/<notebook_id>', methods=['GET', 'POST'])
+    @expose_api(description="在线ide续期",url='/renew/<notebook_id>', methods=['GET', 'POST'])
     def renew(self, notebook_id):
         notebook = db.session.query(Notebook).filter_by(id=notebook_id).first()
         notebook.changed_on = datetime.datetime.now()
@@ -827,7 +833,7 @@ class Notebook_ModelView_Base():
     def pre_delete(self, item):
         self.base_muldelete([item])
 
-    @expose("/list/")
+    @expose_api(description="在线ide的列表查询",url="/list/")
     @has_access
     def list(self):
         args = request.args.to_dict()
@@ -843,7 +849,7 @@ class Notebook_ModelView_Base():
         return res
 
     # @event_logger.log_this
-    # @expose("/delete/<pk>")
+    # @expose_api(description="",url="/delete/<pk>")
     # @has_access
     # def delete(self, pk):
     #     pk = self._deserialize_pk_if_composite(pk)
@@ -857,7 +863,7 @@ class Notebook_ModelView_Base():
         self.update_redirect()
         return redirect(self.get_redirect())
 
-    @expose('/stop/<notebook_id>', methods=['GET', 'POST'])
+    @expose_api(description="停止在线ide",url='/stop/<notebook_id>', methods=['GET', 'POST'])
     def stop(self, notebook_id):
         notebook = db.session.query(Notebook).filter_by(id=notebook_id).first()
         self.base_muldelete([notebook])

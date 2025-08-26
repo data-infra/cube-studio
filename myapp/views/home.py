@@ -1,7 +1,10 @@
 import copy
+import json
 import logging
 import os.path
 import random
+
+from flask_appbuilder.baseviews import expose_api
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 from flask import g
@@ -19,10 +22,10 @@ from flask import stream_with_context, request
 
 class Myapp(BaseMyappView):
     route_base = '/myapp'
-    default_view = 'welcome'  # 设置进入蓝图的默认访问视图（没有设置网址的情况下）
+    default_view = 'home'  # 设置进入蓝图的默认访问视图（没有设置网址的情况下）
 
-    # @expose('/welcome')
-    # @expose('/profile/<username>/')
+    # @expose_api(description="全局首页",url='/welcome')
+    # @expose_api(description="个人首页",url='/profile/<username>/')
     # def welcome(self, username=None):
     #     if not g.user or not g.user.get_id():
     #         return redirect(appbuilder.get_url_for_login)
@@ -34,12 +37,12 @@ class Myapp(BaseMyappView):
     #     # 返回模板
     #     return self.render_template('hello.html', msg=msg)
 
-    @expose('/home')
+    @expose_api(description="首页",url='/home')
     def home(self):
         # 返回模板
         return self.render_template('home.html')
 
-    @expose('/navbar_right')
+    @expose_api(description="顶部右侧导航按钮",url='/navbar_right')
     def navbar_right(self):
         data = [
             {
@@ -73,7 +76,7 @@ class Myapp(BaseMyappView):
         return jsonify(data)
 
 
-    @expose('/menu')
+    @expose_api(description="顶部菜单侧边子菜单",url='/menu')
     # @pysnooper.snoop()
     def menu(self,is_admin=False):
         if g and hasattr(g,'user') and g.user and g.user.is_admin():
@@ -664,7 +667,8 @@ class Myapp(BaseMyappView):
 
         return menu
 
-    @expose('/feature/check')
+    @expose_api(description="每一页的弹窗接口",url='/feature/check')
+    # @pysnooper.snoop()
     def featureCheck(self):
         url = request.values.get("url", type=str, default=None)
         # print(conf.get('alert_config',{}))

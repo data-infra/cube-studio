@@ -31,7 +31,7 @@ Metadata_column_fields = {
         default='',
         description= _('列名(小写字母、数字、_ 组成)，最长50个字符'),
         widget=BS3TextFieldWidget(),
-        validators=[Regexp("^[a-z][a-z0-9_]*[a-z0-9]$"), Length(1, 54), DataRequired()]
+        validators=[Regexp("^[a-z][a-z0-9\-_]*[a-z0-9]$"), Length(1, 54), DataRequired()]
     ),
 
     "describe": StringField(
@@ -113,7 +113,7 @@ class Metadata_table_ModelView_base():
             default='',
             description= _('数据表 格式：dwd_[产品]_[数据域]_[数据域描述]_[刷新周期d/w/m/y][存储策略i(增量)/和f(全量)]  例如，dwd_qq_common_click_di; 表名由字母数组下划线组成 '),
             widget=BS3TextFieldWidget(),
-            validators=[Regexp("^[a-z][a-z0-9_]*[a-z0-9]$"), Length(1, 54), DataRequired()]
+            validators=[Regexp("^[a-z][a-z0-9\-_]*[a-z0-9]$"), Length(1, 54), DataRequired()]
         ),
         "describe": StringField(
             label= _("描述"),

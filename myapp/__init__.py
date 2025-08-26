@@ -275,7 +275,8 @@ import jwt
 @app.before_request
 # @pysnooper.snoop()
 def check_login():
-    static_urls=['/static','/logout','/login','/health','/wechat']
+
+    static_urls = ['/static/appbuilder','/static/assets', '/logout', '/login','/register', '/health', '/wechat','/wework', '/dingtalk','/proxy','/llm/api/','/message_modelview/api/']
     for url in static_urls:
         if url in request.path:
             return
@@ -310,6 +311,10 @@ def check_login():
             except Exception as e:
                 print(e)
 
+        abort(401)
+
+    # 判断静态文件只能访问自己的静态文件
+    if '/static/mnt' in request.path and f'/static/mnt/{g.user.username}' not in request.path:
         abort(401)
 
 # 添加每次请求后的操作函数，必须要返回res
@@ -359,16 +364,8 @@ def page_not_found(e):
 #     app.logger.handlers = gunicorn_logger.handlers
 #     app.logger.setLevel(gunicorn_logger.level)
 
+
 # 引入视图
 from myapp import views
-
-
-# def can_access(menuitem):
-#     print(menuitem.name,menuitem.label)
-#     return security_manager.can_access("menu access",menuitem.label)
-#
-#
-# for item1 in appbuilder.menu.get_list():
-#     item1.can_access = can_access
 
 

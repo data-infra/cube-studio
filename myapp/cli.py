@@ -572,7 +572,7 @@ def init():
                          expand={}):
         model_version = model_version if model_version else datetime.now().strftime('v%Y.%m.%d.1')
         model_version = model_version.replace('v', '').replace('.', '').replace(':', '')
-        service_name = model_name + "-" + model_version
+        service_name = model_name.replace('/', '-').replace(':', '-').replace('.', '-').strip('-') + "-" + model_version
         service = db.session.query(InferenceService).filter_by(name=service_name).first()
         project = db.session.query(Project).filter_by(name=project_name).filter_by(type='org').first()
         if service is None and project:

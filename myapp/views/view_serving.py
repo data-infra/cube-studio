@@ -2,6 +2,7 @@ import copy
 import re
 
 import pysnooper
+from flask_appbuilder.baseviews import expose_api
 
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from myapp.models.model_serving import Service
@@ -66,6 +67,7 @@ class Service_ModelView_base():
     list_columns = ['project', 'name_url', 'host_url', 'ip', 'deploy', 'creator', 'modified']
     fixed_columns = ['deploy']
     cols_width = {
+        "project": {"type": "ellip2", "width": 120},
         "name_url": {"type": "ellip2", "width": 200},
         "host_url": {"type": "ellip2", "width": 400},
         "ip": {"type": "ellip2", "width": 250},
@@ -89,7 +91,7 @@ class Service_ModelView_base():
         "label":StringField(_('标签'), description= _('中文名'), widget=BS3TextFieldWidget(),validators=[DataRequired()]),
         "images": StringField(_('镜像'), description= _('镜像全称'), widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp('^[a-zA-Z0-9\-._:@\/]*$')]),
         "volume_mount":StringField(_('挂载'),description= _('外部挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2<br>注意pvc会自动挂载对应目录下的个人username子目录'),widget=BS3TextFieldWidget(),default='',validators=[Regexp('^[\x00-\x7F]*$')]),
-        "working_dir": StringField(_('工作目录'),description= _('工作目录，容器进程启动目录，不填默认使用Dockerfile内定义的工作目录。<a target="_blank" href="/notebook_modelview/api/entry/jupyter?file_path=/mnt/{{creator}}/">打开目录</a>'),widget=BS3TextFieldWidget(),validators=[Regexp('^[\x00-\x7F]*$')]),
+        "working_dir": StringField(_('工作目录'),description= _('工作目录，容器进程启动目录，不填默认使用Dockerfile内定义的工作目录。')+core.open_jupyter(_('打开目录'),'working_dir'),widget=BS3TextFieldWidget(),validators=[Regexp('^[\x00-\x7F]*$')]),
         "command":StringField(_('启动命令'), description= _('启动命令，支持多行命令'),widget=MyBS3TextAreaFieldWidget(rows=3)),
         "node_selector":StringField(_('机器选择'), description= _('运行当前服务所在的机器'),widget=BS3TextFieldWidget(),default='cpu=true,serving=true'),
         "resource_memory":StringField(_('memory'),default=Service.resource_memory.default.arg,description= _('内存的资源使用配置，示例1G，10G， 最大100G，如需更多联系管路员'),widget=BS3TextFieldWidget(),validators=[DataRequired(), Regexp("^[0-9]*G$")]),
@@ -148,7 +150,7 @@ class Service_ModelView_base():
 
                 item.volume_mount = ','.join(volume_mount_arr).strip(',')
             # 合并项目组的挂载
-            item.volume_mount = ','.join(list(set((item.volume_mount+","+item.project.volume_mount).strip().split(','))))
+            item.volume_mount = core.merge_volume_mount(item.project.volume_mount,item.volume_mount)
 
         item.resource_gpu = item.resource_gpu.upper() if item.resource_gpu else '0'
 
@@ -183,7 +185,7 @@ class Service_ModelView_base():
         self.delete_old_service(service_name=item.name, cluster=item.project.cluster, namespace=item.namespace)
         flash(__('服务清理完成'), category='success')
 
-    @expose('/clear/<service_id>', methods=['POST', "GET"])
+    @expose_api(description="清理内部服务",url='/clear/<service_id>', methods=['POST', "GET"])
     def clear(self, service_id):
         service = db.session.query(Service).filter_by(id=service_id).first()
         self.delete_old_service(service_name=service.name, cluster=service.project.cluster,namespace=service.namespace)
@@ -194,7 +196,8 @@ class Service_ModelView_base():
         flash(__('服务清理完成'), category='success')
         return redirect(conf.get('MODEL_URLS', {}).get('service', ''))
 
-    @expose('/deploy/<service_id>', methods=['POST', "GET"])
+    @expose_api(description="部署内部服务",url='/deploy/<service_id>', methods=['POST', "GET"])
+    # @pysnooper.snoop()
     def deploy(self, service_id):
 
         image_pull_secrets = conf.get('HUBSECRET', [])

@@ -1,5 +1,7 @@
 import re
 
+from flask_appbuilder.baseviews import expose_api
+
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from myapp.models.model_train_model import Training_Model
 from myapp.models.model_serving import InferenceService
@@ -104,7 +106,7 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
         "path": StringField(
             _('模型文件地址'),
             default='/mnt/admin/xx/saved_model/',
-            description=_('模型文件的容器地址或下载地址，格式参考详情。<a target="_blank" href="/notebook_modelview/api/entry/jupyter?file_path=/mnt/{{creator}}/">导入模型</a>'),
+            description=_('模型文件的容器地址或下载地址，格式参考详情。')+core.open_jupyter(_('导入模型'),'path'),
             validators=[DataRequired()],
             widget=MyBS3TextFieldWidget(tips=_(model_path_describe))
         ),
@@ -204,7 +206,7 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
     check_delete_permission = check_edit_permission
 
     import pysnooper
-    @expose("/download/<model_id>", methods=["GET", 'POST'])
+    @expose_api(description="下载模型",url="/download/<model_id>", methods=["GET", 'POST'])
     # @pysnooper.snoop()
     def download_model(self, model_id):
         train_model = db.session.query(Training_Model).filter_by(id=model_id).first()
@@ -221,7 +223,7 @@ vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
         return redirect(conf.get('MODEL_URLS',{}).get('train_model','/frontend/'))
 
 
-    @expose("/deploy/<model_id>", methods=["GET", 'POST'])
+    @expose_api(description="部署模型",url="/deploy/<model_id>", methods=["GET", 'POST'])
     def deploy(self, model_id):
         train_model = db.session.query(Training_Model).filter_by(id=model_id).first()
         name = train_model.name + "-" + train_model.version.replace('v', '').replace('.', '')

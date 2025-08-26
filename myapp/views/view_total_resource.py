@@ -1,9 +1,12 @@
 import copy
 import math
 from flask import Markup,g
+from flask_appbuilder.baseviews import expose_api
 from jinja2 import Environment, BaseLoader, DebugUndefined
 from myapp import app, appbuilder, db, cache
 from flask import request
+
+from flask_appbuilder import CompactCRUDMixin, expose
 from .baseFormApi import (
     MyappFormRestApi
 )
@@ -28,8 +31,8 @@ def node_traffic():
             try:
                 cluster = clusters[cluster_name]
                 k8s_client = K8s(cluster.get('KUBECONFIG', ''))
-                all_node = k8s_client.get_node()
-                all_node_resource = k8s_client.get_all_node_allocated_resources()   # 这个非常耗时间
+                all_node = k8s_client.get_node(cache=True)
+                all_node_resource = k8s_client.get_all_node_allocated_resources(cache=(len(all_node)>50))   # 这个非常耗时间
                 all_node_json[cluster_name] = {}
                 for node in all_node:
                     all_node_json[cluster_name][node['hostip']] = node
@@ -60,7 +63,12 @@ def node_traffic():
         td_html % __("集群"), td_html % __("资源组"), td_html % __("机器"), td_html % __("机型"), td_html % __("cpu占用率"), td_html % __("内存占用率"),
         td_html % __("AI加速卡"))
 
+    joined_cluster_org=[]
     global_cluster_load={}
+    if not g.user.is_admin():
+        joined_project = security_manager.get_join_projects(session=db.session)
+        joined_cluster_org = list(set([project.cluster_name+"-"+project.org for project in joined_project]))
+
     for cluster_name in all_node_json:
         global_cluster_load[cluster_name] = {
             "cpu_req": 0,
@@ -116,19 +124,38 @@ def node_traffic():
             if nodes[ip]['labels'].get('vgpu','')=='true':
                 device = device+'vgpu/'
             device = device + nodes[ip]['labels'].get('gpu-type', '')
-            device=device.strip('/')
+            device = device.strip('/')
 
             gpu_used=0
             gpu_total=0
-            gpu_mfrs='gpu'
-            gpu_resource = conf.get('GPU_RESOURCE')
+            # 如果有vgpu就显示vgpu的值。
+            gpu_mfrs = ''
+            for vgpu_mfrs_temp in conf.get('VGPU_RESOURCE'):
+                vgpu_total_temp = nodes[ip][vgpu_mfrs_temp]
+                if vgpu_total_temp > 0.01:  # 存在指定卡型资源，就显示指定卡提供应简写
+                    gpu_mfrs = vgpu_mfrs_temp
+                    if vgpu_mfrs_temp == 'vgpu':
+                        gpu_total += round(float(vgpu_total_temp))/10
+
+            if not gpu_total:
+                for gpu_mfrs_temp in conf.get('GPU_RESOURCE'):
+                    gpu_total_temp = nodes[ip][gpu_mfrs_temp]
+                    if gpu_total_temp > 0.01:  # 存在指定卡型资源，就显示指定卡提供应简写
+                        if not gpu_mfrs:
+                            gpu_mfrs = gpu_mfrs_temp
+                        gpu_total += gpu_total_temp
+
+            gpu_resource = conf.get('GPU_RESOURCE')   # used_gpu 中添加了所有vgpu的资源，所以这里不需要再增加vgpu的使用量
             for gpu_mfrs_temp in gpu_resource:
                 gpu_used_temp = round(float(nodes[ip].get(f'used_{gpu_mfrs_temp}',0)), 2)
-                gpu_total_temp = nodes[ip][gpu_mfrs_temp]
-                if gpu_total_temp>0.01:  # 存在指定卡型资源，就显示指定卡提供应简写
-                    gpu_mfrs = gpu_mfrs_temp
                 gpu_used += gpu_used_temp
-                gpu_total += gpu_total_temp
+
+            # 限制如果不是自己加入的空间，则不显示
+            if joined_cluster_org:
+                if (cluster_name+"-"+org) not in joined_cluster_org:
+                    continue
+
+            gpu_mfrs = (gpu_mfrs +":") if gpu_mfrs else 'gpu:'
 
             message += '<tr bgcolor="%s">%s %s %s %s %s %s %s<tr>' % (
                 color,
@@ -190,7 +217,7 @@ def pod_resource():
                 def get_namespace_task(namespace):
                     k8s_client = K8s(cluster.get('KUBECONFIG', ''))
                     result={}
-                    all_pods = k8s_client.get_pods(namespace=namespace)
+                    all_pods = k8s_client.get_pods(namespace=namespace,cache=True)
                     for pod in all_pods:
                         org = pod['node_selector'].get("org", 'unknown')
                         if org not in result:
@@ -209,6 +236,8 @@ def pod_resource():
                                 # print(namespace,pod)
                                 result[org][pod['name']]['request_memory'] = pod['memory']
                                 result[org][pod['name']]['request_cpu'] = pod['cpu']
+                                result[org][pod['name']]['limit_memory'] = pod['limit_memory']
+                                result[org][pod['name']]['limit_cpu'] = pod['limit_cpu']
                                 result[org][pod['name']]['request_gpu'] = request_gpu
                                 result[org][pod['name']]['used_memory'] = '0'
                                 result[org][pod['name']]['used_cpu'] = '0'
@@ -261,8 +290,8 @@ def pod_resource():
                         "label":pod['label'],
                         "username":pod['username'],
                         "node":Markup('<a target="blank" href="%s">%s</a>' % (node_grafana_url + pod.get("host_ip",""), pod.get("host_ip",""))),
-                        "cpu":"%s/%s" % (math.ceil(round(float(pod.get('used_cpu', '0'))) / 1000), round(float(pod.get('request_cpu', '0')))),
-                        "memory":"%s/%s" % (round(float(pod.get('used_memory', '0'))), round(float(pod.get('request_memory', '0')))),
+                        "cpu":"%s/%s" % (math.ceil(round(float(pod.get('used_cpu', '0'))) / 1000), round(float(pod.get('request_cpu', '0'))) or round(float(pod.get('limit_cpu', '0')))),
+                        "memory":"%s/%s" % (round(float(pod.get('used_memory', '0'))), round(float(pod.get('request_memory', '0'))) or round(float(pod.get('limit_memory', '0')))),
                         "gpu":"%s" % str(round(float(pod.get('request_gpu', '0')),2)),
                         "start_time":pod['start_time']
                     }
@@ -272,7 +301,7 @@ def pod_resource():
 
 # 添加api
 class Total_Resource_ModelView_Api(MyappFormRestApi):
-    route_base = '/total_resource/api/'
+    route_base = '/total_resource/api'
     order_columns = ["cpu", "memory", "start_time"]
     primary_key = 'pod_info'
     cols_width = {
@@ -339,6 +368,7 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
         total_count=len(lst)
         return total_count,lst
 
+
     # @pysnooper.snoop()
     def echart_option(self, filters=None):
         global_cluster_load = cache.get('total_resource_global_cluster_load')
@@ -349,8 +379,11 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
         from myapp.utils.py.py_prometheus import Prometheus
         prometheus = Prometheus(conf.get('PROMETHEUS', 'prometheus-k8s.monitoring:9090'))
         # prometheus = Prometheus('9.135.92.226:15046')
+        pod_resource_metric = cache.get('total_resource_pod_resource_metric')
+        if not pod_resource_metric:
+            pod_resource_metric = prometheus.get_resource_metric()
+            cache.set('total_resource_pod_resource_metric', pod_resource_metric,timeout=60)
 
-        pod_resource_metric = prometheus.get_resource_metric()
 
         all_resource={
             "mem_all": sum([round(float(global_cluster_load[cluster_name]['mem_all'])) for cluster_name in global_cluster_load]),
@@ -455,6 +488,7 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
                         k8s_client.delete_service(namespace=namespace, name=service_external_name)
                         k8s_client.delete_istio_ingress(namespace=namespace, name=service_name)
                         k8s_client.delete_crd(group='batch.volcano.sh', version='v1alpha1', plural='jobs', namespace=namespace, name=service_name + "-vc")
+                        k8s_client.delete_pods(namespace=namespace, pod_name=pod_name)
                         # 把推理服务的状态改为offline
                     pod_type = pod['label'].get("pod-type",'')
                     if pod_type=='inference':
@@ -491,6 +525,13 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
                         k8s_client.delete_volcano(namespace=namespace, name=vcjob_name)
                         k8s_client.delete_service(namespace=namespace,labels={'app':vcjob_name})
                         k8s_client.delete_istio_ingress(namespace=namespace,name=pod_name)
+                    from myapp.models.model_nni import NNI
+                    nni = db.session.query(NNI).filter_by(name=vcjob_name).first()
+                    if nni:
+                        expand = json.loads(nni.expand) if nni.expand else {}
+                        expand['status'] = 'offline'
+                        nni.expand = json.dumps(expand)
+                        db.session.commit()
             except Exception as e:
                 print(e)
 
@@ -504,6 +545,31 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
     # def add_more_info(self, response, **kwargs):
     #     if not g.user or not g.user.is_admin():
     #         response['action'] = {}
+
+
+    @expose_api(description="暴露监控数据",url="/data", methods=["GET"])
+    def data(self):
+        global_cluster_load = cache.get('total_resource_global_cluster_load')
+        all_node_json = cache.get("total_resource_node_traffic_data")
+        all_task_resource = cache.get("total_resource_pod_resource_data")
+        if not global_cluster_load or not all_node_json:
+            node_traffic()
+            global_cluster_load = cache.get('total_resource_global_cluster_load')
+            all_node_json = cache.get("total_resource_node_traffic_data")
+        if not all_task_resource:
+            pod_resource()
+            all_task_resource = cache.get("total_resource_pod_resource_data")
+
+        return {
+            "status": 0,
+            "message": "success",
+            "result":{
+                "pods":all_task_resource,
+                "nodes":all_node_json,
+                "cluster":global_cluster_load,
+            }
+        }
+
 
 appbuilder.add_api(Total_Resource_ModelView_Api)
 
