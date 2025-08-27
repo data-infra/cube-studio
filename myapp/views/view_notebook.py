@@ -547,7 +547,7 @@ class Notebook_ModelView_Base():
                             time.sleep(2)
                             return redirect(file_path)
 
-                    return redirect('http://%s%s'%(host,rewrite_url))
+                    return redirect('%s%s'%(request.host_url.strip('/'),rewrite_url))
             left_retry=left_retry-1
             time.sleep(2)
         res = make_response(__("notebook未就绪，刷新此页面。<br> notebook状态：<br><br>")+Markup(status))

@@ -313,9 +313,9 @@ def check_login():
 
         abort(401)
 
-    # 判断静态文件只能访问自己的静态文件
-    if '/static/mnt' in request.path and f'/static/mnt/{g.user.username}' not in request.path:
-        abort(401)
+    # # 判断静态文件只能访问自己的静态文件，这样代码层面的访问就都要加请求header了，比如dataset任务模板
+    # if '/static/mnt' in request.path and f'/static/mnt/{g.user.username}' not in request.path:
+    #     abort(401)
 
 # 添加每次请求后的操作函数，必须要返回res
 @app.after_request
