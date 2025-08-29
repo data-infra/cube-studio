@@ -72,8 +72,7 @@ class Metadata_table_ModelView_base():
     base_order = ("id", "desc")
     order_columns = ['id', 'storage_cost', 'visits_seven']
 
-    add_columns = ['app', 'db', 'table', 'describe', 'field', 'warehouse_level', 'value_score', 'storage_cost',
-                   'security_level', 'ttl', 'create_table_ddl']
+    add_columns = ['app', 'db', 'table', 'describe', 'field', 'warehouse_level', 'value_score', 'storage_cost', 'security_level', 'ttl', 'create_table_ddl']
     show_columns = ['app', 'db', 'table', 'describe', 'field', 'warehouse_level', 'owner', 'c_org_fullname',
                     'storage_size', 'lifecycle', 'rec_lifecycle', 'storage_cost', 'visits_seven', 'recent_visit',
                     'partition_start', 'partition_end', 'status', 'visits_thirty', 'create_table_ddl',
@@ -154,6 +153,7 @@ class Metadata_table_ModelView_base():
         ),
         "value_score": StringField(
             label= _('价值评分'),
+            default='0',
             description='',
             widget=BS3TextFieldWidget(),
         ),
@@ -172,8 +172,10 @@ class Metadata_table_ModelView_base():
         ),
         "storage_cost": StringField(
             label= _('数据成本'),
+            default='0',
             description='',
             widget=BS3TextFieldWidget(),
+            validators=[DataRequired(),Regexp('^[0-9]*$')]
         ),
         "owner": StringField(
             label= _('责任人'),
