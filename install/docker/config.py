@@ -807,7 +807,7 @@ ALL_LINKS=[
     {
         "label": "K8s Dashboard",
         "name": "kubernetes_dashboard",
-        "url": "/k8s/dashboard/user1/#/pod?namespace=infra"
+        "url": "/k8s/dashboard/cluster/#/pod?namespace=infra"
     },
     {
         "label":"Grafana",

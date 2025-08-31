@@ -20,48 +20,10 @@ kubectl delete -f redis/configmap.yaml
 
 # 部署prometheus
 cd prometheus
-kubectl delete -f ./operator/operator-crd.yml
-sleep 5
-kubectl delete -f ./operator/operator-crd.yml
-kubectl delete -f ./operator/operator-rbac.yml
-# kubectl wait crd/podmonitors.monitoring.coreos.com --for condition=established --timeout=60s
-kubectl delete -f ./operator/operator-dp.yml
-kubectl delete -f ./alertmanater/alertmanager-main-sa.yml
-kubectl delete -f ./alertmanater/alertmanager-main-secret.yml
-kubectl delete -f ./alertmanater/alertmanager-main-svc.yml
-kubectl delete -f ./alertmanater/alertmanager-main.yml
-kubectl delete -f ./node-exporter/node-exporter-sa.yml
-kubectl delete -f ./node-exporter/node-exporter-rbac.yml
-kubectl delete -f ./node-exporter/node-exporter-svc.yml
-kubectl delete -f ./node-exporter/node-exporter-ds.yml
-kubectl delete -f ./kube-state-metrics/kube-state-metrics-sa.yml
-kubectl delete -f ./kube-state-metrics/kube-state-metrics-rbac.yml
-kubectl delete -f ./kube-state-metrics/kube-state-metrics-svc.yml
-kubectl delete -f ./kube-state-metrics/kube-state-metrics-dp.yml
-
-kubectl delete -f ./grafana/grafana-dp.yml
-kubectl delete -f ./grafana/grafana-sa.yml
-kubectl delete -f ./grafana/grafana-source.yml
-kubectl delete -f ./grafana/grafana-datasources.yml
-kubectl delete -f ./grafana/grafana-admin-secret.yml
-kubectl delete -f ./grafana/grafana-svc.yml
-kubectl delete configmap grafana-config all-grafana-dashboards --namespace=monitoring
-# kubectl create configmap grafana-config --from-file=./grafana/grafana.ini --namespace=monitoring
-# kubectl create configmap all-grafana-dashboards --from-file=./grafana/dashboard --namespace=monitoring
-
-kubectl delete -f ./grafana/pv-pvc-hostpath.yml
-sleep 5
-kubectl delete -f ./service-discovery/kube-controller-manager-svc.yml
-kubectl delete -f ./service-discovery/kube-scheduler-svc.yml
-kubectl delete -f ./prometheus/prometheus-secret.yml
-kubectl delete -f ./prometheus/prometheus-rules.yml
-kubectl delete -f ./prometheus/prometheus-rbac.yml
-kubectl delete -f ./prometheus/prometheus-svc.yml
-# kubectl wait crd/prometheuses.monitoring.coreos.com --for condition=established --timeout=60s
-kubectl delete -f ./prometheus/prometheus-main.yml
-sleep 5
-kubectl delete -f ./prometheus/pv-pvc-hostpath.yaml
-kubectl delete -f ./servicemonitor/alertmanager-sm.yml
+# 删除 prometheus_adapter
+kubectl delete -f ./prometheus_adapter/prometheus_adapter.yaml
+kubectl delete -f ./prometheus_adapter/metric_rule.yaml
+# 卸载sm
 kubectl delete -f ./servicemonitor/coredns-sm.yml
 kubectl delete -f ./servicemonitor/kube-apiserver-sm.yml
 kubectl delete -f ./servicemonitor/kube-controller-manager-sm.yml
@@ -71,9 +33,35 @@ kubectl delete -f ./servicemonitor/kubestate-metrics-sm.yml
 kubectl delete -f ./servicemonitor/node-exporter-sm.yml
 kubectl delete -f ./servicemonitor/prometheus-operator-sm.yml
 kubectl delete -f ./servicemonitor/prometheus-sm.yml
-kubectl delete -f ./servicemonitor/pushgateway-sm.yml
-kubectl delete -f ./prometheus_adapter/metric_rule.yaml
-kubectl delete -f ./prometheus_adapter/prometheus_adapter.yaml
+# 删除prometheus 实例
+kubectl delete -f ./prometheus/prometheus-main.yml
+kubectl delete -f ./prometheus/pv-pvc-hostpath.yaml
+# 删除prometheus 配置
+kubectl delete -f ./service-discovery/kube-controller-manager-svc.yml
+kubectl delete -f ./service-discovery/kube-scheduler-svc.yml
+kubectl delete -f ./prometheus/prometheus-secret.yml
+kubectl delete -f ./prometheus/prometheus-rules.yml
+kubectl delete -f ./prometheus/prometheus-rbac.yml
+kubectl delete -f ./prometheus/prometheus-svc.yml
+# 删除grafana
+kubectl delete -f ./grafana/grafana-dp.yml
+kubectl delete -f ./grafana/grafana-sa.yml
+kubectl delete -f ./grafana/grafana-source.yml
+kubectl delete -f ./grafana/grafana-datasources.yml
+kubectl delete -f ./grafana/grafana-admin-secret.yml
+kubectl delete -f ./grafana/grafana-svc.yml
+kubectl delete configmap grafana-config all-grafana-dashboards --namespace=monitoring
+kubectl delete -f ./grafana/pv-pvc-hostpath.yml
+# 删除node exporter
+kubectl delete -f ./node-exporter/node-exporter-sa.yml
+kubectl delete -f ./node-exporter/node-exporter-rbac.yml
+kubectl delete -f ./node-exporter/node-exporter-svc.yml
+kubectl delete -f ./node-exporter/node-exporter-ds.yml
+# 删除 crd operator
+kubectl delete -f ./operator/operator-crd.yml
+kubectl delete -f ./operator/operator-rbac.yml
+kubectl delete -f ./operator/operator-dp.yml
+
 cd ../
 
 
