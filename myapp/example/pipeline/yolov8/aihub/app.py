@@ -31,7 +31,7 @@ class YOLOV8_Model(Model,LabelStudio_ML_Backend):
     field="机器视觉"  # [机器视觉，听觉，自然语言，多模态，大模型]
     scenes="图像识别"
     status='online'
-    images = 'ccr.ccs.tencentyun.com/cube-studio/yolov8:2025.06'
+    images = 'ccr.ccs.tencentyun.com/cube-studio/yolov8:20250801'
     version='v20241001'
     pic='example.jpg'  # 离线图片，作为模型的样式图，330*180尺寸比例
     # 和train函数的输入参数对应，并且会对接显示到pipeline的模板参数中

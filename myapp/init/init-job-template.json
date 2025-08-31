@@ -2534,7 +2534,7 @@
   },
   "yolov8": {
     "project_name": "机器视觉",
-    "image_name": "ccr.ccs.tencentyun.com/cube-studio/yolov8:2025.06",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/yolov8:20250801",
     "gitpath": "/job-template/job/yolov8",
     "image_describe": "yolo目标识别",
     "job_template_name": "yolov8",

@@ -1,7 +1,7 @@
 # yolov8
 描述：基于yolov8框架实现的目标识别模板
 
-镜像：ccr.ccs.tencentyun.com/cube-studio/yolov8:2024.07
+镜像：ccr.ccs.tencentyun.com/cube-studio/yolov8:20250801
 
 启动参数：  
 ```bash

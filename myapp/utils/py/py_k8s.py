@@ -101,7 +101,7 @@ class K8s():
                 pod_substatus = all_container_status[0]['reason']
         if pod.metadata.deletion_timestamp:
             pod_substatus='Terminating'
-        if status=='Pending':
+        if status=='Pending' and pod.status.conditions:
             message = [condition.message for condition in pod.status.conditions if condition.type=='PodScheduled' and str(condition.status).lower()=='false' and condition.message]
         if status=='Running':
             container_statuse = pod.status.container_statuses[0].state.to_dict() if pod.status.container_statuses else {}
@@ -845,7 +845,7 @@ class K8s():
         if labels:
             try:
                 # 获取具有指定标签的服务
-                services = self.v1.list_namespaced_service(namespace="your-namespace", label_selector=",".join([f"{k}={v}" for k, v in labels.items()])).items or []
+                services = self.v1.list_namespaced_service(namespace=namespace, label_selector=",".join([f"{k}={v}" for k, v in labels.items()])).items or []
 
                 # 遍历每个服务
                 for service in services:
