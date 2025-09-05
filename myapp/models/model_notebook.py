@@ -83,7 +83,9 @@ class Notebook(Model,AuditMixinNullable,MyappModelBase):
             else:
                 url = "/notebook/" + self.namespace + "/" + self.name + "/lab?#" + self.mount
                 # url = '/notebook/jupyter/%s/lab/tree/mnt/%s'%(self.name,self.created_by.username)
-        return Markup(f'<a target=_blank href="{host}{url}">{self.name}</a>')
+        from wtforms.widgets.core import escape_html
+        safe_name = escape_html(self.name)
+        return Markup(f'<a target=_blank href="{host}{url}">{safe_name}</a>')
 
     @property
     def ide_type_html(self):
