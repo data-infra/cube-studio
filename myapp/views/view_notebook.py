@@ -311,7 +311,7 @@ class Notebook_ModelView_Base():
             # notebook.describe = label
             # TODO: 新增字段用于渲染阶段单独转义
             from wtforms.widgets.core import escape_html
-            notebook.describe = escape_html(label)      
+            notebook.describe = escape_html(label)
             notebook.images = images
             notebook.ide_type = 'jupyter'
             notebook.working_dir = ''
