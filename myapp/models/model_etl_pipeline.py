@@ -38,7 +38,10 @@ class ETL_Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     @property
     def etl_pipeline_url(self):
         pipeline_url="/etl_pipeline_modelview/api/web/" +str(self.id)
-        return Markup(f'<a target=_blank href="{pipeline_url}">{self.describe}</a>')
+        # Escape the describe field to prevent XSS
+        from wtforms.widgets.core import escape_html
+        safe_describe = escape_html(self.describe)
+        return Markup(f'<a target=_blank href="{pipeline_url}">{safe_describe}</a>')
 
 
     def clone(self):
