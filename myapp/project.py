@@ -160,7 +160,11 @@ class Myauthdbview(AuthDBView):
                 if user:
                     login_user(user, remember=True)
                     if comed_url:
-                        return redirect(comed_url)
+                        # 仅开放同域名跳转，避免开放式URL重定向漏洞
+                        from werkzeug.urls import url_parse
+                        parsed_url = url_parse(comed_url)
+                        if (not parsed_url.netloc and parsed_url.path) or parsed_url.netloc == request.host:
+                            return redirect(comed_url)
                     return redirect(self.appbuilder.get_url_for_index)
 
         if g.user is not None and g.user.is_authenticated:
