@@ -264,7 +264,7 @@ class Docker_ModelView_Base():
             try_num = try_num - 1
             time.sleep(2)
         if try_num == 0:
-            pod_url = f'/web/search/{conf.get("ENVIRONMENT")}/{namespace}/{pod_name}'
+            pod_url = f'/web/search/{docker.project.cluster["NAME"]}/{namespace}/{pod_name}'
             # event = k8s_client.get_pod_event(namespace=namespace,pod_name=pod_name)
 
             message = __('拉取镜像时间过长，一分钟后刷新此页面，或者打开链接：')+'<a href="%s">' % pod_url+__('查看pod信息')+'</a>'
@@ -275,7 +275,7 @@ class Docker_ModelView_Base():
             # return redirect(conf.get('MODEL_URLS',{}).get('docker',''))
 
         flash(__('镜像调试只安装环境，请不要运行业务代码。当晚前请注意保存镜像'), 'warning')
-        return redirect(f'/k8s/web/debug/{conf.get("ENVIRONMENT")}/{namespace}/{pod_name}/{pod_name}')
+        return redirect(f'/k8s/web/debug/{docker.project.cluster["NAME"]}/{namespace}/{pod_name}/{pod_name}')
 
     # @event_logger.log_this
     @expose_api(description="清理在线调试镜像",url="/delete_pod/<docker_id>", methods=["GET", "POST"])

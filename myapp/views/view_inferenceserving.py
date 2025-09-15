@@ -1182,19 +1182,20 @@ output %s
                 "service.kubernetes.io/local-svc-only-bind-node-with-pod": "true",
                 "service.cloud.tencent.com/local-svc-weighted-balance": "true"
             }
-
-            k8s_client.create_service(
-                namespace=namespace,
-                name=service_external_name,
-                username=service.created_by.username,
-                annotations=annotations,
-                ports=service_ports,
-                selector=labels,
-                service_type='ClusterIP' if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else 'NodePort',
-                external_ip=SERVICE_EXTERNAL_IP if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else None
-                # external_traffic_policy='Local'
-            )
-
+            if meet_ports[0]<30000:
+                k8s_client.create_service(
+                    namespace=namespace,
+                    name=service_external_name,
+                    username=service.created_by.username,
+                    annotations=annotations,
+                    ports=service_ports,
+                    selector=labels,
+                    service_type='ClusterIP' if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else 'NodePort',
+                    external_ip=SERVICE_EXTERNAL_IP if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else None
+                    # external_traffic_policy='Local'
+                )
+            else:
+                flash(__('端口已耗尽，后续请使用泛域名访问服务'), 'warning')
         # # 以ip形式访问的话，使用的代理ip。不然不好处理机器服务化机器扩容和缩容时ip变化
         # ip和端口形式只定向到生产，因为不能像泛化域名一样随意添加
         TKE_EXISTED_LBID = ''
@@ -1211,17 +1212,20 @@ output %s
             meet_ports = core.get_not_black_port(int(eval(port_str)))
             service_ports = [[meet_ports[index], port] for index, port in enumerate(ports)]
             service_external_name = (service.name + "-external").lower()[:60].strip('-')
-            k8s_client.create_service(
-                namespace=namespace,
-                name=service_external_name,
-                username=service.created_by.username,
-                ports=service_ports,
-                selector=labels,
-                service_type='LoadBalancer',
-                annotations={
-                    "service.kubernetes.io/tke-existed-lbid": TKE_EXISTED_LBID,
-                }
-            )
+            if meet_ports[0] < 30000:
+                k8s_client.create_service(
+                    namespace=namespace,
+                    name=service_external_name,
+                    username=service.created_by.username,
+                    ports=service_ports,
+                    selector=labels,
+                    service_type='LoadBalancer',
+                    annotations={
+                        "service.kubernetes.io/tke-existed-lbid": TKE_EXISTED_LBID,
+                    }
+                )
+            else:
+                flash(__('端口已耗尽，后续请使用泛域名访问服务'), 'warning')
 
         if stag == 'prod':
             hpas = re.split(',|;', service.hpa)

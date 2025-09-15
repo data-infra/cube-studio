@@ -313,17 +313,20 @@ class Service_ModelView_base():
             SERVICE_EXTERNAL_IP = [ip.split('|')[0].strip().split(':')[0] for ip in SERVICE_EXTERNAL_IP]
             port_str = conf.get('SERVICE_PORT', '30000+10*ID').replace('ID', str(service.id))
             meet_ports = core.get_not_black_port(int(eval(port_str)))
-            service_ports = [[meet_ports[index], port] for index, port in enumerate(ports)]
-            service_external_name = (service.name + "-external").lower()[:60].strip('-')
-            k8s_client.create_service(
-                namespace=namespace,
-                name=service_external_name,
-                username=service.created_by.username,
-                ports=service_ports,
-                selector=labels,
-                service_type='ClusterIP' if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else 'NodePort',
-                external_ip=SERVICE_EXTERNAL_IP if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else None
-            )
+            if meet_ports[0]<40000:
+                service_ports = [[meet_ports[index], port] for index, port in enumerate(ports)]
+                service_external_name = (service.name + "-external").lower()[:60].strip('-')
+                k8s_client.create_service(
+                    namespace=namespace,
+                    name=service_external_name,
+                    username=service.created_by.username,
+                    ports=service_ports,
+                    selector=labels,
+                    service_type='ClusterIP' if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else 'NodePort',
+                    external_ip=SERVICE_EXTERNAL_IP if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else None
+                )
+            else:
+                flash(__('端口已耗尽，后续请使用泛域名访问服务'), 'warning')
         expand = json.loads(service.expand) if service.expand else {}
         expand['status']='online'
         service.expand = json.dumps(expand)

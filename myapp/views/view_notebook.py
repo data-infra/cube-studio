@@ -569,7 +569,7 @@ class Notebook_ModelView_Base():
             self.pre_delete(notebook)
         except:
             pass
-        k8s_client = K8s(notebook.cluster.get('KUBECONFIG', ''))
+        k8s_client = K8s(notebook.project.cluster.get('KUBECONFIG', ''))
         new_namespace = notebook.project.notebook_namespace
         old_namespace = notebook.namespace
         SERVICE_EXTERNAL_IP = []
@@ -761,8 +761,10 @@ class Notebook_ModelView_Base():
         except:
             pass
         # 边缘模式时，需要根据项目组中的配置设置代理ip
+        if meet_ports[0]>20000:
+            flash(__('端口已耗尽，ssh连接notebook请通过跳板机跳转连接'), 'warning')
 
-        if SERVICE_EXTERNAL_IP and SERVICE_EXTERNAL_IP[0]!='127.0.0.1':
+        if SERVICE_EXTERNAL_IP and SERVICE_EXTERNAL_IP[0]!='127.0.0.1' and meet_ports[0]<20000:
             SERVICE_EXTERNAL_IP = [ip.split('|')[0].strip().split(':')[0] for ip in SERVICE_EXTERNAL_IP]
             ports = [port]
             ports.append(meet_ports[1])   # 给每个notebook多开一个端口，ssh的端口
