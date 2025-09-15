@@ -28,22 +28,6 @@
 
 参考视频：https://cube-studio.oss-cn-hangzhou.aliyuncs.com/video/dev.mp4
 
-## deploy mysql
-
-```
-docker run -p 3306:3306 --restart always --name mysql -e MYSQL_ROOT_PASSWORD=admin -e MYSQL_ALLOW_EMPTY_PASSWORD=true -v $PWD/docker-add-file/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf -d mysql:8.0.32
-```
-
-进入mysql，创建kubeflow数据库
-```
-mysql> CREATE DATABASE IF NOT EXISTS kubeflow DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-
-# 然后给admin用户授权，以便其他容器能访问。
-mysql> use mysql;
-mysql> GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; 
-mysql> flush privileges;
-```
-
 ## 镜像构建（可忽略）
 
 ```
