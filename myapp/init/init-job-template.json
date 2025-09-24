@@ -1894,12 +1894,9 @@
           "require": 1,
           "choice": [
             "serving",
-            "ml-server",
             "tfserving",
             "torch-server",
-            "triton-server",
-            "vllm",
-            "aihub"
+            "triton-server"
           ],
           "range": "",
           "default": "tfserving",
@@ -2071,11 +2068,9 @@
           "require": 1,
           "choice": [
             "serving",
-            "ml-server",
             "tfserving",
             "torch-server",
-            "triton-server",
-            "vllm"
+            "triton-server"
           ],
           "range": "",
           "default": "service",

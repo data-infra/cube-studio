@@ -96,8 +96,6 @@ ml-server：支持sklearn和xgb导出的模型，需按文档设置ml推理服�
 tfserving：仅支持添加了服务签名的saved_model目录地址，例如：/mnt/xx/../saved_model/
 torch-server：torch-model-archiver编译后的mar模型文件，需保存模型结构和模型参数，例如：/mnt/xx/../xx.mar或torch script保存的模型
 triton-server：框架:地址。onnx:模型文件地址model.onnx，pytorch:torchscript模型文件地址model.pt，tf:模型目录地址saved_model，tensorrt:模型文件地址model.plan
-ollama: 使用ollama官方模型，提供openai接口
-vllm: 使用vllm官方支持的hugggingface模型，提供openai接口
 '''.strip()
 
     service_type_choices = [x.replace('_', '-') for x in ['serving','ml-server','tfserving', 'torch-server', 'onnxruntime', 'triton-server']]
