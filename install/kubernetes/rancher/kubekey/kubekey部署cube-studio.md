@@ -65,11 +65,14 @@ free -m
 
 如果下载不成功，可以多执行几次
 ```shell
+# 离线安装
 # arm64版本
 # wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubekey-v3.1.10-linux-arm64 -O /usr/bin/kk
 # amd64版本
 # wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubekey-v3.1.10-linux-amd64 -O /usr/bin/kk
+# chmod +x /usr/bin/kk
 
+# 在线安装
 export KKZONE=cn
 curl -sfL https://get-kk.kubesphere.io | VERSION=v3.1.10 sh -
 chmod +x kk
@@ -85,7 +88,7 @@ rm -rf  /root/.kube/config
 ## 创建集群配置文件
 
 ```bash
-./kk create config --with-kubernetes v1.25.16 
+kk create config --with-kubernetes v1.25.16 
 
 单机可忽略：根据实际情况配置多台机器的免密登录和config-sample.yaml配置。kubekey会使用这个文件里面的机器的账号密码登录远程机器执行添加命令
 
@@ -107,7 +110,7 @@ spec:
 *  安装 1.25 版本的 k8s
 ```bash
 export KKZONE=cn
-./kk create cluster -f config-cluster.yaml
+kk create cluster -f config-cluster.yaml
 会自己安装 containerd，kubectl，kubeadm kubecni，helm 等
 ```
 
@@ -149,14 +152,14 @@ sh start.sh xx.xx.xx.xx
 
 ```bash
 export KKZONE=cn
-./kk add nodes -f config-cluster.yaml       增加机器
-./kk delete node <nodeName> -f config-cluster.yaml     释放机器
+kk add nodes -f config-cluster.yaml       增加机器
+kk delete node <nodeName> -f config-cluster.yaml     释放机器
 ```
 
 # 升级配置
 
 ```bash
-./kk upgrade -f config-cluster.yaml
+kk upgrade -f config-cluster.yaml
 ```
 
 # 可能的问题
@@ -174,7 +177,7 @@ PROMETHEUS 修改为 prometheus-k8s.kubesphere-monitoring-system:9090
 # 卸载 KubeSphere 和 Kubernetes
 
 ```bash
-./kk delete cluster -f config-cluster.yaml
+kk delete cluster -f config-cluster.yaml
 ```
 
 # 彻底清理

@@ -68,7 +68,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -83,10 +83,10 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "editorMode": "code",
-          "expr": "sum by (pod) (container_memory_working_set_bytes{job=\"kubelet\", image!=\"\",container_name!=\"POD\",pod=~\".*$pod.*\"})",
+          "expr": "container_memory_working_set_bytes{job=\"kubelet\", container=\"\",image='',pod=~\".*$pod.*\"}",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "__auto",
+          "legendFormat": "{{pod}}",
           "range": true,
           "refId": "B"
         }
@@ -165,7 +165,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -179,24 +179,15 @@
             "type": "prometheus",
             "uid": "P1809F7CD0C75ACF3"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{job=\"kubelet\", image!=\"\",container_name!=\"POD\",pod=~\".*$pod.*\"}[2m]))",
+          "expr": "rate(container_cpu_usage_seconds_total{job=\"kubelet\", container=\"\",image='',pod=~\".*$pod.*\"}[2m])",
           "format": "time_series",
           "instant": false,
           "interval": "30s",
           "intervalFactor": 1,
           "legendFormat": "{{pod}}",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "expr": "",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -271,7 +262,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -374,7 +365,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -451,17 +442,18 @@
         "y": 29
       },
       "hiddenSeries": false,
-      "id": 4,
+      "id": 9,
       "legend": {
         "alignAsTable": true,
         "avg": true,
         "current": true,
-        "max": false,
+        "hideEmpty": false,
+        "max": true,
         "min": false,
         "rightSide": true,
         "show": true,
         "total": false,
-        "values": false
+        "values": true
       },
       "lines": true,
       "linewidth": 1,
@@ -472,7 +464,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -486,34 +478,22 @@
             "type": "prometheus",
             "uid": "P1809F7CD0C75ACF3"
           },
-          "exemplar": true,
-          "expr": "sum by (pod) (rate(container_network_receive_bytes_total{job=\"kubelet\", image!=\"\",container_name!=\"POD\",pod=~\".*$pod.*\"}[2m]))",
+          "editorMode": "code",
+          "expr": "npu_chip_info_utilization{pod_name=~\".*$pod.*\"}",
           "format": "time_series",
-          "interval": "",
-          "intervalFactor": 2,
-          "legendFormat": "{{pod}} receive",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "exemplar": true,
-          "expr": "- sum by (pod) (rate(container_network_transmit_bytes_total{job=\"kubelet\", image!=\"\",container_name!=\"POD\",pod=~\".*$pod.*\"}[2m]))",
-          "format": "time_series",
-          "interval": "",
+          "instant": false,
+          "interval": "30s",
           "intervalFactor": 1,
-          "legendFormat": "{{pod}} send",
-          "refId": "B"
+          "legendFormat": "{{namespace}} {{pod_name}} {{model_name}} {{id}}",
+          "refId": "A"
         }
       ],
       "thresholds": [],
       "timeRegions": [],
-      "title": "Network I/O",
+      "title": "pod NPU Utilization",
       "tooltip": {
         "shared": true,
-        "sort": 0,
+        "sort": 1,
         "value_type": "individual"
       },
       "type": "graph",
@@ -524,15 +504,121 @@
       },
       "yaxes": [
         {
-          "format": "bytes",
+          "format": "short",
           "logBase": 1,
           "min": 0,
           "show": true
         },
         {
-          "format": "bytes",
+          "format": "short",
           "logBase": 1,
           "min": 0,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "P1809F7CD0C75ACF3"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "hiddenSeries": false,
+      "id": 10,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sort": "current",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "paceLength": 10,
+      "percentage": false,
+      "pluginVersion": "9.5.20",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorMode": "code",
+          "expr": "npu_chip_info_used_memory{pod_name=~'.*$pod.*'}",
+          "format": "time_series",
+          "hide": false,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "{{namespace}} {{pod_name}} {{model_name}} {{id}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "pod NPU Memory Usage",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:57",
+          "format": "percentunit",
+          "logBase": 1,
+          "max": "1",
+          "min": "0",
+          "show": true
+        },
+        {
+          "$$hashKey": "object:58",
+          "format": "short",
+          "logBase": 1,
           "show": true
         }
       ],
@@ -541,77 +627,54 @@
       }
     },
     {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
       "datasource": {
         "type": "prometheus",
         "uid": "P1809F7CD0C75ACF3"
       },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "center",
-            "displayMode": "color-text",
-            "filterable": true,
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 79.9998
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "pod"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 474
-              }
-            ]
-          }
-        ]
-      },
+      "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 44
       },
-      "id": 2,
+      "hiddenSeries": false,
+      "id": 4,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sort": "avg",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
       "links": [],
+      "nullPointMode": "null",
       "options": {
-        "footer": {
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "memory request (max)"
-          }
-        ]
+        "alertThreshold": true
       },
-      "pluginVersion": "9.1.5",
+      "paceLength": 10,
+      "percentage": false,
+      "pluginVersion": "9.5.20",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
       "targets": [
         {
           "datasource": {
@@ -620,12 +683,11 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "container_spec_memory_limit_bytes{job=\"kubelet\", image!=\"\",container_name!=\"POD\",pod!=\"\",namespace=~\"pipeline|jupyter|service|automl|aihub\"}/1024/1024/1024",
-          "format": "table",
-          "hide": false,
+          "expr": "sum by (pod) (rate(container_network_receive_bytes_total{job=\"kubelet\",pod=~\".*$pod.*\"}[2m]))",
+          "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
-          "legendFormat": "",
+          "legendFormat": "{{pod}} receive",
           "range": true,
           "refId": "A"
         },
@@ -636,177 +698,52 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "container_memory_working_set_bytes{job=\"kubelet\", image!=\"\",container_name!=\"POD\",pod!=\"\",namespace=~\"pipeline|jupyter|service|automl|aihub\"}/1024/1024/1024",
-          "format": "table",
-          "hide": false,
-          "instant": true,
+          "expr": "- sum by (pod) (rate(container_network_transmit_bytes_total{job=\"kubelet\",pod=~\".*$pod.*\"}[2m]))",
+          "format": "time_series",
           "interval": "",
-          "intervalFactor": 2,
-          "legendFormat": "{{pod}}",
+          "intervalFactor": 1,
+          "legendFormat": "{{pod}} send",
+          "range": true,
           "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "editorMode": "code",
-          "exemplar": true,
-          "expr": "sum by (node,namespace,pod) (rate(container_cpu_usage_seconds_total{job=\"kubelet\", image!=\"\",container_name!=\"POD\",pod!=\"\",namespace=~\"pipeline|jupyter|service|automl|aihub\"}[2m]))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "interval": "",
-          "legendFormat": "",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "editorMode": "code",
-          "exemplar": true,
-          "expr": "container_spec_cpu_quota{job=\"kubelet\", image!=\"\",container_name!=\"POD\",pod!=\"\",namespace=~\"pipeline|jupyter|service|automl|aihub\"}/100000",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "interval": "",
-          "legendFormat": "",
-          "refId": "D"
         }
       ],
-      "title": "All pod",
-      "transformations": [
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Network I/O",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
         {
-          "id": "labelsToFields",
-          "options": {}
+          "$$hashKey": "object:218",
+          "format": "bytes",
+          "logBase": 1,
+          "min": 0,
+          "show": true
         },
         {
-          "id": "merge",
-          "options": {}
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "container": true,
-              "endpoint": true,
-              "id": true,
-              "image": true,
-              "instance": true,
-              "job": true,
-              "name": true,
-              "service": true
-            },
-            "indexByName": {
-              "Time": 0,
-              "Value #A": 13,
-              "Value #B": 12,
-              "Value #C": 14,
-              "Value #D": 15,
-              "container": 1,
-              "endpoint": 2,
-              "id": 3,
-              "image": 4,
-              "instance": 5,
-              "job": 6,
-              "name": 7,
-              "namespace": 8,
-              "node": 9,
-              "pod": 10,
-              "service": 11
-            },
-            "renameByName": {
-              "Value": "cpu-used",
-              "Value #A": "memory-request",
-              "Value #B": "memory-used",
-              "Value #C": "cpu-used",
-              "Value #D": "cpu-request"
-            }
-          }
-        },
-        {
-          "id": "groupBy",
-          "options": {
-            "fields": {
-              "Value #C": {
-                "aggregations": [
-                  "max"
-                ],
-                "operation": "aggregate"
-              },
-              "Value #D": {
-                "aggregations": [
-                  "max"
-                ],
-                "operation": "aggregate"
-              },
-              "cpu-used": {
-                "aggregations": [
-                  "max"
-                ],
-                "operation": "aggregate"
-              },
-              "cpu-used-ratio": {
-                "aggregations": [
-                  "max"
-                ],
-                "operation": "aggregate"
-              },
-              "cpu申请值": {
-                "aggregations": [
-                  "max"
-                ],
-                "operation": "aggregate"
-              },
-              "memory-request": {
-                "aggregations": [
-                  "max"
-                ],
-                "operation": "aggregate"
-              },
-              "memory-used": {
-                "aggregations": [
-                  "max"
-                ],
-                "operation": "aggregate"
-              },
-              "namespace": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "node": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "pod": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "request": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
-              "used": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              }
-            }
-          }
+          "$$hashKey": "object:219",
+          "format": "bytes",
+          "logBase": 1,
+          "min": 0,
+          "show": true
         }
       ],
-      "type": "table"
+      "yaxis": {
+        "align": false
+      }
     }
   ],
   "refresh": "5s",
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {

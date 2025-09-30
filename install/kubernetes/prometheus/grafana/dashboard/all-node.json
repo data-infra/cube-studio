@@ -28,107 +28,6 @@
   "liveNow": false,
   "panels": [
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "P1809F7CD0C75ACF3"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "links": []
-        },
-        "overrides": []
-      },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "hiddenSeries": false,
-      "id": 14,
-      "legend": {
-        "alignAsTable": true,
-        "avg": true,
-        "current": true,
-        "max": true,
-        "min": false,
-        "rightSide": true,
-        "show": true,
-        "sort": "avg",
-        "sortDesc": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 2,
-      "links": [],
-      "nullPointMode": "null",
-      "options": {
-        "alertThreshold": true
-      },
-      "paceLength": 10,
-      "percentage": false,
-      "pluginVersion": "9.1.5",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "editorMode": "builder",
-          "expr": "sum by(instance, gpu) (DCGM_FI_DEV_GPU_UTIL)",
-          "hide": false,
-          "legendFormat": " {{instance}} GPU {{gpu}}",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "thresholds": [],
-      "timeRegions": [],
-      "title": "GPU Usage",
-      "tooltip": {
-        "shared": true,
-        "sort": 2,
-        "value_type": "cumulative"
-      },
-      "type": "graph",
-      "xaxis": {
-        "mode": "time",
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "percent",
-          "logBase": 1,
-          "max": "100",
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "logBase": 1,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false
-      }
-    },
-    {
       "alert": {
         "conditions": [
           {
@@ -182,7 +81,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 8
+        "y": 0
       },
       "hiddenSeries": false,
       "id": 3,
@@ -206,7 +105,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -305,7 +204,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 8
+        "y": 0
       },
       "hiddenSeries": false,
       "id": 2,
@@ -329,7 +228,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -401,7 +300,7 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 8
+        "y": 0
       },
       "hiddenSeries": false,
       "id": 4,
@@ -425,7 +324,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -485,6 +384,208 @@
         "type": "prometheus",
         "uid": "P1809F7CD0C75ACF3"
       },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "hiddenSeries": false,
+      "id": 14,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sort": "avg",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "paceLength": 10,
+      "percentage": false,
+      "pluginVersion": "9.5.20",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorMode": "builder",
+          "expr": "sum by(instance, gpu) (DCGM_FI_DEV_GPU_UTIL)",
+          "hide": false,
+          "legendFormat": " {{instance}} GPU {{gpu}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "GPU Usage",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "logBase": 1,
+          "max": "100",
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "P1809F7CD0C75ACF3"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "hiddenSeries": false,
+      "id": 18,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sort": "avg",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "paceLength": 10,
+      "percentage": false,
+      "pluginVersion": "9.5.20",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorMode": "code",
+          "expr": "sum by(instance, id) (npu_chip_info_utilization)",
+          "hide": false,
+          "legendFormat": " {{instance}} NPU {{id}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "NPU Usage",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "logBase": 1,
+          "max": "100",
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "P1809F7CD0C75ACF3"
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -517,7 +618,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -608,7 +709,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -701,7 +802,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -794,7 +895,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -887,7 +988,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -989,7 +1090,7 @@
       },
       "paceLength": 10,
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.5.20",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1052,7 +1153,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {

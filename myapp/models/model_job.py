@@ -528,7 +528,7 @@ class Task(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     outputs = Column(Text,default='{}',comment='task的输出，会将输出复制到minio上 ')   #   {'prediction': '/output.txt'}
     monitoring = Column(Text,default='{}',comment='该任务的监控信息')  #
     expand = Column(Text(65536), default='',comment='扩展参数')
-    skip = Column(Boolean,default=False,comment='是否跳过')  #
+    skip = Column(Boolean,name='skip',default=False,comment='是否跳过',quote=True)  #
     export_parent = "pipeline"
 
 

@@ -1177,14 +1177,14 @@ spec:
         - workflow-controller
         args:
           - '--executor-image'
-          - argoproj/argoexec:v3.4.3
+          - ccr.ccs.tencentyun.com/cube-argoproj/argoexec:v3.4.3
         env:
         - name: LEADER_ELECTION_IDENTITY
           valueFrom:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.name
-        image: argoproj/workflow-controller:v3.4.3
+        image: ccr.ccs.tencentyun.com/cube-argoproj/workflow-controller:v3.4.3
         livenessProbe:
           failureThreshold: 3
           httpGet:

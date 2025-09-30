@@ -14,6 +14,9 @@ spec:
     tlsConfig:
       insecureSkipVerify: true
   jobLabel: k8s-app
+  namespaceSelector:
+    matchNames:
+      - monitoring  # 指定要监控的命名空间
   selector:
     matchLabels:
       k8s-app: node-exporter

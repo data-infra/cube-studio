@@ -1095,8 +1095,8 @@ metadata:
   name: my-minio-cred
   namespace: infra
 stringData:
-  accesskey: admin
-  secretkey: password
+  accesskey: minio
+  secretkey: minio123
 type: Opaque
 ---
 apiVersion: v1
@@ -1185,7 +1185,7 @@ spec:
 #          value: 'true'
         - name: ARGO_SECURE
           value: 'false'
-        image: argoproj/argocli:v3.4.3   # v3.3.5
+        image: ccr.ccs.tencentyun.com/cube-argoproj/argocli:v3.4.3   # v3.3.5
         imagePullPolicy: IfNotPresent
         name: argo-server
         ports:
@@ -1304,7 +1304,7 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.name
-        image: argoproj/workflow-controller:v3.4.3
+        image: ccr.ccs.tencentyun.com/cube-argoproj/workflow-controller:v3.4.3
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3

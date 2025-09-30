@@ -60,7 +60,7 @@ def deliver_message(workflow, dbsession):
 
     info_json = json.loads(workflow.info_json)
     # print(info_json,workflow.status)
-    if workflow.status in info_json['alert_status'] and workflow.status not in info_json['has_push']:
+    if workflow.status in info_json.get('alert_status','') and workflow.status not in info_json.get('has_push',''):
         receivers = list(set(receivers))
         # data = {
         #     "Sender": sender,
@@ -150,7 +150,7 @@ def check_has_push(crd, dbsession):
     workflow = dbsession.query(Workflow).filter(Workflow.name == crd['name']).filter(Workflow.namespace == crd['namespace']).first()
     if workflow and workflow.info_json:
         info_json = json.loads(workflow.info_json)
-        if crd['status'] in info_json['alert_status'] and crd['status'] not in info_json['has_push']:
+        if crd['status'] in info_json.get('alert_status','') and crd['status'] not in info_json.get('has_push',''):
             return False
         else:
             return True

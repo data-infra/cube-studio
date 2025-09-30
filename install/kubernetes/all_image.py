@@ -45,9 +45,9 @@ volcano = [
 
 pipeline = [
     'minio/minio:RELEASE.2023-04-20T17-56-55Z',
-    'argoproj/argoexec:v3.4.3',
-    'argoproj/workflow-controller:v3.4.3',
-    'argoproj/argocli:v3.4.3'
+    'ccr.ccs.tencentyun.com/cube-argoproj/argoexec:v3.4.3',
+    'ccr.ccs.tencentyun.com/cube-argoproj/workflow-controller:v3.4.3',
+    'ccr.ccs.tencentyun.com/cube-argoproj/argocli:v3.4.3'
 ]
 cube_studio = [
     # 前后端
