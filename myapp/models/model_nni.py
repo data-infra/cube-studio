@@ -91,12 +91,14 @@ class NNI(Model,AuditMixinNullable,MyappModelBase):
 
     @property
     def describe_url(self):
+        from wtforms.widgets.core import escape_html
+        safe_describe = escape_html(self.describe)
         expand = json.loads(self.expand) if self.expand else {}
         status = expand.get('status','')
         if status=='online':
-            return Markup(f'<a target=_blank href="/nni_modelview/api/web/{self.id}">{self.describe}</a>')
+            return Markup(f'<a target=_blank href="/nni_modelview/api/web/{self.id}">{safe_describe}</a>')
         else:
-            return self.describe
+            return safe_describe
 
 
     # @property
