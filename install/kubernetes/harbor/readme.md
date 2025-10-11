@@ -8,6 +8,7 @@ wget https://githubfast.com/goharbor/harbor/releases/download/v2.11.1/harbor-off
 wget https://githubfast.com/wise2c-devops/build-harbor-aarch64/releases/download/v2.13.0/harbor-offline-installer-aarch64-v2.13.0.tgz
 
 解压
+rm -rf /usr/local/harbor
 tar xf harbor-offline-installer-v2.11.1.tgz -C /usr/local/
 cd /usr/local/harbor
 

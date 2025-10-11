@@ -22,12 +22,12 @@ for image in images:
     # 可联网机器上拉取公有镜像并推送到私有仓库
     # print('docker pull %s && docker tag %s %s && docker push %s &' % (image,image,image_name,image_name))
     push_harbor_file.write('docker pull %s && docker tag %s %s && docker push %s &\n' % (image,image,new_image,new_image))
-    pull_save_file.write('docker pull %s && docker save %s | gzip > %s.tar.gz &\n' % (image, image, image.replace('/','-').replace(':','-')))
+    pull_save_file.write('docker pull %s && docker save %s | gzip > %s.tar.gz \n' % (image, image, image.replace('/','-').replace(':','-')))
 
     # # # 内网机器上拉取私有仓库镜像
     # print("docker pull %s && docker tag %s %s &" % (image_name,image_name,image))
     pull_harbor_file.write("docker pull %s && docker tag %s %s &\n" % (new_image,new_image,image))
-    load_image_file.write('gunzip -c %s.tar.gz | docker load &\n' % (image.replace('/','-').replace(':','-')))
+    load_image_file.write('gunzip -c %s.tar.gz | docker load \n' % (image.replace('/','-').replace(':','-')))
 
     # # 拉取公有镜像
     # print("docker pull %s && docker tag %s %s &" % (image_name,image_name,image))
@@ -35,8 +35,6 @@ for image in images:
     pull_file.write("docker pull %s &\n" % (image,))
 
 pull_file.write('\nwait\n')
-pull_save_file.write('\nwait\n')
-load_image_file.write('\nwait\n')
 pull_harbor_file.write('\nwait\n')
 push_harbor_file.write('\nwait\n')
 

@@ -5,11 +5,15 @@
 ```bash
 sudo systemctl stop docker
 apt-get --purge remove -y *docker*  
+apt-get --purge remove -y docker*  
 sudo apt-get autoremove -y
 dpkg -l | grep docker
+sudo rm -rf /var/lib/docker
+sudo rm -rf /var/lib/containerd
+
 ```
 
-## 1.2 安装docker
+## 1.2 在线安装docker
 
 ```bash
 ### 设置docker存储库
@@ -52,6 +56,56 @@ apt install -y docker-ce=5:27.0.3-1~ubuntu.24.04~noble      # ubuntu 2024
 
 # 安装docker-compose
 apt install -y docker-compose
+```
+
+## 1.3 离线安装docker
+
+```bash
+
+wget https://download.docker.com/linux/static/stable/x86_64/docker-24.0.6.tgz
+tar -zxvf docker-24.0.6.tgz
+sudo cp docker/* /usr/bin/
+vim /etc/systemd/system/docker.service
+
+
+[Unit]
+Description=Docker Application Container Engine
+Documentation=https://docs.docker.com
+After=network-online.target firewalld.service
+Wants=network-online.target
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/dockerd
+ExecReload=/bin/kill -s HUP $MAINPID
+LimitNOFILE=infinity
+LimitNPROC=infinity
+TimeoutStartSec=0
+Delegate=yes
+KillMode=process
+Restart=on-failure
+StartLimitBurst=3
+StartLimitInterval=60s
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+chmod +x /etc/systemd/system/docker.service
+systemctl daemon-reload 
+systemctl enable docker.service
+systemctl start docker
+
+```
+离线安装docker-compose
+```bash
+wget https://githubfast.com/docker/compose/releases/download/v2.40.0/docker-compose-linux-x86_64
+mv docker-compose-linux-x86_64 /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose 
+
+docker-compose -v
+
 ```
 
 # 2. ubuntu 安装 k8s客户端
@@ -139,7 +193,7 @@ systemctl enable docker
 ```bash
 
 mkdir -p /etc/docker/
-# 添加如下配置
+# 添加如下配置，先把下面这个文件中的中文去掉，不然可能会有问题
 cat > /etc/docker/daemon.json <<EOF
 {
     # 镜像加速器，拉取docker官方镜像时需要

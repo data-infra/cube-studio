@@ -447,8 +447,8 @@ class MyappSecurityManager(SecurityManager):
             self.user_view = self.userdbmodelview
             self.auth_view = self.authdbview()
         elif self.auth_type == AUTH_OAUTH:
-            self.user_view = self.useroauthmodelview
-            self.auth_view = self.authoauthview()
+            self.user_view = self.userremoteusermodelview
+            self.auth_view = self.authremoteuserview()
         elif self.auth_type == AUTH_REMOTE_USER:
             self.user_view = self.userremoteusermodelview
             self.auth_view = self.authremoteuserview()

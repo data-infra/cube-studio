@@ -73,11 +73,18 @@ def check_notebook_commit(task,notebook_id,target_image):  # 在页面中测试�
                     commit_pod=commit_pods[0]
                     if commit_pod['status']=='Succeeded':
                         notebook.images=target_image
+                        expand = json.loads(notebook.expand) if notebook.expand else {}
+                        expand['save_success_last_time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        notebook.expand = json.dumps(expand)
                         dbsession.commit()
                         push_message([notebook.created_by.username],'notebook %s save success'%notebook.name)
                         break
                     # 其他异常状态直接报警
                     if commit_pod['status']!='Running':
+                        expand = json.loads(notebook.expand) if notebook.expand else {}
+                        expand['save_fail_last_time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        notebook.expand = json.dumps(expand)
+                        dbsession.commit()
                         push_message([notebook.created_by.username], 'notebook %s save fail' % notebook.name)
                         break
                 else:
@@ -327,30 +334,30 @@ def update_dataset(task,dataset_id):
 
 
 @celery_app.task(name="task.get_k8s_resource", bind=True)  # , soft_time_limit=15
-def get_k8s_resource(task,kubeconfig='',namespace='',ops_type='pods',label=None,**kwargs):
+def get_k8s_resource(task,cluster_name,kubeconfig='',namespace='',ops_type='pods',label=None,**kwargs):
     try:
         from myapp.utils.py.py_k8s import K8s
         from myapp import cache
         k8s_client = K8s(kubeconfig)
         if ops_type=='pods':
             if namespace:
-                if not cache.get(f'all_pods_{namespace}_checking'):
-                    cache.set(f'all_pods_{namespace}_checking', 1)
+                if not cache.get(f'all_pods_{namespace}_{cluster_name}_checking'):
+                    cache.set(f'all_pods_{namespace}_{cluster_name}_checking', 1)
                     pods = k8s_client.v1.list_namespaced_pod(namespace=namespace,watch=False).items or []
-                    cache.set(f'all_pods_{namespace}', pods)
-                    cache.set(f'all_pods_{namespace}_checking', 0)
+                    cache.set(f'all_pods_{namespace}_{cluster_name}', pods)
+                    cache.set(f'all_pods_{namespace}_{cluster_name}_checking', 0)
             else:
-                if not cache.get(f'all_pods_checking'):
-                    cache.set(f'all_pods_checking', 1)
+                if not cache.get(f'all_pods_{cluster_name}_checking'):
+                    cache.set(f'all_pods_{cluster_name}_checking', 1)
                     pods = k8s_client.v1.list_pod_for_all_namespaces(watch=False).items or []
-                    cache.set('all_pods', pods)
-                    cache.set(f'all_pods_checking', 0)
+                    cache.set(f'all_pods_{cluster_name}', pods)
+                    cache.set(f'all_pods_{cluster_name}_checking', 0)
         if ops_type=='nodes':
-            if not cache.get(f'all_nodes_checking'):
-                cache.set(f'all_nodes_checking', 1)
+            if not cache.get(f'all_nodes_{cluster_name}_checking'):
+                cache.set(f'all_nodes_{cluster_name}_checking', 1)
                 all_node = k8s_client.v1.list_node(label_selector=label).items or []
-                cache.set('all_nodes', all_node)
-                cache.set(f'all_nodes_checking', 0)
+                cache.set(f'all_nodes_{cluster_name}', all_node)
+                cache.set(f'all_nodes_{cluster_name}_checking', 0)
     except Exception as e:
         pass
 if __name__ =='__main__':

@@ -19,7 +19,7 @@ from myapp.utils import core
 
 class K8s():
 
-    def __init__(self, file_path=None):  # kubeconfig
+    def __init__(self, file_path=None,cluster_name=''):  # kubeconfig
         if not file_path:
             file_path = conf.get('CLUSTERS',{}).get(conf.get('ENVIRONMENT'),{}).get('KUBECONFIG','')
         kubeconfig = os.getenv('KUBECONFIG', '')
@@ -30,6 +30,13 @@ class K8s():
         else:
             config.load_incluster_config()
         self.kubeconfig = file_path
+        self.cluster_name = cluster_name
+
+        if not cluster_name and not file_path:
+            self.cluster_name = conf.get('ENVIRONMENT').lower()
+        if not cluster_name and file_path:
+            self.cluster_name = file_path.split('/')[-1].replace('-kubeconfig','')
+
         self.v1 = client.CoreV1Api()
         self.AppsV1Api = client.AppsV1Api()
         self.NetworkingV1Api = client.NetworkingV1Api()
@@ -106,7 +113,7 @@ class K8s():
         if status=='Running':
             container_statuse = pod.status.container_statuses[0].state.to_dict() if pod.status.container_statuses else {}
             message = [x['message'] for x in list(container_statuse.values()) if x and 'message' in x]
-        if status=='Running' and not message:
+        if status=='Running' and not message and pod_substatus==status:
             message = [condition.message for condition in pod.status.conditions if condition.type == 'Ready' and str(condition.status).lower() == 'false' and condition.message]
             if message:
                 pod_substatus = 'Starting'
@@ -180,7 +187,7 @@ class K8s():
             "container_start_time": (pod.status.start_time + datetime.timedelta(hours=8)).replace(tzinfo=None) if pod.status.start_time else None,
             "node_selector": node_selector,
             "restart_count": max([container_statuse.restart_count for container_statuse in pod.status.container_statuses]) if pod.status.container_statuses else 0,
-            "message":message,
+            "message":message if ''.join(message).lower()!='none' else [],
             "containers": [x.name for x in pod.spec.containers]
         }
         temp.update(ai_resource)
@@ -197,12 +204,13 @@ class K8s():
                 if cache:
                     from myapp import cache
                     from myapp.tasks.async_task import get_k8s_resource
-                    all_pods = cache.get(f'all_pods_{namespace}')
+                    all_pods = cache.get(f'all_pods_{namespace}_{self.cluster_name}')
                     if not all_pods:
                         all_pods = self.v1.list_namespaced_pod(namespace=namespace).items or []
-                        cache.set(f'all_pods_{namespace}', all_pods)
+                        cache.set(f'all_pods_{namespace}_{self.cluster_name}', all_pods)
                     else:
                         kwargs = {
+                            "cluster_name":self.cluster_name,
                             "kubeconfig": self.kubeconfig,
                             "namespace": namespace,
                             "ops_type": "pods"
@@ -211,7 +219,7 @@ class K8s():
                 else:
                     all_pods = self.v1.list_namespaced_pod(namespace=namespace).items or []
                     from myapp import cache
-                    cache.set(f'all_pods_{namespace}', all_pods)
+                    cache.set(f'all_pods_{namespace}_{self.cluster_name}', all_pods)
 
             # 如果有命名空间和pod名，就直接查询pod
             elif (namespace and pod_name):
@@ -328,12 +336,13 @@ class K8s():
                 from myapp import cache
                 from myapp.tasks.async_task import get_k8s_resource
                 # 从缓存中读取一遍
-                pods = cache.get('all_pods')
+                pods = cache.get(f'all_pods_{self.cluster_name}')
                 if not pods:
                     pods = self.v1.list_pod_for_all_namespaces(watch=False).items or []
-                    cache.set('all_pods',pods)
+                    cache.set(f'all_pods_{self.cluster_name}',pods)
                 else:
                     kwargs = {
+                        "cluster_name": self.cluster_name,
                         "kubeconfig": self.kubeconfig,
                         "namespace":"",
                         "ops_type":"pods"
@@ -342,7 +351,7 @@ class K8s():
             else:
                 pods = self.v1.list_pod_for_all_namespaces(watch=False).items or []
                 from myapp import cache
-                cache.set('all_pods', pods)
+                cache.set(f'all_pods_{self.cluster_name}', pods)
 
             for pod in pods:
                 # 如果没有占用资源，这里就不计算
@@ -407,12 +416,13 @@ class K8s():
             if cache:
                 from myapp import cache
                 from myapp.tasks.async_task import get_k8s_resource
-                all_node = cache.get('all_nodes')
+                all_node = cache.get(f'all_nodes_{self.cluster_name}')
                 if not all_node:
                     all_node = self.v1.list_node(label_selector=label).items or []
-                    cache.set('all_nodes', all_node)
+                    cache.set(f'all_nodes_{self.cluster_name}', all_node)
                 else:
                     kwargs = {
+                        "cluster_name": self.cluster_name,
                         "kubeconfig": self.kubeconfig,
                         "namespace": "",
                         "ops_type": "nodes",
@@ -422,7 +432,7 @@ class K8s():
             else:
                 all_node = self.v1.list_node(label_selector=label).items or []
                 from myapp import cache
-                cache.set('all_nodes', all_node)
+                cache.set(f'all_nodes_{self.cluster_name}', all_node)
 
             # print(all_node)
             for node in all_node:
@@ -464,7 +474,7 @@ class K8s():
                         back_nodes.append(back_node)
                 except Exception as e1:
                     print(e1)
-            cache.set('all_nodes_num', len(back_nodes))
+
             return back_nodes
         except Exception as e:
             print(e)
@@ -1048,7 +1058,7 @@ class K8s():
     # @pysnooper.snoop(watch_explode=())
     def make_container(self, name, command, args, volume_mount, working_dir, resource_memory, resource_cpu,
                        resource_gpu, image_pull_policy, image, env, privileged=False, username='', ports=None,
-                       health=None,hostPort=[],resource_rdma=0):
+                       health=None,hostPort=[],resource_rdma=0,security_context=None):
 
         k8s_volumes, k8s_volume_mounts = self.get_volume_mounts(volume_mount, username)
 
@@ -1069,7 +1079,8 @@ class K8s():
         env_list.append(client.V1EnvVar(name='K8S_HOST_IP', value_from=client.V1EnvVarSource(field_ref=client.V1ObjectFieldSelector(field_path='status.hostIP'))))
         env_list.append(client.V1EnvVar(name='K8S_POD_NAME', value_from=client.V1EnvVarSource(field_ref=client.V1ObjectFieldSelector(field_path='metadata.name'))))
 
-        security_context = client.V1SecurityContext(privileged=privileged) if privileged else None
+        k8s_security_context = client.V1SecurityContext(privileged=privileged,capabilities=client.V1Capabilities(add=security_context.get('capabilities',{}).get('add',[]) if security_context else []))
+
         resources_requests = {}
         resources_limits = {}
         if resource_memory and not '~' in resource_memory:
@@ -1139,10 +1150,10 @@ class K8s():
                 path = health[health.index(":") + 1:]
                 port_name = "port" + port
                 # 端口只能用名称，不能用数字，而且要在里面定义
-                if int(port) not in ports:
-                    ports_k8s.append(client.V1ContainerPort(name=port_name, protocol='TCP', container_port=port))
+                if port and (not ports or int(port) not in ports):
+                    ports_k8s.append(client.V1ContainerPort(name=port_name, protocol='TCP', container_port=int(port)))
 
-                readiness_probe = client.V1Probe(http_get=client.V1HTTPGetAction(path=path,port=port_name),failure_threshold=1,period_seconds=60,timeout_seconds=30,initial_delay_seconds=60)
+                readiness_probe = client.V1Probe(http_get=client.V1HTTPGetAction(path=path,port=int(port)),failure_threshold=1,period_seconds=60,timeout_seconds=30,initial_delay_seconds=60)
 
             # print(readiness_probe)
 
@@ -1156,7 +1167,7 @@ class K8s():
             volume_mounts=k8s_volume_mounts if k8s_volume_mounts else None,
             resources=resources_obj,
             env=env_list,
-            security_context=security_context,
+            security_context=k8s_security_context,
             ports=ports_k8s,
             readiness_probe=readiness_probe if health else None
         )
@@ -1169,7 +1180,8 @@ class K8s():
     def make_pod(self, namespace, name, labels, command, args, volume_mount, working_dir, node_selector,
                  resource_memory, resource_cpu, resource_gpu, image_pull_policy, image_pull_secrets, image, hostAliases,
                  env, privileged, accounts, username, ports=None, restart_policy='OnFailure',
-                 scheduler_name='default-scheduler', node_name='', health=None, annotations={}, hostPort=[],resource_rdma=0,sidecar=[]):
+                 scheduler_name='default-scheduler', node_name='', health=None, annotations={}, hostPort=[],resource_rdma=0,
+                 sidecar=[],security_context=None):
         if not labels:
             labels={}
 
@@ -1234,7 +1246,8 @@ class K8s():
                                           ports=ports,
                                           health=health,
                                           hostPort=hostPort,
-                                          resource_rdma=resource_rdma
+                                          resource_rdma=resource_rdma,
+                                          security_context=security_context
                                           )]
         if sidecar:
             containers = sidecar+containers
@@ -1261,7 +1274,7 @@ class K8s():
     def create_debug_pod(self, namespace, name, labels, command, args, volume_mount, working_dir, node_selector,
                          resource_memory, resource_cpu, resource_gpu, image_pull_policy, image_pull_secrets, image,
                          hostAliases, env, privileged, accounts, username, scheduler_name='default-scheduler',
-                         node_name='',annotations={},hostPort=[],resource_rdma=0,sidecar=[],health=None):
+                         node_name='',annotations={},hostPort=[],resource_rdma=0,sidecar=[],health=None,security_context=None):
         try:
             self.v1.delete_namespaced_pod(name=name, namespace=namespace, grace_period_seconds=0)
             # time.sleep(1)
@@ -1299,7 +1312,8 @@ class K8s():
             hostPort=hostPort,
             resource_rdma=resource_rdma,
             sidecar=sidecar,
-            health=health
+            health=health,
+            security_context=security_context
         )
         # print(pod)
         pod = self.v1.create_namespaced_pod(namespace, pod)

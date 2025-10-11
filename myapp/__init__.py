@@ -275,8 +275,8 @@ import jwt
 @app.before_request
 # @pysnooper.snoop()
 def check_login():
-
-    static_urls = ['/static/appbuilder','/static/assets', '/logout', '/login','/register', '/health', '/wechat','/wework', '/dingtalk','/proxy','/llm/api/','/message_modelview/api/']
+    # /static下面不少地方静态文件直接访问。所以不能加权限限制
+    static_urls = ['/static/', '/logout', '/login','/register', '/health', '/wechat','/wework', '/dingtalk','/proxy','/llm/api/','/message_modelview/api/']
     for url in static_urls:
         if url in request.path:
             return
@@ -286,9 +286,9 @@ def check_login():
 
     if g.user is None or not g.user.get_id():
 
-        # 支持跨域名cookie登录
+        # 支持跨域名cookie登录，有平台域名共享时打开
         myapp_username = request.cookies.get('myapp_username', '')
-        if myapp_username:
+        if conf.get('AUTH_PLATFORM_ACCESS',False) and myapp_username:
             try:
                 user = security_manager.find_user(myapp_username)
                 if not user:
@@ -298,6 +298,7 @@ def check_login():
                     return
             except Exception as e:
                 print(e)
+
         # 支持header认证
         authorization_value = request.headers.get('Authorization','')
         if authorization_value:
