@@ -43,7 +43,7 @@ spec:
             - name: data
               mountPath: /var/lib/mysql
             - name: mysql-configmap
-              mountPath: /etc/mysql/mysql.conf.d/mysqld.cnf
+              mountPath: /etc/mysql/conf.d/mysqld.cnf
               subPath: mysqld.cnf
               readOnly: False
             - name: mysql-configmap
@@ -54,8 +54,6 @@ spec:
             - containerPort: 3306
               protocol: TCP
           env:
-          - name: MYSQL_ALLOW_EMPTY_PASSWORD
-            value: "true"
           - name: MYSQL_ROOT_PASSWORD
             value: admin
       volumes:

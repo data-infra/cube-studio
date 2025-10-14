@@ -40,8 +40,25 @@ spec:
       number: 8080
       protocol: HTTP       # TCP 协议需要vs tcp match 端口后才会开启
 
-
-
+# 添加代理ssh转发
+---
+#apiVersion: networking.istio.io/v1alpha3
+#kind: Gateway
+#metadata:
+#  name: kubeflow-gateway-8022
+#  namespace: kubeflow
+#spec:
+#  selector:
+#    istio: ingressgateway
+#  servers:
+#  - hosts:
+#    - '*'          # 此处不能修改为域名，不然泛域名没法用
+#    port:
+#      number: 8022
+#      name: ssh
+#      protocol: TLS
+#    tls:
+#      mode: PASSTHROUGH  # 关键：透传模式
 
 
 

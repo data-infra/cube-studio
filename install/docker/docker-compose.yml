@@ -14,13 +14,12 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: admin
       MYSQL_DATABASE: kubeflow
-      MYSQL_ALLOW_EMPTY_PASSWORD: true
       TZ: Asia/Shanghai
     ports:
       - "3306:3306"
     volumes:
       - ./data/mysql:/var/lib/mysql
-      - ./docker-add-file/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf
+      - ./docker-add-file/mysqld.cnf:/etc/mysql/conf.d/mysqld.cnf
     healthcheck:
       test: "/usr/bin/mysql --user=root --password=admin --execute \"SHOW DATABASES;\""
       timeout: 45s
@@ -46,13 +45,13 @@ services:
   myapp:   # 后端容器
     image: ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2025.09.01
     restart: unless-stopped
-    command: [ 'bash','-c','/entrypoint.sh' ]
+    command: [ 'bash','-c','/entrypoint.sh' ]     # 在容器内使用sleep 命令启动，然后exec进入myapp容器，手动执行/entrypoint.sh 或 python myapp/run.py
     environment:
       STAGE: 'dev'
       REDIS_HOST: 'redis'
       REDIS_PORT: '6379'
       REDIS_PASSWORD: admin
-      MYSQL_SERVICE: 'mysql+pymysql://root:admin@host.docker.internal:3306/kubeflow?charset=utf8'
+      MYSQL_SERVICE: 'mysql+pymysql://root:admin@mysql:3306/kubeflow?charset=utf8mb4'
       ENVIRONMENT: DEV
     depends_on:
         redis:

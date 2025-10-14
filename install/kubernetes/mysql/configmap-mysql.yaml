@@ -25,7 +25,7 @@ data:
     explicit_defaults_for_timestamp = 1
     character_set_server=utf8
     init_connect='SET NAMES utf8'
-    skip-grant-tables
+    # skip-grant-tables
 
   init.sql: |-
 

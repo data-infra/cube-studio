@@ -151,7 +151,7 @@ yarn: npm install yarn -g
 
  -  `cd myapp/frontend` 进入目录
  - `npm run start` 进入调试模式。
- - - 首次进入  http://localhost:3000/login?username=admin&login_url=http://localhost:3000/frontend/
+ - - 首次进入  http://localhost:3000/login?username=admin&login_url=http://localhost:3000/frontend/  跳转后页面可直接关闭
  - - 后面可直接进入 前端 http://localhost:3000/frontend/
 
 ### vision 任务流编排
@@ -165,7 +165,8 @@ yarn: npm install yarn -g
 2、前端启动
  -  `cd myapp/vision` 进入目录
  - `npm run dev` 进入调试模式。
- - - vision启动访问地址：http://localhost:3000/   或者某个pipeline的id， http://localhost:3000/?pipeline_id=1#/
+ - - 首次进入  http://localhost:3000/login?username=admin&login_url=http://localhost:3000/frontend/  跳转后页面可直接关闭
+ - - vision启动 首页访问地址：http://localhost:3000/#/home/   或者某个pipeline的id， http://localhost:3000/?pipeline_id=1#/
 
 ### visionPlus 任务流编排
 
@@ -178,6 +179,7 @@ yarn: npm install yarn -g
 2、前端启动
  -  `cd myapp/visionPlus` 进入目录
  - `npm run dev` 进入调试模式。
+ - - 首次进入  http://localhost:3000/login?username=admin&login_url=http://localhost:3000/frontend/  跳转后页面可直接关闭
  - - visionPLus启动访问地址：http://localhost:3000/?scenes=etl_pipeline&pipeline_id=1
 
 
