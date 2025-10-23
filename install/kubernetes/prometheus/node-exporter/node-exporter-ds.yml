@@ -44,7 +44,7 @@ spec:
           name: sys
           readOnly: false
       - name: kube-rbac-proxy
-        image: bitnami/kube-rbac-proxy:0.14.1
+        image: ccr.ccs.tencentyun.com/cube-studio/kube-rbac-proxy:0.14.1
         args:
         - --secure-listen-address=:9100
         - --upstream=http://127.0.0.1:9101/

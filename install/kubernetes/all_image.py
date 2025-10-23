@@ -26,7 +26,7 @@ new_prometheus = [
 
     'quay.io/prometheus-operator/prometheus-config-reloader:v0.46.0',  # prometheus配置翻译
     "quay.io/prometheus-operator/prometheus-operator:v0.46.0",  # prometheus 部署工具
-    'bitnami/kube-rbac-proxy:0.14.1',  # 指标
+    'ccr.ccs.tencentyun.com/cube-studio/kube-rbac-proxy:0.14.1',  # 指标
     'carlosedp/addon-resizer:v1.8.4',  # 指标
 
     'grafana/grafana:9.5.20',  # 监控看板
