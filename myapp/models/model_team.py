@@ -139,6 +139,19 @@ class Project(Model,AuditMixinNullable,MyappModelBase):
     @property
     def cluster(self):
         all_clusters = conf.get('CLUSTERS')
+        for cluster_name in all_clusters:
+            if 'KUBECONFIG' not in all_clusters[cluster_name]:
+                all_clusters[cluster_name]['KUBECONFIG']=''
+            if 'SERVICE_DOMAIN' not in all_clusters[cluster_name]:
+                all_clusters[cluster_name]['SERVICE_DOMAIN']=conf.get('SERVICE_DOMAIN','service.svc.cluster.local')
+            if 'K8S_NETWORK_MODE' not in all_clusters[cluster_name]:
+                all_clusters[cluster_name]['K8S_NETWORK_MODE']=conf.get('K8S_NETWORK_MODE','iptables')
+            if 'CONTAINER_CLI' not in all_clusters[cluster_name]:
+                all_clusters[cluster_name]['CONTAINER_CLI']=conf.get('CONTAINER_CLI','docker')
+            if 'DOCKER_SOCKET' not in all_clusters[cluster_name]:
+                all_clusters[cluster_name]['DOCKER_SOCKET']=conf.get('DOCKER_SOCKET','/var/run/docker.sock(hostpath):/var/run/docker.sock')
+            if 'CONTAINERD_SOCKET' not in all_clusters[cluster_name]:
+                all_clusters[cluster_name]['CONTAINERD_SOCKET']=conf.get('CONTAINERD_SOCKET','/etc/containerd/(hostpath):/etc/containerd/,/run/containerd/containerd.sock(hostpath):/run/containerd/containerd.sock')
         default=all_clusters.get(conf.get('ENVIRONMENT'),{})
         try:
             expand = json.loads(self.expand) if self.expand else {}

@@ -12,7 +12,7 @@ from myapp.models.base import MyappModelBase
 from myapp.models.model_team import Project
 from myapp.models.helpers import AuditMixinNullable
 from flask import g, request
-from myapp import app
+from myapp import app,db,cache
 
 from sqlalchemy import Column, Integer, String, ForeignKey
 from flask import Markup

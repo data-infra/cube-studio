@@ -135,7 +135,7 @@ class Service(Model,AuditMixinNullable,MyappModelBase,service_common):
                 url = host
 
             if self.ready:
-                return Markup(f'<a target=_blank href="//{url}">{host}</a>')
+                return Markup(f'<a target=_blank href="http://{url}">{host}</a>')
             else:
                 return host
         else:
@@ -274,7 +274,7 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
 
         monitoring_url="//"+self.project.cluster.get('HOST', request.host).split('|')[-1]+conf.get('GRAFANA_SERVICE_PATH','').replace('var-namespace=service',f'var-namespace={self.namespace}')+self.name
         # if self.created_by.username==g.user.username or g.user.is_admin():
-        if self.created_by.id == g.user.id or self.project.user_role(g.user.id)=='creator':
+        if self.created_by.id == g.user.id or self.project.user_role(g.user.id)=='creator' or g.user.is_admin():
             dom = f'''
                 <a target=_blank href="/inferenceservice_modelview/api/deploy/debug/{self.id}">{__("调试")}</a> | 
                 <a href="/inferenceservice_modelview/api/deploy/prod/{self.id}">{__("部署")}</a> | 

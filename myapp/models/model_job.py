@@ -430,12 +430,13 @@ class Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
 
         # 增加新的task的位置
         for task_id in tasks:
-            exist=False
-            for item in expand_tasks:
+            exist_index=-1
+            for index,item in enumerate(expand_tasks):
                 if "data" in item and item['id']==str(task_id):
-                    exist=True
+                    exist_index=index
                     break
-            if not exist:
+            # 如果后端有节点，但是前端没有节点信息，就增加一个
+            if exist_index==-1:
                 # if task_id not in expand_tasks:
                 expand_tasks.append({
                     "id": str(task_id),
@@ -454,6 +455,14 @@ class Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
                         "label": tasks[task_id].label
                     }
                 })
+            else:
+                expand_tasks[exist_index]['data']={
+                    "info": {
+                        "describe": tasks[task_id].job_template.describe
+                    },
+                    "name": tasks[task_id].name,
+                    "label": tasks[task_id].label
+                }
 
         # 重写所有task的上下游关系
         dag_json = json.loads(self.dag_json)
