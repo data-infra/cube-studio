@@ -339,12 +339,6 @@ class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
                     pvc = k8s_client.get_pvc(name=pvc_name, namespace=namespace)
                     if not pvc:
                         raise Exception(f'pvc {pvc_name} not exist in {namespace} namespace')
-            if '(storage)' in volumn:
-                from myapp.models.model_storage import Storage
-                storage_name = volumn.split(':')[0].strip().replace('(storage)', '').strip()
-                storage = db.session.query(Storage).filter_by(name=storage_name).first()
-                if not storage:
-                    raise Exception(f'storage {storage_name} not exist')
             if volumn.strip() and '(pvc)' not in volumn and '(pvc-share)' not in volumn and '(hostpath)' not in volumn and '(storage)' not in volumn and '(configmap)' not in volumn and '(memory)' not in volumn:
                 if ':' in volumn and '(' not in volumn:
                     volumn = volumn.split(':')[0] + "(hostpath):" + volumn.split(':')[1]

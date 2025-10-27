@@ -21,7 +21,7 @@ class AbstractEventLogger(ABC):
             d = request.form.to_dict() or {}
 
             # request parameters can overwrite post body
-            request_params = request.args.to_dict()
+            request_params = request.args.to_dict() or {}
             d.update(request_params)
             d.update(kwargs)
 
@@ -56,17 +56,21 @@ class DBEventLogger(AbstractEventLogger):
         referrer = request.referrer[:1000] if request.referrer else None
         if not user_id and g.user:
             user_id = g.user.get_id()
-        log = Log(
-            action=action,
-            json=json.dumps(kwargs, indent=4, ensure_ascii=False),
-            duration_ms=duration_ms,
-            referrer=referrer,
-            user_id=user_id,
-            method=request.method,
-            path=request.path,
-            dttm=datetime.datetime.now()
-        )
 
         sesh = current_app.appbuilder.get_session
-        sesh.add(log)
-        sesh.commit()
+        try:
+            log = Log(
+                action=str(action),
+                json=json.dumps(kwargs, indent=4, ensure_ascii=False),
+                duration_ms=duration_ms,
+                referrer=str(referrer),
+                user_id=user_id,
+                method=str(request.method),
+                path=request.path,
+                dttm=datetime.datetime.now()
+            )
+            sesh.add(log)
+            sesh.commit()
+        except Exception as e:
+            sesh.rollback()  # 发生异常时显式回滚
+
