@@ -8,7 +8,7 @@
         "data-import": {
           "upstream": []
         },
-        "hyperparam-search": {
+        "hyperparameter-search": {
           "upstream": []
         },
         "data-process": {
@@ -19,7 +19,7 @@
         "model-train": {
           "upstream": [
             "data-process",
-            "hyperparam-search"
+            "hyperparameter-search"
           ]
         },
         "model-val": {
@@ -136,7 +136,7 @@
           }
         },
         {
-          "id": "hyperparam-search",
+          "id": "hyperparameter-search",
           "type": "dataSet",
           "position": {
             "x": 572,
@@ -146,7 +146,7 @@
             "info": {
               "describe": "超参搜索模板"
             },
-            "name": "hyperparam-search",
+            "name": "hyperparameter-search",
             "label": "超参搜索"
           }
         },
@@ -178,10 +178,10 @@
           "id": "logic__edge-data-processnull-model-trainnull"
         },
         {
-          "source": "hyperparam-search",
+          "source": "hyperparameter-search",
           "arrowHeadType": "arrow",
           "target": "model-train",
-          "id": "logic__edge-hyperparam-searchnull-model-trainnull"
+          "id": "logic__edge-hyperparameter-searchnull-model-trainnull"
         },
         {
           "source": "model-train",
@@ -313,8 +313,8 @@
         }
       },
       {
-        "job_templete": "hyperparam-search",
-        "name": "hyperparam-search",
+        "job_templete": "hyperparameter-search-ray",
+        "name": "hyperparameter-search",
         "label": "超参搜索",
         "volume_mount": "kubeflow-user-workspace(pvc):/mnt",
         "resource_memory": "2G",
