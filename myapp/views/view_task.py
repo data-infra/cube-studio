@@ -12,7 +12,7 @@ import pysnooper
 from myapp.models.model_job import Job_Template, Task, Pipeline
 from flask_appbuilder.forms import GeneralModelConverter
 from myapp.utils import core
-from myapp import app, appbuilder, db
+from myapp import app, appbuilder, db, event_logger
 from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from jinja2 import Environment, BaseLoader, DebugUndefined
 import os
@@ -530,7 +530,7 @@ class Task_ModelView_Base():
                                     hostPort=[hostPort+1,hostPort+2] if HostNetwork else []
                                     )
 
-    # @event_logger.log_this
+    @event_logger.log_this
     @expose_api(description="单个任务debug",url="/debug/<task_id>", methods=["GET", "POST"])
     def debug(self, task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
@@ -651,8 +651,8 @@ class Task_ModelView_Base():
 
         return redirect("/k8s/web/debug/%s/%s/%s/%s" % (task.pipeline.project.cluster['NAME'], new_namespace, pod_name, pod_name))
 
+    @event_logger.log_this
     @expose_api(description="单个任务run",url="/run/<task_id>", methods=["GET", "POST"])
-    # @pysnooper.snoop(watch_explode=('ops_args',))
     def run_task(self, task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
 
@@ -822,6 +822,7 @@ class Task_ModelView_Base():
                 k8s_client.delete_pods(namespace=namespace, labels={"run-id": run_id})
                 time.sleep(2)
 
+    @event_logger.log_this
     @expose_api(description="单个任务clear",url="/clear/<task_id>", methods=["GET", "POST"])
     def clear_task(self, task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()

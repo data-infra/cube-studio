@@ -488,7 +488,7 @@ class K8s_View(BaseMyappView):
         # 查询pod
         pods = k8s_client.v1.list_namespaced_pod(namespace=namespace).items or []
         pods = [k8s_client.pod_model2dict(pod) for pod in pods if search in pod.metadata.name]
-        pods = sorted(pods, key=lambda pod: pod['start_time'])
+        pods = sorted(pods, key=lambda pod: pod['start_time'], reverse=True)
         if not g.user.is_admin():
             pods = [pod for pod in pods if pod['username'] == g.user.username]
         # 查询服务
@@ -503,6 +503,8 @@ class K8s_View(BaseMyappView):
                 container_name = 'main'
             else:
                 container_name = pod['containers'][-1]
+
+            grafana_url = "//"+all_clusters[cluster_name].get('HOST', request.host).split('|')[-1]+conf.get("GRAFANA_TASK_PATH")+pod["name"]
             data_pod = [
                 Markup(status_icon.get(pod['pod_substatus'],default_status_icon)),
                 Markup(f'<a href="/k8s/web/pod/{cluster_name}/{namespace}/{pod["name"]}">{pod["name"]}</a>'),
@@ -511,7 +513,7 @@ class K8s_View(BaseMyappView):
                 pod['pod_substatus'],
                 pod['restart_count'],
                 Markup('<div style="min-width:120px">'+humanize.naturaltime(datetime.datetime.now() - pod['start_time'])+"</div>"),
-                Markup(f'<div style="min-width:180px"><a href="/k8s/web/log/{cluster_name}/{namespace}/{pod["name"]}/{container_name}">日志</a> | <a href="/k8s/web/debug/{cluster_name}/{namespace}/{pod["name"]}/{container_name}">进入</a> | <a href="{conf.get("GRAFANA_TASK_PATH")}{pod["name"]}">监控</a> | <a href="/k8s/web/delete/pod/{cluster_name}/{namespace}/{pod["name"]}">删除</a></div>' )
+                Markup(f'<div style="min-width:180px"><a href="/k8s/web/log/{cluster_name}/{namespace}/{pod["name"]}/{container_name}">日志</a> | <a href="/k8s/web/debug/{cluster_name}/{namespace}/{pod["name"]}/{container_name}">进入</a> | <a href="{grafana_url}">监控</a> | <a href="/k8s/web/delete/pod/{cluster_name}/{namespace}/{pod["name"]}">删除</a></div>' )
             ]
             data_pods.append({
                 "one":data_pod,

@@ -579,22 +579,19 @@ class Notebook_ModelView_Base():
             SERVICE_EXTERNAL_IP = json.loads(notebook.project.expand).get('SERVICE_EXTERNAL_IP', '')
         # 使用集群的ip
         if not SERVICE_EXTERNAL_IP:
-            SERVICE_EXTERNAL_IP = notebook.project.cluster.get('HOST','').split('|')[0].strip().split(':')[0]
+            SERVICE_EXTERNAL_IP = notebook.project.cluster.get('HOST','')
         # 使用全局ip
         if not SERVICE_EXTERNAL_IP:
             SERVICE_EXTERNAL_IP = conf.get('SERVICE_EXTERNAL_IP', None)
         # 使用当前url的
         if not SERVICE_EXTERNAL_IP:
-            if core.checkip(request.host.split(':')[0]):
-                SERVICE_EXTERNAL_IP = request.host.split(':')[0]
+            SERVICE_EXTERNAL_IP = request.host
 
         if SERVICE_EXTERNAL_IP and type(SERVICE_EXTERNAL_IP) == str:
             SERVICE_EXTERNAL_IP = [SERVICE_EXTERNAL_IP]
-        if SERVICE_EXTERNAL_IP:
-            SERVICE_EXTERNAL_IP = [x.split('|')[0].strip().split(':')[0] for x in SERVICE_EXTERNAL_IP]
 
         port = 3000
-
+        security_context=None
         command = None
         workingDir = None
         health=None
@@ -602,6 +599,7 @@ class Notebook_ModelView_Base():
         # 端口+0是jupyterlab  +1是sshd   +2 +3 是预留的用户自己启动应用占用的端口
         port_str = conf.get('NOTEBOOK_PORT','10000+10*ID').replace('ID', str(notebook.id))
         meet_ports = core.get_not_black_port(int(eval(port_str)))
+
         env = {
             "NO_AUTH": "true",
             "DISPLAY": ":10.0",   # 屏幕投屏时使用
@@ -698,17 +696,9 @@ class Notebook_ModelView_Base():
         if vs_obj:
             k8s_client.delete_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],namespace=old_namespace, name=old_crd_name)
             time.sleep(1)
-        host=None
-        # 优先使用项目组配置的
-        if SERVICE_EXTERNAL_IP:
-            host = SERVICE_EXTERNAL_IP[0]
-        # 再使用项目配置
-        if not host:
-            host = notebook.project.cluster.get('HOST', request.host).split('|')[0].strip().split(':')[0]
-        # 最后使用当前域名
-        if not host:
-            host = request.host.split(':')[0]
-        crd_json = {
+
+        host = notebook.project.cluster.get('HOST', request.host).split('|')[-1].strip().split(':')[0]
+        web_crd_json = {
             "apiVersion": "networking.istio.io/v1alpha3",
             "kind": "VirtualService",
             "metadata": {
@@ -733,7 +723,7 @@ class Notebook_ModelView_Base():
                                     "cookie":{
                                         "regex": ".*myapp_username=.*"
                                     }
-                                }
+                                }  if notebook.project.cluster['NAME']==conf.get('ENVIRONMENT','dev').lower() else None
                             }
                         ],
                         "rewrite": {
@@ -757,15 +747,16 @@ class Notebook_ModelView_Base():
 
         # print(crd_json)
         try:
-            crd = k8s_client.create_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],namespace=new_namespace, body=crd_json)
+            crd = k8s_client.create_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],namespace=new_namespace, body=web_crd_json)
         except:
             pass
         # 边缘模式时，需要根据项目组中的配置设置代理ip
-        if meet_ports[0]>20000:
-            flash(__('端口已耗尽，ssh连接notebook请通过跳板机跳转连接'), 'warning')
+        if meet_ports[0]>=20000:
+            flash(__('端口已耗尽，ssh连接notebook请通过跳板机连接'), 'warning')
 
         if SERVICE_EXTERNAL_IP and SERVICE_EXTERNAL_IP[0]!='127.0.0.1' and meet_ports[0]<20000:
-            SERVICE_EXTERNAL_IP = [ip.split('|')[0].strip().split(':')[0] for ip in SERVICE_EXTERNAL_IP]
+            external_ip = [ip.split('|')[0].strip().split(':')[0] for ip in SERVICE_EXTERNAL_IP]
+            external_ip = [ip for ip in external_ip if core.checkip(ip)]
             ports = [port]
             ports.append(meet_ports[1])   # 给每个notebook多开一个端口，ssh的端口
 
@@ -781,11 +772,16 @@ class Notebook_ModelView_Base():
                 username=notebook.created_by.username,
                 ports=service_ports,
                 selector=labels,
-                service_type='ClusterIP' if conf.get('K8S_NETWORK_MODE','iptables')!='ipvs' else 'NodePort',
-                external_ip=SERVICE_EXTERNAL_IP if conf.get('K8S_NETWORK_MODE','iptables')!='ipvs' else None
+                service_type='ClusterIP' if notebook.project.cluster['K8S_NETWORK_MODE']!='ipvs' else 'NodePort',
+                external_ip=external_ip if notebook.project.cluster['K8S_NETWORK_MODE']!='ipvs' else None
             )
 
-    # @event_logger.log_this
+        expand = json.loads(notebook.expand) if notebook.expand else {}
+        expand['status']='online'
+        notebook.expand = json.dumps(expand)
+        db.session.commit()
+
+    @event_logger.log_this
     @expose_api(description="重置在线ide",url='/reset/<notebook_id>', methods=['GET', 'POST'])
     def reset(self, notebook_id):
 
@@ -801,7 +797,7 @@ class Notebook_ModelView_Base():
 
         return redirect(conf.get('MODEL_URLS', {}).get('notebook', ''))
 
-    # @event_logger.log_this
+    @event_logger.log_this
     @expose_api(description="在线ide续期",url='/renew/<notebook_id>', methods=['GET', 'POST'])
     def renew(self, notebook_id):
         notebook = db.session.query(Notebook).filter_by(id=notebook_id).first()
@@ -811,7 +807,7 @@ class Notebook_ModelView_Base():
 
     # 基础批量删除
     # @pysnooper.snoop()
-    def base_muldelete(self, items, cluster=None):
+    def base_stop(self, items, cluster=None):
         if not items:
             return
             # abort(404)
@@ -829,11 +825,15 @@ class Notebook_ModelView_Base():
                 if crd_info:
                     k8s_client.delete_crd(group=crd_info['group'], version=crd_info['version'],plural=crd_info['plural'], namespace=item.namespace, name="notebook-jupyter-%s" % item.name.replace('_', '-'))
 
+                expand = json.loads(item.expand) if item.expand else {}
+                expand['status']='offline'
+                item.expand = json.dumps(expand)
+                db.session.commit()
             except Exception as e:
                 flash(str(e), "warning")
 
     def pre_delete(self, item):
-        self.base_muldelete([item])
+        self.base_stop([item])
 
     @expose_api(description="在线ide的列表查询",url="/list/")
     @has_access
@@ -861,14 +861,15 @@ class Notebook_ModelView_Base():
 
     @action("stop_all", "停止", "停止所有选中的notebook?", "fa-trash", single=False)
     def stop_all(self, items):
-        self.base_muldelete(items)
+        self.base_stop(items)
         self.update_redirect()
         return redirect(self.get_redirect())
 
+    @event_logger.log_this
     @expose_api(description="停止在线ide",url='/stop/<notebook_id>', methods=['GET', 'POST'])
     def stop(self, notebook_id):
         notebook = db.session.query(Notebook).filter_by(id=notebook_id).first()
-        self.base_muldelete([notebook])
+        self.base_stop([notebook])
         flash(_('清理完成'),'info')
         return redirect(conf.get('MODEL_URLS', {}).get('notebook', ''))
     @action("muldelete", "删除", "确定删除所选记录?", "fa-trash", single=False)

@@ -1,3 +1,5 @@
+from flask_appbuilder.baseviews import expose_api
+
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
@@ -45,8 +47,7 @@ conf = app.config
 class Service_Pipeline_Filter(MyappFilter):
     # @pysnooper.snoop()
     def apply(self, query, func):
-        user_roles = [role.name.lower() for role in list(self.get_user_roles())]
-        if "admin" in user_roles:
+        if g.user.is_admin():
             return query
 
         join_projects_id = security_manager.get_join_projects_id(db.session)
@@ -105,10 +106,10 @@ class Service_Pipeline_ModelView_Base():
         ),
         "images": StringField(
             _('镜像'),
-            default='ccr.ccs.tencentyun.com/cube-studio/service-pipeline',
+            default=f'{conf.get("REPOSITORY_ORG","ccr.ccs.tencentyun.com/cube-studio/")}service-pipeline',
             description= _("推理服务镜像"),
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
+            validators=[DataRequired(),Regexp('^[a-zA-Z0-9\-._:@\/]*$')]
         ),
         "node_selector": StringField(
             _('节点选择'),
@@ -140,16 +141,17 @@ class Service_Pipeline_ModelView_Base():
                              validators=[DataRequired()]),
         "resource_memory": StringField('memory',
                                        default=Service_Pipeline.resource_memory.default.arg,
-                                       description= _('内存的资源使用限制，示例1G，10G， 最大100G，如需更多联系管路员'), widget=BS3TextFieldWidget(),
-                                       validators=[DataRequired()]),
+                                       description= _('内存的资源使用配置，示例1G，10G， 最大100G，如需更多联系管路员'), widget=BS3TextFieldWidget(),
+                                       validators=[DataRequired(),Regexp("^[0-9]*G$")]),
         "resource_cpu": StringField('cpu', default=Service_Pipeline.resource_cpu.default.arg,
-                                    description= _('cpu的资源使用限制(单位核)，示例 0.4，10，最大50核，如需更多联系管路员'),
-                                    widget=BS3TextFieldWidget(), validators=[DataRequired()]),
+                                    description= _('cpu的资源使用配置(单位核)，示例 0.4，10，最大50核，如需更多联系管路员'),
+                                    widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp("^[0-9]*$")]),
         "resource_gpu": StringField('gpu', default='0',
-                                    description= _('gpu的资源使用限制(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)'),
-                                    widget=BS3TextFieldWidget()),
+                                    description= _('gpu的资源使用配置(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)'),
+                                    widget=BS3TextFieldWidget(),validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')]
+                                    ),
         "replicas": StringField(_('副本数'), default=Service_Pipeline.replicas.default.arg,
-                                description= _('pod副本数，用来配置高可用'), widget=BS3TextFieldWidget(), validators=[DataRequired()]),
+                                description= _('pod副本数，用来配置高可用'), widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp("^[0-9]+$")]),
         "env": StringField(_('环境变量'), default=Service_Pipeline.env.default.arg,
                            description= _('使用模板的task自动添加的环境变量，支持模板变量。书写格式:每行一个环境变量env_key=env_value'),
                            widget=MyBS3TextAreaFieldWidget()),
@@ -160,8 +162,7 @@ class Service_Pipeline_ModelView_Base():
 
     # 检测是否具有编辑权限，只有creator和admin可以编辑
     def check_edit_permission(self, item):
-        user_roles = [role.name.lower() for role in list(get_user_roles())]
-        if "admin" in user_roles:
+        if g.user.is_admin():
             return True
         if g.user and g.user.username and hasattr(item, 'created_by'):
             if g.user.username == item.created_by.username:
@@ -248,7 +249,7 @@ class Service_Pipeline_ModelView_Base():
         item.dag_json = json.dumps(json.loads(item.dag_json), indent=4,ensure_ascii=False) if item.dag_json else '{}'
         item.volume_mount = item.project.volume_mount + ",%s(configmap):/config/" % item.name
 
-    @expose("/my/list/")
+    @expose_api(description="",url="/my/list/")
     def my(self):
         try:
             user_id = g.user.id
@@ -271,8 +272,7 @@ class Service_Pipeline_ModelView_Base():
                 response.status_code = 404
                 return response
 
-            user_roles = [role.name.lower() for role in g.user.roles]
-            if "admin" in user_roles:
+            if g.user.is_admin():
                 return user_fun(*args, **kwargs)
 
             join_projects_id = security_manager.get_join_projects_id(db.session)
@@ -350,7 +350,7 @@ class Service_Pipeline_ModelView_Base():
 
     # 只能有一个入口。不能同时接口两个队列
     # # @event_logger.log_this
-    @expose("/run_service_pipeline/<service_pipeline_id>", methods=["GET", "POST"])
+    @expose_api(description="",url="/run_service_pipeline/<service_pipeline_id>", methods=["GET", "POST"])
     @check_service_pipeline_perms
     def run_service_pipeline(self, service_pipeline_id):
         service_pipeline = db.session.query(Service_Pipeline).filter_by(id=service_pipeline_id).first()
@@ -372,7 +372,7 @@ class Service_Pipeline_ModelView_Base():
         # return redirect(run_url)
 
     # # @event_logger.log_this
-    @expose("/web/<service_pipeline_id>", methods=["GET"])
+    @expose_api(description="",url="/web/<service_pipeline_id>", methods=["GET"])
     def web(self, service_pipeline_id):
         service_pipeline = db.session.query(Service_Pipeline).filter_by(id=service_pipeline_id).first()
 
@@ -388,38 +388,29 @@ class Service_Pipeline_ModelView_Base():
         return self.render_template('link.html', data=data)
 
     # # @event_logger.log_this
-    @expose("/web/log/<service_pipeline_id>", methods=["GET"])
+    @expose_api(description="",url="/web/log/<service_pipeline_id>", methods=["GET"])
     def web_log(self, service_pipeline_id):
         pass
 
     # 链路跟踪
-    @expose("/web/monitoring/<service_pipeline_id>", methods=["GET"])
+    @expose_api(description="",url="/web/monitoring/<service_pipeline_id>", methods=["GET"])
     def web_monitoring(self, service_pipeline_id):
         service_pipeline = db.session.query(Service_Pipeline).filter_by(id=int(service_pipeline_id)).first()
         if service_pipeline.run_id:
-            url = "http://"+service_pipeline.project.cluster.get('HOST', request.host)+conf.get('GRAFANA_TASK_PATH')+ service_pipeline.name
+            url = "//"+service_pipeline.project.cluster.get('HOST', request.host).split('|')[-1]+conf.get('GRAFANA_TASK_PATH')+ service_pipeline.name
             return redirect(url)
         else:
             flash('no running instance', 'warning')
             return redirect('/service_pipeline_modelview/api/web/%s' % service_pipeline.id)
 
     # # @event_logger.log_this
-    @expose("/web/pod/<service_pipeline_id>", methods=["GET"])
+    @expose_api(description="",url="/web/pod/<service_pipeline_id>", methods=["GET"])
     def web_pod(self, service_pipeline_id):
         service_pipeline = db.session.query(Service_Pipeline).filter_by(id=service_pipeline_id).first()
-        data = {
-            "url": "http://" + service_pipeline.project.cluster.get('HOST', request.host) + conf.get('K8S_DASHBOARD_CLUSTER','/k8s/dashboard/cluster/') + '#/search?namespace=%s&q=%s' % (conf.get('SERVICE_PIPELINE_NAMESPACE'), service_pipeline.name.replace('_', '-')),
-            "target":"div.kd-chrome-container.kd-bg-background",
-            "delay":500,
-            "loading": True
-        }
-        # 返回模板
-        if service_pipeline.project.cluster['NAME'] == conf.get('ENVIRONMENT'):
-            return self.render_template('link.html', data=data)
-        else:
-            return self.render_template('external_link.html', data=data)
+        return redirect(f'/k8s/web/search/{service_pipeline.project.cluster["NAME"]}/{service_pipeline.namespace}/{service_pipeline.name}')
 
-    @expose('/clear/<service_id>', methods=['POST', "GET"])
+
+    @expose_api(description="",url='/clear/<service_id>', methods=['POST', "GET"])
     def clear(self, service_pipeline_id):
         service_pipeline = db.session.query(Service_Pipeline).filter_by(id=service_pipeline_id).first()
 
@@ -429,9 +420,9 @@ class Service_Pipeline_ModelView_Base():
         k8s_client.delete_deployment(namespace=namespace, name=service_pipeline.name)
 
         flash(__('服务清理完成'), category='success')
-        return redirect('/service_pipeline_modelview/api/')
+        return redirect('/service_pipeline_modelview/api/list/')
 
-    @expose("/config/<service_pipeline_id>", methods=("GET", 'POST'))
+    @expose_api(description="",url="/config/<service_pipeline_id>", methods=("GET", 'POST'))
     def pipeline_config(self, service_pipeline_id):
         print(service_pipeline_id)
         pipeline = db.session.query(Service_Pipeline).filter_by(id=service_pipeline_id).first()
@@ -488,7 +479,7 @@ class Service_Pipeline_ModelView_Base():
         }
         return jsonify(config)
 
-    @expose("/template/list/")
+    @expose_api(description="",url="/template/list/")
     def template_list(self):
 
         all_template = {

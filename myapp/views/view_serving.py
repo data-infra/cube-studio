@@ -9,7 +9,7 @@ from myapp.models.model_serving import Service
 from myapp.utils import core
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
-from myapp import app, appbuilder, db
+from myapp import app, appbuilder, db, event_logger
 from myapp.models.model_job import Repository
 from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from myapp import security_manager
@@ -185,6 +185,7 @@ class Service_ModelView_base():
         self.delete_old_service(service_name=item.name, cluster=item.project.cluster, namespace=item.namespace)
         flash(__('服务清理完成'), category='success')
 
+    @event_logger.log_this
     @expose_api(description="清理内部服务",url='/clear/<service_id>', methods=['POST', "GET"])
     def clear(self, service_id):
         service = db.session.query(Service).filter_by(id=service_id).first()
@@ -196,6 +197,7 @@ class Service_ModelView_base():
         flash(__('服务清理完成'), category='success')
         return redirect(conf.get('MODEL_URLS', {}).get('service', ''))
 
+    @event_logger.log_this
     @expose_api(description="部署内部服务",url='/deploy/<service_id>', methods=['POST', "GET"])
     # @pysnooper.snoop()
     def deploy(self, service_id):

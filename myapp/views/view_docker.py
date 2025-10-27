@@ -7,7 +7,7 @@ from flask_babel import lazy_gettext as _
 from flask_appbuilder.forms import GeneralModelConverter
 from wtforms.validators import DataRequired, Regexp
 from myapp.models.model_job import Repository
-from myapp import app, appbuilder, db
+from myapp import app, appbuilder, db, event_logger
 from myapp.models.model_job import Repository
 from wtforms import StringField
 from myapp.views.view_team import Project_Join_Filter, filter_join_org_project
@@ -197,9 +197,8 @@ class Docker_ModelView_Base():
                 item.last_image = ''
                 flash(__('发现基础镜像更换，已帮你删除之前启动的debug容器'), 'success')
 
-    # @event_logger.log_this
+    @event_logger.log_this
     @expose_api(description="容器debug",url="/debug/<docker_id>", methods=["GET", "POST"])
-    # @pysnooper.snoop()
     def debug(self, docker_id):
         docker = db.session.query(Docker).filter_by(id=docker_id).first()
 
@@ -277,9 +276,8 @@ class Docker_ModelView_Base():
         flash(__('镜像调试只安装环境，请不要运行业务代码。当晚前请注意保存镜像'), 'warning')
         return redirect(f'/k8s/web/debug/{docker.project.cluster["NAME"]}/{namespace}/{pod_name}/{pod_name}')
 
-    # @event_logger.log_this
+    @event_logger.log_this
     @expose_api(description="清理在线调试镜像",url="/delete_pod/<docker_id>", methods=["GET", "POST"])
-    # @pysnooper.snoop()
     def delete_pod(self, docker_id,cluster=None):
         docker = db.session.query(Docker).filter_by(id=docker_id).first()
         from myapp.utils.py.py_k8s import K8s
@@ -297,9 +295,8 @@ class Docker_ModelView_Base():
     def pre_delete(self,item):
         self.delete_pod(docker_id=item.id)
 
-    # @event_logger.log_this
+    @event_logger.log_this
     @expose_api(description="保存在线调试镜像",url="/save/<docker_id>", methods=["GET", "POST"])
-    # @pysnooper.snoop(watch_explode='status')
     def save(self, docker_id):
         docker = db.session.query(Docker).filter_by(id=docker_id).first()
         from myapp.utils.py.py_k8s import K8s
@@ -338,7 +335,7 @@ class Docker_ModelView_Base():
             flash(__('构建推送镜像前，请先添加镜像仓库信息')+docker.target_image[:docker.target_image.index('/')],'warning')
             return redirect(conf.get('MODEL_URLS', {}).get('repository'))
         repo = max(all_repositorys, key=lambda repo: len(repo.server)+1000*int(repo.created_by.username==g.user.username))  # 优先使用自己创建的，再使用最匹配的，最后使用别人创建的
-        cli = conf.get('CONTAINER_CLI','docker')
+        cli = docker.project.cluster['CONTAINER_CLI']
 
         if repo:
             server = repo.server[:repo.server.index('/')] if '/' in repo.server else repo.server
@@ -364,7 +361,7 @@ class Docker_ModelView_Base():
             labels={"app": "docker", "user": g.user.username, "pod-type": "docker"},
             annotations={'project': docker.project.name},
             args=None,
-            volume_mount=conf.get('DOCKER_SOCKET','/var/run/docker.sock(hostpath):/var/run/docker.sock') if 'docker' in cli else conf.get('CONTAINERD_SOCKET','/etc/containerd/(hostpath):/etc/containerd/,/run/containerd/containerd.sock(hostpath):/run/containerd/containerd.sock'),
+            volume_mount=docker.project.cluster['DOCKER_SOCKET'] if 'docker' in cli else docker.project.cluster['CONTAINERD_SOCKET'],
             working_dir='/mnt/%s' % docker.created_by.username,
             node_selector=None,
             resource_memory='0~10G',

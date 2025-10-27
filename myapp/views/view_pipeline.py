@@ -18,7 +18,7 @@ from flask_appbuilder.actions import action
 from flask import jsonify, Response, request, render_template
 from flask_appbuilder.forms import GeneralModelConverter
 from myapp.utils import core
-from myapp import app, appbuilder, db
+from myapp import app, appbuilder, db, event_logger
 from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from jinja2 import Environment, BaseLoader, DebugUndefined,Undefined
 import os
@@ -251,7 +251,7 @@ def dag_to_pipeline(pipeline, dbsession, workflow_label=None, **kwargs):
         container_envs.append(("KFJ_TASK_IMAGES", str(task.job_template.images)))
         container_envs.append(("KFJ_TASK_RESOURCE_CPU", str(task.resource_cpu)))
         container_envs.append(("KFJ_TASK_RESOURCE_MEMORY", str(task.resource_memory)))
-        container_envs.append(("KFJ_TASK_RESOURCE_GPU", str(task.resource_gpu.replace("+", ''))))
+        container_envs.append(("KFJ_TASK_RESOURCE_GPU", str(task.resource_gpu)))
         container_envs.append(("KFJ_TASK_PROJECT_NAME", str(pipeline.project.name)))
         container_envs.append(("GPU_RESOURCE_NAME", gpu_resource_name))
         container_envs.append(("USERNAME", pipeline.created_by.username))
@@ -1096,7 +1096,7 @@ class Pipeline_ModelView_Base():
             except Exception as e:
                 print(e)
 
-    # @event_logger.log_this
+    @event_logger.log_this
     @expose_api(description="运行指定pipeline",url="/run_pipeline/<pipeline_id>", methods=["GET", "POST"])
     @check_pipeline_perms
     # @pysnooper.snoop()

@@ -233,6 +233,7 @@ def pod_resource():
                                 result[org][pod['name']] = {}
                                 result[org][pod['name']]['username'] = user
                                 result[org][pod['name']]['host_ip'] = pod['host_ip']
+                                result[org][pod['name']]['pod_ip'] = pod['pod_ip']
                                 # print(namespace,pod)
                                 result[org][pod['name']]['request_memory'] = pod['memory']
                                 result[org][pod['name']]['request_cpu'] = pod['cpu']
