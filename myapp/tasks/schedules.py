@@ -233,7 +233,7 @@ def delete_debug_docker(task):
                     notebooks = dbsession.query(Notebook).filter(Notebook.name.in_([pod["name"] for pod in terminated_pods])).all()
                     from myapp.views.view_notebook import Notebook_ModelView_Base
                     note_view = Notebook_ModelView_Base()
-                    note_view.base_muldelete(notebooks)
+                    note_view.base_stop(notebooks)
                 # 清理debug和run的task
                 for pipeline_namespace in security_manager.get_all_pipeline_namespace(dbsession):
                     pipeline_pods = k8s_client.get_pods(pipeline_namespace)
@@ -1154,14 +1154,14 @@ def adjust_node_resource(task):
 
 # get_dir_size('/data/k8s/kubeflow/pipeline/workspace')
 # @pysnooper.snoop()
-def get_deployment_node_selector(name,namespace):
+def get_deployment_node_selector(k8s_client,name,namespace):
     from kubernetes import client
-    exist_dp = client.AppsV1Api().read_namespaced_deployment(name=name, namespace=namespace)
+    exist_dp = k8s_client.get_deployment(name=name, namespace=namespace)
 
     node_selector = {}
     try:
         # aa=client.V1NodeSelector
-        if exist_dp.spec.template.spec.affinity.node_affinity and exist_dp.spec.template.spec.affinity.node_affinity.required_during_scheduling_ignored_during_execution:
+        if exist_dp and exist_dp.spec.template.spec.affinity.node_affinity and exist_dp.spec.template.spec.affinity.node_affinity.required_during_scheduling_ignored_during_execution:
             match_expressions = exist_dp.spec.template.spec.affinity.node_affinity.required_during_scheduling_ignored_during_execution.node_selector_terms
             match_expressions = [ex.match_expressions for ex in match_expressions]
             match_expressions = match_expressions[0]
@@ -1175,7 +1175,7 @@ def get_deployment_node_selector(name,namespace):
         logging.error(e)
         logging.error('Traceback: %s', traceback.format_exc())
 
-    if exist_dp.spec.template.spec.node_selector:
+    if exist_dp and exist_dp.spec.template.spec.node_selector:
         node_selector.update(exist_dp.spec.template.spec.node_selector)
 
     logging.info(node_selector)
@@ -1210,31 +1210,31 @@ def adjust_service_resource(task):
                             # 如果没有扩张，或者持续时间太久，就缩小低优先级服务
                             if not hpa.status.last_scale_time or datetime.datetime.now().timestamp() - hpa.status.last_scale_time.astimezone(datetime.timezone(datetime.timedelta(hours=8))).timestamp() > 400:
                                 push_message(conf.get('ADMIN_USER','admin').split(','), __('寻找扩服务%s一卡') % (inferenceserving.name,))
-                                target_node_selector = get_deployment_node_selector(name=inferenceserving.name,namespace=namespace)
+                                target_node_selector = get_deployment_node_selector(k8s_client=k8s_client,name=inferenceserving.name,namespace=hpa.metadata.namespace)
 
                                 # 获取同项目组，低优先级的推理
                                 low_inferenceservings =dbsession.query(InferenceService).filter_by(priority=0).filter_by(project_id=inferenceserving.project_id).all()
                                 low_inferenceservings.sort(key=lambda item:item.max_replicas-item.min_replicas)  # 从大到小排序
                                 for service in low_inferenceservings:
                                     if service.resource_gpu and service.resource_gpu!='0':  #
-                                        current_replicas = client.AppsV1Api().read_namespaced_deployment(name=service.name, namespace=namespace).spec.replicas
+                                        current_replicas = k8s_client.get_deployment(name=service.name, namespace=service.namespace).spec.replicas
                                         # 如果当前副本数大于最小副本数
                                         if current_replicas > service.min_replicas:
                                             # 随意缩放一个pod
                                             if not target_node_selector.get('gpu-type',''):
-                                                client.AppsV1Api().patch_namespaced_deployment_scale(service.name, namespace,[{'op': 'replace', 'path': '/spec/replicas', 'value': current_replicas-1}])
+                                                client.AppsV1Api().patch_namespaced_deployment_scale(service.name, service.namespace,[{'op': 'replace', 'path': '/spec/replicas', 'value': current_replicas-1}])
                                                 push_message([service.created_by.username,inferenceserving.created_by.username]+conf.get('ADMIN_USER','admin').split(','),'缩服务%s一卡，扩服务%s一卡'%(service.name,inferenceserving.name))
                                                 return
                                             # 缩放指定pod
                                             else:
-                                                node_selector = get_deployment_node_selector(name=service.name,namespace=namespace)
+                                                node_selector = get_deployment_node_selector(k8s_client=k8s_client,name=service.name,namespace=service.namespace)
                                                 target_gpu_type = target_node_selector['gpu-type']
                                                 exist_gpu_type = node_selector.get('gpu-type','')
                                                 if exist_gpu_type and exist_gpu_type!=target_gpu_type:
                                                     logging.info('服务gpu卡型不匹配')
                                                     break
                                                 # 如果低级别服务没有gpu机型限制。就查看是否有符合需求的机器型号，缩放指定pod
-                                                pods = k8s_client.get_pods(namespace=namespace,labels={"app":service.name,"pod-type":"inference"})
+                                                pods = k8s_client.get_pods(namespace=service.namespace,labels={"app":service.name,"pod-type":"inference"})
                                                 nodeips = [pod['host_ip'] for pod in pods]
                                                 for nodeip in nodeips:
                                                     node = k8s_client.get_node(nodeip)
@@ -1242,9 +1242,9 @@ def adjust_service_resource(task):
                                                         # 缩放指定pod
                                                         can_scale_pods = [pod for pod in pods if pod['host_ip']==nodeip]
                                                         if can_scale_pods:
-                                                            k8s_client.v1.delete_namespaced_pod(can_scale_pods[0]['name'], namespace,grace_period_seconds=0)
-                                                            client.AppsV1Api().patch_namespaced_deployment_scale(service.name, namespace, [{'op': 'replace', 'path': '/spec/replicas','value': current_replicas - 1}])
-                                                            push_message([service.created_by.username,inferenceserving.created_by.username] + conf.get('ADMIN_USER','admin').split(','), __('缩服务%s一卡，扩服务%s一卡') % (service.name, inferenceserving.name))
+                                                            k8s_client.v1.delete_namespaced_pod(can_scale_pods[0]['name'], can_scale_pods[0]['namespace'],grace_period_seconds=0)
+                                                            client.AppsV1Api().patch_namespaced_deployment_scale(service.name, service.namespace, [{'op': 'replace', 'path': '/spec/replicas','value': current_replicas - 1}])
+                                                            push_message(list(set([service.created_by.username,inferenceserving.created_by.username] + conf.get('ADMIN_USER','admin').split(','))), __('缩服务%s一卡，扩服务%s一卡') % (service.name, inferenceserving.name))
 
                                                             return
 

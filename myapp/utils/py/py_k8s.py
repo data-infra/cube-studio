@@ -1400,11 +1400,24 @@ class K8s():
         pod_object = self.v1.create_namespaced_pod(namespace=namespace, body=body)
         return pod_object
 
-    #
-    # def get_deployment(self,name,namespace):
-    #     client.AppsV1Api().  (name, namespace)
-    #     return []
 
+    def get_deployment(self,name,namespace):
+        try:
+            return  self.AppsV1Api.read_namespaced_deployment(
+                name=name,
+                namespace=namespace
+            )
+        except client.exceptions.ApiException as e:
+            if e.status == 404:
+                return None
+            # 可以添加其他状态码的处理
+            elif e.status == 403:
+                print("没有权限访问该资源")
+                return None
+            else:
+                print(f"Kubernetes API 错误: {e}")
+                return None
+        return None
 
     # @pysnooper.snoop(watch_explode=())
     def create_ReplicationController(self, namespace, name, replicas, labels, command, args, volume_mount, working_dir,

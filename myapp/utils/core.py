@@ -2009,8 +2009,8 @@ def get_not_black_port(port):
 # @pysnooper.snoop()
 def meet_quota(req_user,req_project,req_cluster_name,req_org,req_namespace,exclude_pod=[],req_resource={},replicas=1):
     # 管理员不受限制
-    # if req_user.is_admin():
-    #     return True,''
+    if req_user.is_admin():
+        return True,''
 
     # resource为{"cpu":1,"memory":1,"gpu":1}格式
     # quota 书写格式，cluster_name，org,namespace，resource，single_concurrent,value

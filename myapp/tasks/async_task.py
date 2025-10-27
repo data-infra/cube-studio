@@ -1,5 +1,6 @@
 
 """Utility functions used across Myapp"""
+import json
 import os.path
 import logging
 import shutil
@@ -31,7 +32,7 @@ def check_docker_commit(task,docker_id):  # 在页面中测试时会自定接收
             docker = dbsession.query(Docker).filter_by(id=int(docker_id)).first()
             pod_name = "docker-commit-%s-%s" % (docker.created_by.username, str(docker.id))
             namespace = docker.project.notebook_namespace
-            k8s_client = K8s(conf.get('CLUSTERS').get(conf.get('ENVIRONMENT')).get('KUBECONFIG',''))
+            k8s_client = K8s(docker.project.cluster.get('KUBECONFIG',''))
             begin_time=datetime.datetime.now()
             now_time=datetime.datetime.now()
             while((now_time-begin_time).total_seconds()<1800):   # 也就是最多commit push 30分钟
@@ -169,7 +170,7 @@ def upgrade_service(task,service_id,name,namespace):
 
             while (True):
                 try:
-                    deployment = k8s_client.AppsV1Api.read_namespaced_deployment(name=name, namespace=namespace)
+                    deployment = k8s_client.get_deployment(name=name, namespace=namespace)
                     if deployment:
                         ready_replicas = deployment.status.ready_replicas
                         replicas = deployment.status.replicas
@@ -191,7 +192,8 @@ def upgrade_service(task,service_id,name,namespace):
                                     .filter(InferenceService.host == service.host).first()
                             # 有旧服务才改流量
                             if old_service:
-                                old_deployment = k8s_client.AppsV1Api.read_namespaced_deployment(name=old_service.name,namespace=namespace)
+
+                                old_deployment = k8s_client.get_deployment(name=old_service.name,namespace=namespace)
                                 # 先更改流量比例
                                 crd = k8s_client.get_one_crd(
                                     group=crd_info['group'],
