@@ -184,8 +184,10 @@ sudo docker run -d --privileged --restart=unless-stopped -p 443:443 --name=myran
         enforce-node-allocatable: "pods"
         system-reserved: "cpu=0.25,memory=200Mi"
         kube-reserved: "cpu=0.25,memory=1500Mi"
+        # docker存储不能和根目录是同一个分区才生效
         image-gc-high-threshold: 95
         image-gc-low-threshold: 90
+        eviction-hard: "imagefs.available<5%,nodefs.available<5%,nodefs.inodesFree<5%"
         # 不限制最大并行拉取次数
         registry-qps: 0
         registry-burst: 10
