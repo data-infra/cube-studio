@@ -50,43 +50,6 @@ from flask_appbuilder.fieldwidgets import BS3TextFieldWidget
 from flask_appbuilder.forms import DynamicForm
 
 
-
-
-
-# user list page template
-class MyappSecurityListWidget(ListWidget):
-    """
-        Redeclaring to avoid circular imports
-    """
-    template = "myapp/fab_overrides/list.html"
-
-
-# role list page template
-class MyappRoleListWidget(ListWidget):
-    """
-        Role model view from FAB already uses a custom list widget override
-        So we override the override
-    """
-    template = "myapp/fab_overrides/list_role.html"
-    def __init__(self, **kwargs):
-        kwargs["appbuilder"] = current_app.appbuilder
-        super().__init__(**kwargs)
-
-
-
-# customize list,add,edit page
-UserModelView.list_columns= ["username", "active", "roles"]
-UserModelView.edit_columns= ["first_name", "last_name", "username", "active", "email"]
-UserModelView.add_columns= ["first_name", "last_name", "username", "email", "active", "roles"]
-
-
-
-UserModelView.list_widget = MyappSecurityListWidget
-RoleModelView.list_widget = MyappRoleListWidget
-PermissionViewModelView.list_widget = MyappSecurityListWidget
-PermissionModelView.list_widget = MyappSecurityListWidget
-
-
 # expand user
 from flask_appbuilder.security.sqla.models import User,Role
 from sqlalchemy import Column, String
@@ -423,18 +386,6 @@ class MyappSecurityManager(SecurityManager):
         # Security APIs
         self.appbuilder.add_api(self.security_api)
 
-        if self.auth_user_registration:
-            if self.auth_type == AUTH_DB:
-                self.registeruser_view = self.registeruserdbview()
-            elif self.auth_type == AUTH_OID:
-                self.registeruser_view = self.registeruseroidview()
-            elif self.auth_type == AUTH_OAUTH:
-                self.registeruser_view = self.registeruseroauthview()
-            if self.registeruser_view:
-                self.appbuilder.add_view_no_menu(self.registeruser_view)
-
-        self.appbuilder.add_view_no_menu(self.resetpasswordview())
-        self.appbuilder.add_view_no_menu(self.resetmypasswordview())
         self.appbuilder.add_view_no_menu(self.userinfoeditview())
 
 
@@ -483,46 +434,6 @@ class MyappSecurityManager(SecurityManager):
             category_icon="fa-cogs",
         )
         role_view.related_views = [self.user_view.__class__]
-
-        if self.userstatschartview:
-            self.appbuilder.add_view(
-                self.userstatschartview,
-                "User's Statistics",
-                icon="fa-bar-chart-o",
-                label=_("用户统计信息"),
-                category="Security",
-            )
-        if self.auth_user_registration:
-            self.appbuilder.add_view(
-                self.registerusermodelview,
-                "User's Statistics",
-                icon="fa-user-plus",
-                label=_("用户注册"),
-                category="Security",
-            )
-        self.appbuilder.menu.add_separator("Security")
-        self.appbuilder.add_view(
-            self.permissionmodelview,
-            "Base Permissions",
-            icon="fa-lock",
-            label=_("基础权限"),
-            category="Security",
-        )
-        self.appbuilder.add_view(
-            self.viewmenumodelview,
-            "Views/Menus",
-            icon="fa-list-alt",
-            label=_("视图和菜单"),
-            category="Security",
-        )
-        self.appbuilder.add_view(
-            self.permissionviewmodelview,
-            "Permission on Views/Menus",
-            icon="fa-link",
-            label=_("Permission on Views/Menus"),
-            category="Security",
-        )
-
 
     # @pysnooper.snoop()
     def add_org_user(self,username,first_name,last_name,org,email,roles,password="",hashed_password=""):
