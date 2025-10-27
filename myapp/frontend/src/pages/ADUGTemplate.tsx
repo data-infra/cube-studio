@@ -906,6 +906,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
     const uploadConfig: UploadProps = {
         name: 'csv_file',
         maxCount: 1,
+        accept: '.csv,.xls,.json,.xlsx',
         action: `${baseUrl}upload/`,
         headers: {
             authorization: 'authorization-text',
