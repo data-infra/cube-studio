@@ -140,7 +140,7 @@ class MyUserRemoteUserModelView_Base():
     describe_columns={
         "roles": "Admin角色拥有管理员权限，Gamma为普通用户角色"
     }
-    list_widget = MyappSecurityListWidget
+
     label_columns = {
         "get_full_name": _("全名称"),
         "first_name": _("姓"),
