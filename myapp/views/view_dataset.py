@@ -3,9 +3,11 @@ import re
 import shutil
 import zipfile, pandas
 from flask_appbuilder import action
+from flask_appbuilder.baseviews import expose_api
+
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from wtforms.validators import DataRequired, Regexp
-from myapp import app, appbuilder
+from myapp import app, appbuilder, event_logger
 from wtforms import StringField, SelectField
 from flask_appbuilder.fieldwidgets import BS3TextFieldWidget, Select2Widget, Select2ManyWidget
 from myapp.forms import MyBS3TextAreaFieldWidget, MySelect2Widget, MyCommaSeparatedListField, MySelect2ManyWidget, \
@@ -149,7 +151,7 @@ example：
             description= _('数据集英文名，(小写字母、数字、- 组成)，最长50个字符'),
             default='',
             widget=BS3TextFieldWidget(),
-            validators=[DataRequired(), Regexp("^[a-z][a-z0-9_]*[a-z0-9]$")]
+            validators=[DataRequired(), Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$")]
         ),
         "version": StringField(
             label= _('版本'),
@@ -345,6 +347,9 @@ example：
                 return f'{request.host_url.strip("/")}/static{path.replace("/data/k8s/kubeflow", "")}'
 
         dataset = db.session.query(Dataset).filter_by(id=int(dataset_id)).first()
+        # 查询是否有下载权限
+        if '*' not in dataset.owner and g.user.username not in dataset.owner and not g.user.is_admin():
+            return make_response(("Not authorized to download dataset", 401))
         try:
             download_url = []
             if dataset.path and dataset.path.strip():

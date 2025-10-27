@@ -14,7 +14,7 @@ from myapp.utils import core
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 from flask_appbuilder.actions import action
-from myapp import app, appbuilder, db
+from myapp import app, appbuilder, db, event_logger
 import re
 from kubernetes.client import ApiException
 import pytz
@@ -68,6 +68,7 @@ INFERNENCE_HOST={
 }
 
 INFERNENCE_CONFIGMAP={
+    "torch-server" : "---config.properties\n\ninference_address=http://0.0.0.0:8080\nmanagement_address=http://0.0.0.0:8081\nmetrics_address=http://0.0.0.0:8082\ncors_allowed_origin=*\ncors_allowed_methods=GET, POST, PUT, OPTIONS\ncors_allowed_headers=X-Custom-Header\nnumber_of_netty_threads=32\nenable_metrics_api=true\njob_queue_size=1000\nenable_envvars_config=true\nasync_logging=true\ndefault_response_timeout=120\nmax_request_size=6553500\n"
 }
 INFERNENCE_COMMAND={
     "tfserving":"/usr/bin/tf_serving_entrypoint.sh --model_config_file=/config/models.config --monitoring_config_file=/config/monitoring.config --platform_config_file=/config/platform.config --rest_api_num_threads=300 --enable_batching=true",
@@ -504,23 +505,9 @@ enable_envvars_config=true
 async_logging=true
 default_response_timeout=120
 max_request_size=6553500
-vmargs=-Dlog4j.configurationFile=file:///config/log4j2.xml
         '''
         return config_str
 
-    def torch_log(self):
-        config_str = '''
-<RollingFile name="access_log" fileName="${env:LOG_LOCATION:-logs}/access_log.log" filePattern="${env:LOG_LOCATION:-logs}/access_log.%d{dd-MMM}.log.gz"> 
-  <PatternLayout pattern="%d{ISO8601} - %m%n"/>  
-  <Policies> 
-    <SizeBasedTriggeringPolicy size="100 MB"/>  
-    <TimeBasedTriggeringPolicy/> 
-  </Policies>  
-  <DefaultRolloverStrategy max="5"/> 
-</RollingFile>
-
-        '''
-        return config_str
 
     def triton_config(self, item, model_type):
         plat_form = {
@@ -665,17 +652,13 @@ output %s
                 item.command=download_command+'cp /config/* /models/ && '+tar_command+' && torchserve --start --model-store /models --models %s=%s --foreground --ts-config=/config/config.properties'%(item.model_name,model_file)
 
             expand['config.properties'] = expand['config.properties'] if expand.get('config.properties','') else self.torch_config()
-            expand['log4j2.xml'] = expand['log4j2.xml'] if expand.get('log4j2.xml','') else self.torch_log()
 
             if not item.inference_config:
                 item.inference_config = '''
 ---config.properties
 %s
----log4j2.xml
-%s
                 ''' % (
-                    self.torch_config(),
-                    self.torch_log()
+                    self.torch_config()
                 )
 
         if item.service_type == 'triton-server':
@@ -822,6 +805,7 @@ output %s
 
         flash(__('服务清理完成'), category='success')
 
+    @event_logger.log_this
     @expose_api(description="清理推理服务",url='/clear/<service_id>', methods=['POST', "GET"])
     def clear(self, service_id):
         service = db.session.query(InferenceService).filter_by(id=service_id).first()
@@ -835,21 +819,23 @@ output %s
             flash(__('服务清理完成'), category='success')
         return redirect(conf.get('MODEL_URLS', {}).get('inferenceservice', ''))
 
+    @event_logger.log_this
     @expose_api(description="部署推理服务调试环境",url='/deploy/debug/<service_id>', methods=['POST', "GET"])
-    # @pysnooper.snoop()
     def deploy_debug(self, service_id):
         return self.deploy(service_id, stag='debug')
 
+    @event_logger.log_this
     @expose_api(description="部署推理服务测试环境",url='/deploy/test/<service_id>', methods=['POST', "GET"])
-    # @pysnooper.snoop()
     def deploy_test(self, service_id):
         return self.deploy(service_id, stag='test')
 
+    @event_logger.log_this
     @expose_api(description="部署推理服务生产环境",url='/deploy/prod/<service_id>', methods=['POST', "GET"])
     # @pysnooper.snoop()
     def deploy_prod(self, service_id):
         return self.deploy(service_id, stag='prod')
 
+    @event_logger.log_this
     @expose_api(description="推理服务升级",url='/deploy/update/', methods=['POST', 'GET'])
     # @pysnooper.snoop(watch_explode=('deploy'))
     def update_service(self):
@@ -1188,8 +1174,8 @@ output %s
                     annotations=annotations,
                     ports=service_ports,
                     selector=labels,
-                    service_type='ClusterIP' if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else 'NodePort',
-                    external_ip=SERVICE_EXTERNAL_IP if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else None
+                    service_type='ClusterIP' if service.project.cluster['K8S_NETWORK_MODE'] != 'ipvs' else 'NodePort',
+                    external_ip=SERVICE_EXTERNAL_IP if service.project.cluster['K8S_NETWORK_MODE'] != 'ipvs' else None
                     # external_traffic_policy='Local'
                 )
             else:

@@ -215,7 +215,7 @@ class NNI_ModelView_Base():
     )
     edit_form_extra_fields['working_dir'] = StringField(
         _('工作目录'),
-        description= _('代码所在目录，nni代码、配置和log都将在/mnt/${username}/nni/目录下进行。')+core.open_jupyter(_('打开目录'),'working_dir'),
+        description= __('代码所在目录，nni代码、配置和log都将在/mnt/${username}/nni/目录下进行。')+core.open_jupyter(_('打开目录'),'working_dir'),
         default=datamodel.obj.working_dir.default.arg,
         widget=BS3TextFieldWidget(),
         validators=[Regexp('^[\x00-\x7F]*$')]
@@ -456,8 +456,6 @@ class NNI_ModelView_Base():
 
         # 创建vs
         host = nni.project.cluster.get('HOST', request.host).split('|')[-1].strip().split(':')[0]
-        if not host:
-            host = request.host.split(':')[0]
         vs_json = {
             "apiVersion": "networking.istio.io/v1alpha3",
             "kind": "VirtualService",
@@ -483,7 +481,7 @@ class NNI_ModelView_Base():
                                     "cookie": {
                                         "regex": ".*myapp_username=.*"
                                     }
-                                }
+                                }  if nni.project.cluster['NAME']==conf.get('ENVIRONMENT','dev').lower() else None
                             },
                             {
                                 "uri": {
@@ -493,7 +491,7 @@ class NNI_ModelView_Base():
                                     "cookie": {
                                         "regex": ".*myapp_username=.*"
                                     }
-                                }
+                                } if nni.project.cluster['NAME']==conf.get('ENVIRONMENT','dev').lower() else None
                             }
                         ],
                         "rewrite": {
@@ -533,7 +531,6 @@ class NNI_ModelView_Base():
     # @pysnooper.snoop()
     @event_logger.log_this
     @expose_api(description="停止超参搜索",url='/stop/<nni_id>', methods=['GET', 'POST'])
-    # @pysnooper.snoop()
     def stop(self, nni_id):
         nni = db.session.query(NNI).filter(NNI.id == nni_id).first()
         self.pre_delete(nni)
@@ -547,9 +544,8 @@ class NNI_ModelView_Base():
 
 
     # 生成实验
-    # @pysnooper.snoop()
+    @event_logger.log_this
     @expose_api(description="停启动超参搜索",url='/run/<nni_id>', methods=['GET', 'POST'])
-    # @pysnooper.snoop()
     def run(self, nni_id):
         nni = db.session.query(NNI).filter(NNI.id == nni_id).first()
         namespace = nni.project.automl_namespace
