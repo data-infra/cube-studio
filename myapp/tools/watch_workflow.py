@@ -336,8 +336,8 @@ def save_monitoring(workflow, dbsession):
 # @pysnooper.snoop()
 def save_history(workflow, dbsession):
     info_json = json.loads(workflow.info_json)
-    if info_json['has_push']:
-        if not workflow.status in info_json['has_push']:
+    if info_json.get('has_push',''):
+        if not workflow.status in info_json.get('has_push',''):
             info_json['has_push'] += ',' + workflow.status
     else:
         info_json['has_push'] = workflow.status

@@ -69,6 +69,7 @@ from flask_appbuilder.security.decorators import permission_name, protect, has_a
 from flask_appbuilder.api import BaseModelApi, BaseApi, ModelRestApi
 from sqlalchemy.sql import sqltypes
 from myapp import app, appbuilder, db, event_logger, cache
+from myapp.forms import MySelectMultipleField
 from myapp.models.favorite import Favorite
 
 conf = app.config
@@ -1286,23 +1287,26 @@ class MyappModelRestApi(ModelRestApi):
 
 
     def fix_xss(self,input):
-        return input
-        if '<svg' in input:
-            return input
-        # 去除用户添加的html dom
-        import bleach
-        # 允许的 HTML 标签和属性
-        allowed_tags = ['svg']  # 注意  会把启动命令的&&也转义了
-        allowed_attributes = {}
+        from myapp import conf
+        if conf.get('DISABLE_XSS',False):
+            if '<svg' in input:
+                return input
+            # 去除用户添加的html dom
+            import bleach
+            # 允许的 HTML 标签和属性
+            allowed_tags = ['svg']  # 注意  会把启动命令的&&也转义了
+            allowed_attributes = {}
 
-        # 使用 bleach.clean 函数来清理输入
-        cleaned_input = bleach.clean(input, tags=allowed_tags, attributes=allowed_attributes).replace('&amp;', '&')
-        return cleaned_input
+            # 使用 bleach.clean 函数来清理输入
+            cleaned_input = bleach.clean(input, tags=allowed_tags, attributes=allowed_attributes).replace('&amp;', '&')  # 有些参数是输入启动命令，也不应该转义
+            return cleaned_input
+        else:
+            return input    # 如果限制xss 那么这一行就注释掉
 
-        # @expose("/add", methods=["POST"])
-    # def add(self):
+
+
+    @event_logger.log_this
     @expose("/", methods=["POST"])
-    # @pysnooper.snoop(watch_explode=('item', 'json_data'))
     def api_add(self):
         self.src_item_json = {}
         if not request.is_json:
@@ -1324,11 +1328,22 @@ class MyappModelRestApi(ModelRestApi):
                 json_data = self.to_expand(json_data)
 
             json_data = {key: json_data[key] for key in json_data if key in self.add_columns}
+            # 逗号分隔的要注意去除空白逗号
+
             # 对于RelatedListt参数做处理，因为传递过来的是逗号分隔的id
             for col in self.add_columns:
                 field = self.add_model_schema.fields[col]
+                extra_fields = self.add_form_extra_fields[col] if self.add_form_extra_fields and col in self.add_form_extra_fields else None
                 if isinstance(field, RelatedList) and field.name in json_data:
                     json_data[field.name] = [{"id": int(str(id).strip())} for id in json_data[field.name].replace('，',',').split(',') if str(id).strip()]
+
+                # 对于有选择项的，如果是字符串输入，就替换逗号
+                if hasattr(extra_fields, 'kwargs') and extra_fields.kwargs:
+                    choices = extra_fields.kwargs.get('choices', [])
+                    if choices and field.name in json_data:
+                        if type(json_data[field.name])==str:
+                            json_data[field.name] = json_data[field.name].replace(',,', ',').strip(',')
+
             item = self.add_model_schema.load(json_data)
             # item = self.add_model_schema.load(data)
         except Exception as err:
@@ -1359,7 +1374,7 @@ class MyappModelRestApi(ModelRestApi):
 
     @event_logger.log_this
     @expose("/<int:pk>", methods=["PUT"])
-    # @pysnooper.snoop(watch_explode=('item','data'))
+    # @pysnooper.snoop(watch_explode=('item','data','field'))
     def api_edit(self, pk):
 
         item = self.datamodel.get(pk, self._base_filters)
@@ -1390,8 +1405,18 @@ class MyappModelRestApi(ModelRestApi):
             # 对于RelatedListt参数做处理，因为传递过来的是逗号分隔的id
             for col in self.edit_columns:
                 field = self.edit_model_schema.fields[col]
+                extra_fields = self.edit_form_extra_fields[col] if self.edit_form_extra_fields and col in self.edit_form_extra_fields else None
+
                 if isinstance(field, RelatedList) and field.name in json_data:
                     json_data[field.name] = [{"id": int(str(id).strip())} for id in json_data[field.name].replace('，',',').split(',') if str(id).strip()]
+
+                # 对于有选择项的，如果是字符串输入，就替换逗号
+                if hasattr(extra_fields, 'kwargs') and extra_fields.kwargs:
+                    choices = extra_fields.kwargs.get('choices', [])
+                    if choices and field.name in json_data:
+                        if type(json_data[field.name])==str:
+                            json_data[field.name] = json_data[field.name].replace(',,', ',').strip(',')
+
             if self.pre_update_req:
                 new_json_data = self.pre_update_req(req_json=json_data, src_item = item)
                 if new_json_data:
@@ -1481,24 +1506,28 @@ class MyappModelRestApi(ModelRestApi):
         """
         pk = self._deserialize_pk_if_composite(pk)
         action = self.actions.get(name)
+        message=''
         try:
-            res = action.func(self.datamodel.get(pk))
-            if isinstance(res,Response) and action.icon=='url':
-                return res
-            back = {
-                "status": 0,
-                "result": {},
-                "message": 'success'
-            }
-            return self.response(200, **back)
+            item = self.datamodel.get(pk)
+            if item:
+                res = action.func(item)
+                if isinstance(res,Response) and action.icon=='url':
+                    return res
+                back = {
+                    "status": 0,
+                    "result": {},
+                    "message": 'success'
+                }
+                return self.response(200, **back)
         except Exception as e:
             print(e)
-            back = {
-                "status": -1,
-                "message": str(e),
-                "result": {}
-            }
-            return self.response(500, **back)
+            message =  str(e)
+        back = {
+            "status": -1,
+            "message":message,
+            "result": {}
+        }
+        return self.response(500, **back)
 
     @event_logger.log_this
     @expose("/multi_action/<string:name>", methods=["POST"])
@@ -1511,6 +1540,7 @@ class MyappModelRestApi(ModelRestApi):
         items = [
             self.datamodel.get(self._deserialize_pk_if_composite(int(pk))) for pk in pks
         ]
+        items = [item for item in items if item]
         try:
             back = action.func(items)
             if isinstance(back, Response) and action.icon=='url':
@@ -1578,7 +1608,8 @@ class MyappModelRestApi(ModelRestApi):
     @expose("/upload/", methods=["POST"])
     def upload(self):
         csv_file = request.files.get('csv_file')  # FileStorage
-        if '.csv' not in csv_file and '.json' not in csv_file:
+        i_path = csv_file.filename
+        if '.csv' not in i_path and '.json' not in i_path:
             back = {
                 "status": 1,
                 "message": '不支持的格式文件',
@@ -1587,7 +1618,7 @@ class MyappModelRestApi(ModelRestApi):
             return self.response(200, **back)
 
         # 文件保存至指定路径
-        i_path = csv_file.filename
+
         if os.path.exists(i_path):
             os.remove(i_path)
         csv_file.save(i_path)
@@ -1638,7 +1669,8 @@ class MyappModelRestApi(ModelRestApi):
                 print(e)
                 result.append(str(e))
 
-        csv_file.remove(i_path)
+        if os.path.exists(i_path):
+            os.remove(i_path)
         flash('success %s rows，fail %s rows' % (len([x for x in result if x == 'success']), len([x for x in result if x == 'fail'])),'warning')
         back = {
             "status": 0,
@@ -1775,7 +1807,8 @@ class MyappModelRestApi(ModelRestApi):
                         continue
 
             except Exception as e:
-                flash(str(e), "error")
+                pass
+                # flash(str(e), "error")
 
             fail.append(item.to_json())
         db.session.commit()
