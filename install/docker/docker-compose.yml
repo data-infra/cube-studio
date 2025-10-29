@@ -1,7 +1,7 @@
 version: '3'
 services:
   redis:
-    image: bitnami/redis:7.4
+    image: ccr.ccs.tencentyun.com/cube-studio/redis:7.4
     restart: unless-stopped
     environment:
       REDIS_PASSWORD: admin

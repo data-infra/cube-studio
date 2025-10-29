@@ -1,4 +1,4 @@
-docker pull bitnami/redis:7.4 &
+docker pull ccr.ccs.tencentyun.com/cube-studio/redis:7.4 &
 docker pull prom/prometheus:v2.27.1 &
 docker pull busybox:1.36.0 &
 docker pull mpioperator/kubectl-delivery:latest &
