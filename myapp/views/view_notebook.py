@@ -723,7 +723,7 @@ class Notebook_ModelView_Base():
                                     "cookie":{
                                         "regex": ".*myapp_username=.*"
                                     }
-                                }  if notebook.project.cluster['NAME']==conf.get('ENVIRONMENT','dev').lower() else None
+                                }
                             }
                         ],
                         "rewrite": {

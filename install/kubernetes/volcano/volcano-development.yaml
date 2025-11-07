@@ -7543,23 +7543,6 @@ data:
       - name: proportion
       - name: nodeorder
       - name: binpack
-        arguments:
-            binpack.weight: 10
-            binpack.cpu: 1
-            binpack.memory: 1
-            binpack.resources: nvidia.com/gpu, huawei.com/Ascend310, huawei.com/Ascend310P, huawei.com/Ascend910
-            binpack.resources.nvidia.com/gpu: 100
-            binpack.resources.huawei.com/Ascend910: 100
-            binpack.resources.huawei.com/Ascend310P: 100
-            binpack.resources.huawei.com/Ascend310: 100
-# 上面的支持按升级gpu资源量来调度
-
-#    configurations:
-#    - name: init-params
-#      arguments: {"grace-over-time":"900","presetVirtualDevice":"true"}
-# 上面的配置是vnpu化
-
-
 ---
 # Source: volcano/templates/scheduler.yaml
 kind: ClusterRole

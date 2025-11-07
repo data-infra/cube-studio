@@ -481,7 +481,7 @@ class NNI_ModelView_Base():
                                     "cookie": {
                                         "regex": ".*myapp_username=.*"
                                     }
-                                }  if nni.project.cluster['NAME']==conf.get('ENVIRONMENT','dev').lower() else None
+                                }
                             },
                             {
                                 "uri": {
@@ -491,7 +491,7 @@ class NNI_ModelView_Base():
                                     "cookie": {
                                         "regex": ".*myapp_username=.*"
                                     }
-                                } if nni.project.cluster['NAME']==conf.get('ENVIRONMENT','dev').lower() else None
+                                }
                             }
                         ],
                         "rewrite": {
