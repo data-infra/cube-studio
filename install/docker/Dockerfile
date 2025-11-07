@@ -1,5 +1,5 @@
-# docker build -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2025.09.01 -f install/docker/Dockerfile .
-# docker buildx build --platform linux/amd64,linux/arm64 -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2025.09.01 -f install/docker/Dockerfile . --push
+# docker build -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2026.01.01 -f install/docker/Dockerfile .
+# docker buildx build --platform linux/amd64,linux/arm64 -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2026.01.01 -f install/docker/Dockerfile . --push
 
 FROM ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:base-python3.9-20250701
 
