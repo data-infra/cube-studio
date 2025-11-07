@@ -257,7 +257,7 @@ def delete_debug_docker(task):
                 try:
                     if inferenceservice.model_status in ['debug','test']:
                         inference_view.delete_old_service(service_name=inferenceservice.name, cluster=inferenceservice.project.cluster, namespaces=inferenceservice.namespace)
-                        inference_view.model_status = 'offline'
+                        inferenceservice.model_status = 'offline'
                         dbsession.commit()
 
                 except Exception as e1:

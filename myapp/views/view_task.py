@@ -404,7 +404,9 @@ class Task_ModelView_Base():
         if parameter.get("demo", 'false').lower() == 'true':
             raise MyappException(__("示例pipeline，不允许修改，请复制后编辑"))
         self.pipeline = item.pipeline
-        # 删除task启动的所有实例
+
+    def post_delete(self, item):
+        # 删除task启动的所有实例，如果没有删掉，也不重新删除了。就不管了
         self.delete_task_run(item)
 
     def run_pod(self, task, k8s_client, run_id, namespace, pod_name, image, working_dir, command, args):
