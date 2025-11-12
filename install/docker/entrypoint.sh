@@ -41,7 +41,15 @@ elif [ "$STAGE" = "dev" ]; then
 elif [ "$STAGE" = "prod" ]; then
   export FLASK_APP=myapp:app
   python myapp/check_tables.py
-  gunicorn --bind  0.0.0.0:80 --workers 20 --worker-class=gevent --timeout 300 --limit-request-line 0 --limit-request-field_size 0 --log-level=info myapp:app
+  # 默认worker数量为20
+  WORKERS_NUMS=20
+  # 根据是否配置了pod的resource.limits.cpu资源动态调整workers的数量
+  if [[ $(cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us) -ne -1 ]]; then
+    # IO密集型，worker数量等于resource.limits.cpu核心数量*2+1，如果分配小于一个核心，等于1
+    WORKERS_NUMS=$(($(cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us)/$(cat /sys/fs/cgroup/cpu/cpu.cfs_period_us)*2+1))
+  fi
+  # gunicorn方式启动，将错误与访问日志输出到容终端
+  gunicorn --bind  0.0.0.0:80 --workers ${WORKERS_NUMS} --worker-class=gevent --timeout 300 --limit-request-line 0 --limit-request-field_size 0 --access-logfile=- --error-logfile=- --log-level=info myapp:app
 else
     myapp --help
 fi
