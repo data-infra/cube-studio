@@ -93,13 +93,6 @@ spec:
               mountPath: /etc/localtime
             - name: kubernetes-config
               mountPath: /home/myapp/kubeconfig
-          resources:
-            limits:
-              cpu: 4
-              memory: 4Gi
-            requests:
-              cpu: 10m
-              memory: 100Mi
           livenessProbe:
             failureThreshold: 1
             exec:

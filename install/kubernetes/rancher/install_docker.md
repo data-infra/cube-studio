@@ -9,6 +9,7 @@ apt-get --purge remove -y docker*
 sudo apt-get autoremove -y
 dpkg -l | grep docker
 sudo rm -rf /var/lib/docker
+sudo rm -rf /data/docker
 sudo rm -rf /var/lib/containerd
 
 ```
@@ -63,6 +64,7 @@ apt install -y docker-compose
 ```bash
 
 wget https://download.docker.com/linux/static/stable/x86_64/docker-24.0.6.tgz
+# arm64 下载 wget https://download.docker.com/linux/static/stable/aarch64/docker-24.0.6.tgz
 tar -zxvf docker-24.0.6.tgz
 sudo cp docker/* /usr/bin/
 vim /etc/systemd/system/docker.service
@@ -100,7 +102,8 @@ systemctl start docker
 ```
 离线安装docker-compose
 ```bash
-wget https://githubfast.com/docker/compose/releases/download/v2.40.0/docker-compose-linux-x86_64
+wget https://githubfast.com/docker/compose/releases/download/v5.0.2/docker-compose-linux-x86_64
+#arm64下载：wget https://githubfast.com/docker/compose/releases/download/v5.0.2/docker-compose-linux-aarch64
 mv docker-compose-linux-x86_64 /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose 
 
@@ -108,7 +111,7 @@ docker-compose -v
 
 ```
 
-# 2. ubuntu 安装 k8s客户端
+# 2. ubuntu 安装 k8s客户端（非必须）
 
 ```bash
 apt-get update && apt-get install -y apt-transport-https

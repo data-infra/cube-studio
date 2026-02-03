@@ -1,5 +1,11 @@
 #!/bin/bash
 
+kubectl delete all --all -n jupyter
+kubectl delete all --all -n aihub
+kubectl delete all --all -n pipeline
+kubectl delete all --all -n service
+kubectl delete all --all -n automl
+
 # 部署dashboard
 kubectl delete -f dashboard/v2.2.0-cluster.yaml
 # 高版本k8s部署2.6.1版本
@@ -30,7 +36,7 @@ kubectl delete -f ./servicemonitor/kube-controller-manager-sm.yml
 kubectl delete -f ./servicemonitor/kube-scheduler-sm.yml
 kubectl delete -f ./servicemonitor/kubelet-sm.yml
 kubectl delete -f ./servicemonitor/kubestate-metrics-sm.yml
-kubectl delete -f ./servicemonitor/node-exporter-sm.yml
+
 kubectl delete -f ./servicemonitor/prometheus-operator-sm.yml
 kubectl delete -f ./servicemonitor/prometheus-sm.yml
 # 删除prometheus 实例
@@ -54,6 +60,7 @@ kubectl delete -f ./grafana/grafana-svc.yml
 kubectl delete configmap grafana-config all-grafana-dashboards --namespace=monitoring
 kubectl delete -f ./grafana/pv-pvc-hostpath.yml
 # 删除node exporter
+kubectl delete -f ./node-exporter/node-exporter-sm.yml
 kubectl delete -f ./node-exporter/node-exporter-sa.yml
 kubectl delete -f ./node-exporter/node-exporter-rbac.yml
 kubectl delete -f ./node-exporter/node-exporter-svc.yml

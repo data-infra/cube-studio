@@ -11,16 +11,19 @@ mkdir -p kubeconfig && echo "" > kubeconfig/dev-kubeconfig
 ARCH=$(uname -m)
 
 if [ "$ARCH" = "x86_64" ]; then
-  wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
+  wget -O kubectl https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl-amd64-1.28 && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
 elif [ "$ARCH" = "aarch64" ]; then
-  wget -O kubectl https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl-arm64 && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
+  wget -O kubectl https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl-arm64-1.28 && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
 fi
 
 version=`kubectl version --short | awk '/Server Version:/ {print $3}'`
 echo "kubernets versison" $version
 
 node=`kubectl  get node -o wide |grep $1 |awk '{print $1}'| head -n 1`
+
 kubectl label node $node train=true cpu=true notebook=true service=true org=public istio=true kubeflow=true kubeflow-dashboard=true mysql=true redis=true monitoring=true logging=true --overwrite
+
+# kubectl label nodes --all train=true cpu=true notebook=true service=true org=public istio=true kubeflow=true kubeflow-dashboard=true mysql=true redis=true monitoring=true logging=true --overwrite
 
 # 创建命名空间
 sh create_ns_secret.sh
@@ -53,6 +56,7 @@ kubectl apply -f ./node-exporter/node-exporter-sa.yml
 kubectl apply -f ./node-exporter/node-exporter-rbac.yml
 kubectl apply -f ./node-exporter/node-exporter-svc.yml
 kubectl apply -f ./node-exporter/node-exporter-ds.yml
+kubectl apply -f ./node-exporter/node-exporter-sm.yml
 
 kubectl apply -f ./grafana/pv-pvc-hostpath.yml
 kubectl apply -f ./grafana/grafana-sa.yml
@@ -85,7 +89,6 @@ kubectl apply -f ./servicemonitor/kube-controller-manager-sm.yml
 kubectl apply -f ./servicemonitor/kube-scheduler-sm.yml
 kubectl apply -f ./servicemonitor/kubelet-sm.yml
 kubectl apply -f ./servicemonitor/kubestate-metrics-sm.yml
-kubectl apply -f ./servicemonitor/node-exporter-sm.yml
 kubectl apply -f ./servicemonitor/prometheus-operator-sm.yml
 kubectl apply -f ./servicemonitor/prometheus-sm.yml
 cd ../

@@ -10,7 +10,6 @@ docker pull ubuntu:20.04 &
 docker pull volcanosh/vc-scheduler:v1.7.0 &
 docker pull kubernetesui/metrics-scraper:v1.0.8 &
 docker pull istio/pilot:1.15.0 &
-docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/kube-scheduler:v1.25.16 &
 docker pull alpine:3.10 &
 docker pull quay.io/prometheus-operator/prometheus-config-reloader:v0.46.0 &
 docker pull carlosedp/addon-resizer:v1.8.4 &
@@ -21,9 +20,9 @@ docker pull ccr.ccs.tencentyun.com/cube-argoproj/argocli:v3.4.3 &
 docker pull postgres:11.5 &
 docker pull volcanosh/vc-webhook-manager:v1.7.0 &
 docker pull quay.io/prometheus-operator/prometheus-operator:v0.46.0 &
-docker pull liangjw/kube-webhook-certgen:v1.1.1 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/kube-rbac-proxy:0.14.1 &
 docker pull kubernetesui/dashboard:v2.6.1 &
+docker pull ccr.ccs.tencentyun.com/cube-studio/k8s-dashboard:v2.6.1 &
 docker pull python:3.9 &
 docker pull istio/proxyv2:1.15.0 &
 docker pull minio/minio:RELEASE.2023-04-20T17-56-55Z &

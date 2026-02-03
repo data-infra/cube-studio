@@ -164,6 +164,7 @@ rules:
   - services
   - events
   - pods
+  - pods/log
   verbs:
   - get
   - list

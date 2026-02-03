@@ -2,18 +2,19 @@
 
 参考install/rancher/install_docker.md部署docker
 
-clone项目，git clone --depth=1 https://github.com/data-infra/cube-studio.git
+clone项目，`git clone --depth=1 https://github.com/data-infra/cube-studio.git`
 
-centos中如果没有git，可以先yum install git安装git
+centos中如果没有git，可以先`yum install git`安装git
 
 ## 1.1 git clone遇到问题“GnuTLS recv error (-110): The TLS connection was non-properly terminated.”
 
 解决方案为依次执行以下命令：
+```
 apt-get install gnutls-bin
 git config --global http.sslVerify false
 git config --global http.postBuffer 1048576000
-
-再执行git clone即可，如果还是不行，直接git clone --depth=1 https://githubfast.com/data-infra/cube-studio.git，通过国内代理拉取。
+```
+再执行git clone即可，如果还是不行，直接`git clone --depth=1 https://githubfast.com/data-infra/cube-studio.git`，通过国内代理拉取。
 
 # 2. 建设前准备
 
@@ -108,7 +109,7 @@ sh pull_rancher_images.sh
 echo "127.0.0.1 localhost" >> /etc/hosts
 
 # 部署rancher server
-export RANCHER_CONTAINER_TAG=v2.8.5
+export RANCHER_CONTAINER_TAG=v2.10.3
 export PASSWORD=cube-studio
 # 有网的环境直接拉取阿里云的
 sudo docker run -d --privileged --restart=unless-stopped -p 443:443 --name=myrancher -e AUDIT_LEVEL=3 -e CATTLE_SYSTEM_DEFAULT_REGISTRY=registry.cn-hangzhou.aliyuncs.com -e CATTLE_BOOTSTRAP_PASSWORD=$PASSWORD registry.cn-hangzhou.aliyuncs.com/rancher/rancher:$RANCHER_CONTAINER_TAG
@@ -154,20 +155,21 @@ sudo docker run -d --privileged --restart=unless-stopped -p 443:443 --name=myran
 
 选择“Set a specific password to use”来配置rancher的密码，不选择"Allow collection of anonymous statistics ......"，选择"I agree to the terms and conditions ......"。
 
-![在这里插入图片描述](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/ecda7c7b8861482091848e3b7fe22688.png)
+![在这里插入图片描述](https://i-blog.csdnimg.cn/img_convert/a7d56660ea7e0245f558b434dd79f78b.png)
 
 之后选择添加集群->选择自定义集群->填写集群名称，集群名称英文小写
-![在这里插入图片描述](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/ec25233e26a749d5bcb62a339e222163.jpeg)
+![在这里插入图片描述](https://i-blog.csdnimg.cn/img_convert/e0beb334ab20f8d2a90a1259d3e99497.jpeg)
 
-![在这里插入图片描述](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/8ad63ad0bafb46268401f07ec2433cb6.jpeg)
+![在这里插入图片描述](https://i-blog.csdnimg.cn/img_convert/8bdd3a26e3df2774ae1a8b19fef3b3fe.jpeg)
 
 然后选择kubernetes的版本（注意：这个版本在第一次打开选择页面时可能刷新不出来，需要等待1~2分钟再刷新才能显示）
 
-注意：选择1.25版本的k8s。
+注意：选择1.28版本的k8s。
 
-![在这里插入图片描述](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/d60704f5dcf242b883a6dece66e07e93.jpeg)
+![在这里插入图片描述](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/40e54f2faac34cd296a2d3780ade491f.jpeg)
 
-![在这里插入图片描述](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/d778f141f20842b3ac2442acd75b66b5.jpeg)
+
+![在这里插入图片描述](https://i-blog.csdnimg.cn/img_convert/54178d3992b4da762afbfea90b02941d.jpeg)
 
 修改Advanced option，主要是禁用nginx ingress，修改端口范围，使用docker info检查服务器上的docker根目录是否和默认的一致，不一致则需要更改。
 
@@ -199,7 +201,7 @@ sudo docker run -d --privileged --restart=unless-stopped -p 443:443 --name=myran
         - '/data:/data'
         
 ```
-![在这里插入图片描述](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/a380de5081d74bd5ac49f0392e6aa341.jpeg)
+![在这里插入图片描述](https://i-blog.csdnimg.cn/img_convert/5533c2ae063e10038fbdf3a0337ac0e5.jpeg)
 
 这个yaml文件中控制着k8s基础组件的启动方式。比如kubelet的启动参数，api-server的启动参数等等。
 
@@ -266,17 +268,18 @@ services部分的示例（注意缩进对齐）
 
 我们可以在部署rancher server的这台机器上，添加etcd/control角色。(如果你准备单机部署或者只是简单尝试，可以把所有角色都选上)
 
-![在这里插入图片描述](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/e9f72ad20ac74afca6dfbe4980065d4a.jpeg)
+![在这里插入图片描述](https://i-blog.csdnimg.cn/img_convert/8abae389555146660722367f13800e56.jpeg)
 
 最后复制页面中显示的命令，接着在rancher server的终端上粘贴命令，注意在粘贴命令后面加上参数 --node-name xx.xx.xx.xx    也就是加上服务器主机的内网ip地址。
 
 粘贴后等待部署完成就行了。
 
-![在这里插入图片描述](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/9c6f2fa9750749edb92a1f92e48824a7.jpeg)
+![在这里插入图片描述](https://i-blog.csdnimg.cn/img_convert/37fbfef15a62e6096e51fb925d1b46e4.jpeg)
 
 部署完成后，集群的状态会变为"Active"，之后就可以下载kubeconfig文件，连接k8s集群了。
 
-![在这里插入图片描述](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/618cfde682044b77b7103fc811d5060b.jpeg)
+![在这里插入图片描述](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/1f0f669880ee4b3bb166bcf35ca7f6a5.png)
+
 
 ## 5.1 配置认证过期问题
 

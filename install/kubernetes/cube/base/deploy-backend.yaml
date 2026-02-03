@@ -84,6 +84,11 @@ spec:
               configMapKeyRef:
                 name: deploy-config
                 key: ENVIRONMENT
+          - name: K8S_HOST_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.hostIP
 
           volumeMounts:
             - name: kubeflow-dashboard-config
@@ -128,7 +133,8 @@ spec:
             initialDelaySeconds: 500
             periodSeconds: 60
             timeoutSeconds: 10
-
+          securityContext:
+            privileged: true
 
 ---
 # encoding: utf-8

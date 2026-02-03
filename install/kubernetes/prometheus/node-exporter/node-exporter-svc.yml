@@ -3,6 +3,10 @@ kind: Service
 metadata:
   labels:
     k8s-app: node-exporter
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: '9100'
+    prometheus.io/path: /metrics
   name: node-exporter
   namespace: monitoring
 spec:
