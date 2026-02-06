@@ -22,9 +22,7 @@ from flask import (
     redirect, render_template
 )
 from .base import (
-    DeleteMixin,
-    MyappFilter,
-    MyappModelView,
+    MyappFilter
 )
 from flask_appbuilder import expose
 import datetime, time, json
@@ -179,7 +177,10 @@ class Docker_ModelView_Base():
             item.namespace = item.project.notebook_namespace
         if item.expand:
             expand = json.loads(item.expand)
-            expand['namespace'] = json.loads(item.project.expand).get('NOTEBOOK_NAMESPACE', conf.get('NOTEBOOK_NAMESPACE','jupyter'))
+
+            resource_memory = expand.get('resource_memory','4G')
+            resource_cpu = expand.get('resource_cpu', '4')
+            resource_gpu = expand.get('resource_gpu', '0').upper()
             item.expand = json.dumps(expand,indent=4,ensure_ascii=False)
 
     def pre_update(self, item):
@@ -220,7 +221,7 @@ class Docker_ModelView_Base():
         if not pod or (pod['status']!='Running' and pod['status']!='Pending'):
 
             command=['sh','-c','sleep 7200 && hour=`date +%H` && while [ $hour -ge 06 ];do sleep 3600;hour=`date +%H`;done']
-            hostAliases = conf.get('HOSTALIASES')
+            host_aliases = conf.get('HOSTALIASES')
 
             default_volume_mount = docker.project.volume_mount
             image_pull_secrets = conf.get('HUBSECRET', [])
@@ -236,14 +237,14 @@ class Docker_ModelView_Base():
                                         args=None,
                                         volume_mount=json.loads(docker.expand).get('volume_mount',default_volume_mount) if docker.expand else default_volume_mount,
                                         working_dir='/mnt/%s'%docker.created_by.username,
-                                        node_selector='train=true,org=%s'%(docker.project.org,),
+                                        node_selector=f'notebook=true;cpu=true;org={docker.project.user_org}',
                                         resource_memory="0~"+json.loads(docker.expand).get('resource_memory','8G') if docker.expand else '8G',
                                         resource_cpu='0~'+json.loads(docker.expand).get('resource_cpu','4') if docker.expand else '4',
                                         resource_gpu=json.loads(docker.expand if docker.expand else '{}').get('resource_gpu','0'),
                                         image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
                                         image_pull_secrets=image_pull_secrets,
                                         image= docker.last_image if docker.last_image and docker.consecutive_build else docker.base_image,
-                                        hostAliases=hostAliases,
+                                        hostAliases=host_aliases,
                                         env={
                                             "USERNAME": docker.created_by.username
                                         },
@@ -263,7 +264,7 @@ class Docker_ModelView_Base():
             try_num = try_num - 1
             time.sleep(2)
         if try_num == 0:
-            pod_url = f'/web/search/{docker.project.cluster["NAME"]}/{namespace}/{pod_name}'
+            pod_url = f'/k8s/web/search/{docker.project.cluster["NAME"]}/{namespace}/{pod_name}'
             # event = k8s_client.get_pod_event(namespace=namespace,pod_name=pod_name)
 
             message = __('拉取镜像时间过长，一分钟后刷新此页面，或者打开链接：')+'<a href="%s">' % pod_url+__('查看pod信息')+'</a>'
@@ -348,7 +349,7 @@ class Docker_ModelView_Base():
         else:
             command = ['sh', '-c', f'{cli} commit {container_id} {docker.target_image} && {cli} push {docker.target_image}']
 
-        hostAliases = conf.get('HOSTALIASES')
+        host_aliases = conf.get('HOSTALIASES')
 
         image_pull_secrets = conf.get('HUBSECRET', [])
         user_repositorys = db.session.query(Repository).filter(Repository.created_by_fk==g.user.id).all()
@@ -370,7 +371,7 @@ class Docker_ModelView_Base():
             image_pull_policy='IfNotPresent',
             image_pull_secrets=image_pull_secrets,
             image=conf.get('NERDCTL_IMAGES', f'{cli}:xx') if cli!='docker' else conf.get('DOCKER_IMAGES', f'{cli}:xx'),
-            hostAliases=hostAliases,
+            hostAliases=host_aliases,
             env={
                 "USERNAME": docker.created_by.username
             },

@@ -22,7 +22,7 @@ class Docker(Model,AuditMixinNullable,MyappModelBase):
     id = Column(Integer, primary_key=True,comment='id主键')
     project_id = Column(Integer, ForeignKey('project.id'), nullable=False,comment='项目组id')
     project = relationship(
-        "Project", foreign_keys=[project_id]
+        "Project", foreign_keys=[project_id], lazy='selectin'
     )
     describe = Column(String(200),  nullable=True,comment='描述')
     namespace = Column(String(200), nullable=True, default='jupyter', comment='命名空间')

@@ -23,12 +23,7 @@ from flask import (
     redirect,
     request
 )
-from .base import (
-    DeleteMixin,
-    MyappFilter,
-    MyappModelView,
-
-)
+from .base import MyappFilter
 from .baseApi import (
     MyappModelRestApi
 )
@@ -93,7 +88,7 @@ class Service_ModelView_base():
         "volume_mount":StringField(_('挂载'),description= _('外部挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2<br>注意pvc会自动挂载对应目录下的个人username子目录'),widget=BS3TextFieldWidget(),default='',validators=[Regexp('^[\x00-\x7F]*$')]),
         "working_dir": StringField(_('工作目录'),description= _('工作目录，容器进程启动目录，不填默认使用Dockerfile内定义的工作目录。')+core.open_jupyter(_('打开目录'),'working_dir'),widget=BS3TextFieldWidget(),validators=[Regexp('^[\x00-\x7F]*$')]),
         "command":StringField(_('启动命令'), description= _('启动命令，支持多行命令'),widget=MyBS3TextAreaFieldWidget(rows=3)),
-        "node_selector":StringField(_('机器选择'), description= _('运行当前服务所在的机器'),widget=BS3TextFieldWidget(),default='cpu=true,serving=true'),
+        "node_selector":StringField(_('机器选择'), description= _('运行当前服务所在的机器'),widget=BS3TextFieldWidget(),default='cpu=true;serving=true'),
         "resource_memory":StringField(_('memory'),default=Service.resource_memory.default.arg,description= _('内存的资源使用配置，示例1G，10G， 最大100G，如需更多联系管路员'),widget=BS3TextFieldWidget(),validators=[DataRequired(), Regexp("^[0-9]*G$")]),
         "resource_cpu":StringField(_('cpu'), default=Service.resource_cpu.default.arg,description= _('cpu的资源使用配置(单位核)，示例 0.4，10，最大50核，如需更多联系管路员'),widget=BS3TextFieldWidget(), validators=[DataRequired(), Regexp("^[0-9]*$")]),
         "resource_gpu": StringField(_('gpu'), default='0',description= _('gpu的资源使用配置(单位卡)，示例:1，2，训练任务每个容器独占整卡'), widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')]),
@@ -201,7 +196,6 @@ class Service_ModelView_base():
     @expose_api(description="部署内部服务",url='/deploy/<service_id>', methods=['POST', "GET"])
     # @pysnooper.snoop()
     def deploy(self, service_id):
-
         image_pull_secrets = conf.get('HUBSECRET', [])
         user_repositorys = db.session.query(Repository).filter(Repository.created_by_fk == g.user.id).all()
         image_pull_secrets = list(set(image_pull_secrets + [rep.hubsecret for rep in user_repositorys]))
@@ -324,8 +318,8 @@ class Service_ModelView_base():
                     username=service.created_by.username,
                     ports=service_ports,
                     selector=labels,
-                    service_type='ClusterIP' if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else 'NodePort',
-                    external_ip=SERVICE_EXTERNAL_IP if conf.get('K8S_NETWORK_MODE', 'iptables') != 'ipvs' else None
+                    service_type='ClusterIP' if service.project.cluster['K8S_NETWORK_MODE'] != 'ipvs' else 'NodePort',
+                    external_ip=SERVICE_EXTERNAL_IP if service.project.cluster['K8S_NETWORK_MODE'] != 'ipvs' else None
                 )
             else:
                 flash(__('端口已耗尽，后续请使用泛域名访问服务'), 'warning')

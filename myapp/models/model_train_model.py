@@ -27,7 +27,7 @@ class Training_Model(Model,AuditMixinNullable,MyappModelBase):
     download_url = Column(String(200),comment='下载url')
     project_id = Column(Integer, ForeignKey('project.id'),comment='项目组id')
     project = relationship(
-        Project, foreign_keys=[project_id]
+        Project, foreign_keys=[project_id], lazy='selectin'
     )
     pipeline_id = Column(Integer,default=0,comment='任务流id')
     run_id = Column(String(100),nullable=False,comment='run id')   # pipeline run instance

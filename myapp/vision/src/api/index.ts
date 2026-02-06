@@ -8,7 +8,7 @@ const job_template_modelview = (): Promise<any> => {
     params: {
       form_data: JSON.stringify({
         columns: ['project', 'name', 'version', 'describe', 'images', 'workdir', 'entrypoint', 'args', 'demo', 'env',
-          'hostAliases', 'privileged', 'accounts', 'created_by', 'changed_by', 'created_on', 'changed_on',
+          'host_aliases', 'privileged', 'accounts', 'created_by', 'changed_by', 'created_on', 'changed_on',
           'expand'],
         str_related: 0
       })

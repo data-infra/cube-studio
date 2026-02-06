@@ -1,5 +1,5 @@
-# docker build -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard-frontend:2026.01.01 -f install/docker/dockerFrontend/Dockerfile .
-# docker buildx build --platform linux/amd64,linux/arm64 -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard-frontend:2026.01.01 -f install/docker/dockerFrontend/Dockerfile . --push
+# docker build -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard-frontend:2026.03.01 -f install/docker/dockerFrontend/Dockerfile .
+# docker buildx build --platform linux/amd64,linux/arm64 -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard-frontend:2026.03.01 -f install/docker/dockerFrontend/Dockerfile . --push
 
 FROM nginx
 

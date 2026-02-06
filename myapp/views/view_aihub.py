@@ -9,7 +9,7 @@ from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 import urllib.parse
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
-from myapp import app, appbuilder, db
+from myapp import app, appbuilder, db, event_logger
 from wtforms import SelectField, StringField
 from flask_appbuilder.fieldwidgets import Select2Widget, BS3TextFieldWidget
 from myapp.models.model_job import Images, Job_Template, Repository
@@ -38,16 +38,13 @@ import datetime, json
 from myapp.forms import MyBS3TextAreaFieldWidget
 
 conf = app.config
-logging = app.logger
+
 
 
 # 获取某类project分组
 class Aihub_Filter(MyappFilter):
     # @pysnooper.snoop()
     def apply(self, query, value):
-        # user_roles = [role.name.lower() for role in list(get_user_roles())]
-        # if "admin" in user_roles:
-        #     return query.filter(Project.type == value).order_by(Project.id.desc())
         return query.filter(self.model.field == value)
 
 
@@ -57,7 +54,7 @@ class Aihub_base():
     base_permissions = ['can_show','can_list']
     base_order = ("hot", "desc")
     order_columns = ['id']
-    search_columns = ['describe', 'label', 'name', 'scenes']
+    search_columns = ['describe', 'label', 'name', 'scenes','expand']
     list_columns = ['card']
     page_size = 100
 

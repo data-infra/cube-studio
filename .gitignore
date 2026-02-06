@@ -4,9 +4,7 @@ __pycache__
 install/docker/file
 myapp/static/file
 myapp/test
-#/myapp/static/appbuilder/vison/*
 /myapp/static/appbuilder/mnt
-# /myapp/static/appbuilder/assets/
 /images/web/target-detection/yolo/
 /install/docker/data/mysql/
 /myapp/visionPlus/node_modules
@@ -24,8 +22,17 @@ myapp/test
 /myapp/wechat/receive/audio/
 .ipynb_checkpoints
 /job-template/job/*/.ipynb_checkpoints/
-/install/docker/kubeconfig/
+install/docker/kubeconfig/
 /aihub/deep-learning/chat-embedding/docs/
 /myapp/chatgpt-web/.pnpm-store/
 /myapp/flask_appbuilder/
-/myapp/chatgpt-web/distChat
+/myapp/utils/alipay/
+/dev/*
+!/dev/common/
+!/dev/common/**
+/dist/
+compile.py
+/myapp/test/
+/install/docker/kubeconfig/
+/install/docker/project/
+/myapp/dm/

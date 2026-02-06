@@ -20,11 +20,7 @@ from .baseApi import (
 )
 from flask import jsonify
 from myapp import security_manager
-from .base import (
-    DeleteMixin,
-    MyappFilter,
-    MyappModelView,
-)
+from .base import MyappFilter
 
 conf = app.config
 

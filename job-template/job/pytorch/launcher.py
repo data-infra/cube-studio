@@ -280,7 +280,9 @@ def make_pytorchjob(name,num_workers,image,working_dir,command):
         pod_spec['template']['spec']['containers'][0]['resources']['requests'][GPU_RESOURCE_NAME] = int(gpu_num)
         pod_spec['template']['spec']['containers'][0]['resources']['limits'][GPU_RESOURCE_NAME] = int(gpu_num)
     elif int(gpu_num)==-1: # -1表示共享占用，使用gpu机器，但是不强制声明使用gpu，用户容器自行决定
-        pass
+        pod_spec['template']['spec']['containers'][0]['securityContext']={
+            "privileged": True
+        }
     else:
         # 添加禁用指令
         pod_spec['template']['spec']['containers'][0]['env'].append({

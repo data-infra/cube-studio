@@ -1,5 +1,6 @@
 import base64
 import math
+import traceback
 
 from flask_appbuilder.baseviews import expose_api
 
@@ -23,7 +24,7 @@ from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from jinja2 import Environment, BaseLoader, DebugUndefined,Undefined
 import os
 from wtforms.validators import DataRequired, Length, Regexp
-from myapp.views.view_task import Task_ModelView, Task_ModelView_Api
+from myapp.views.view_task import Task_ModelView_Api
 from sqlalchemy import or_
 from myapp.exceptions import MyappException
 from wtforms import BooleanField, IntegerField, StringField, SelectField
@@ -50,13 +51,7 @@ from myapp import security_manager
 from myapp.views.view_team import filter_join_org_project
 import pysnooper
 from kubernetes import client
-from .base import (
-    DeleteMixin,
-    get_user_roles,
-    MyappFilter,
-    MyappModelView,
-    json_response
-)
+from .base import MyappFilter,json_response
 
 from flask_appbuilder import expose
 import datetime, time, json
@@ -68,12 +63,11 @@ class Pipeline_Filter(MyappFilter):
     # @pysnooper.snoop()
     def apply(self, query, func):
         if g.user.is_admin():
-            return query
+            return query.filter(or_(Pipeline.type==None,Pipeline.type==''))
 
         join_projects_id = security_manager.get_join_projects_id(db.session)
-        # public_project_id =
         # logging.info(join_projects_id)
-        return query.filter(
+        return query.filter(or_(Pipeline.type==None,Pipeline.type=='')).filter(
             or_(
                 self.model.project_id.in_(join_projects_id),
                 # self.model.project.name.in_(['public'])
@@ -314,16 +308,13 @@ def dag_to_pipeline(pipeline, dbsession, workflow_label=None, **kwargs):
                 print(e)
 
         # 添加node selector
-        node_selector = {}
-        for selector in re.split(',|;|\n|\t', task.get_node_selector()):
-            selector = selector.replace(' ', '')
-            if '=' in selector:
-                node_selector[selector.strip().split('=')[0].strip()] = selector.strip().split('=')[1].strip()
+        nodeSelector, nodeAffinity = core.get_node_selector(task.get_node_selector())
 
         # 添加pod label
         pod_label = {
             "pipeline-id": str(pipeline.id),
             "pipeline-name": str(pipeline.name),
+            "app":str(pipeline.name),
             "task-id": str(task.id),
             "task-name": str(task.name),
             "run-id": global_envs.get('KFJ_RUN_ID', ''),
@@ -378,20 +369,20 @@ def dag_to_pipeline(pipeline, dbsession, workflow_label=None, **kwargs):
                 for gpu_alias in conf.get('GPU_NONE', {}):
                     container_envs.append((conf.get('GPU_NONE',{})[gpu_alias][0], conf.get('GPU_NONE',{})[gpu_alias][1]))
         # 配置host
-        hostAliases = {}
+        host_aliases = {}
 
-        global_hostAliases = conf.get('HOSTALIASES', '')
-        # global_hostAliases = ''
-        if task_temp.job_template.hostAliases:
-            global_hostAliases += "\n" + task_temp.job_template.hostAliases
-        if global_hostAliases:
-            hostAliases_list = re.split('\r|\n', global_hostAliases)
-            hostAliases_list = [host.strip() for host in hostAliases_list if host.strip()]
-            for row in hostAliases_list:
+        global_host_aliases = conf.get('HOSTALIASES', '')
+        # global_host_aliases = ''
+        if task_temp.job_template.host_aliases:
+            global_host_aliases += "\n" + task_temp.job_template.host_aliases
+        if global_host_aliases:
+            host_aliases_list = re.split('\r|\n', global_host_aliases)
+            host_aliases_list = [host.strip() for host in host_aliases_list if host.strip()]
+            for row in host_aliases_list:
                 hosts = row.strip().split(' ')
                 hosts = [host for host in hosts if host]
                 if len(hosts) > 1:
-                    hostAliases[hosts[1]] = hosts[0]
+                    host_aliases[hosts[1]] = hosts[0]
 
         if task.skip:
             command = ["echo", "skip"]
@@ -425,7 +416,7 @@ def dag_to_pipeline(pipeline, dbsession, workflow_label=None, **kwargs):
                 "workingDir": working_dir,
                 "imagePullPolicy": conf.get('IMAGE_PULL_POLICY', 'Always')
             },
-            "nodeSelector": node_selector,
+            "nodeSelector": nodeSelector,
             "securityContext": {
                 "privileged": True if task.job_template.privileged else False
             },
@@ -457,8 +448,8 @@ def dag_to_pipeline(pipeline, dbsession, workflow_label=None, **kwargs):
             "hostAliases": [
                 {
                     "hostnames": [hostname],
-                    "ip": hostAliases[hostname]
-                } for hostname in hostAliases
+                    "ip": host_aliases[hostname]
+                } for hostname in host_aliases
             ],
             "activeDeadlineSeconds": task.timeout if task.timeout else None
         }
@@ -723,7 +714,7 @@ class Pipeline_ModelView_Base():
     edit_form_extra_fields = add_form_extra_fields
 
 
-    related_views = [Task_ModelView, ]
+    related_views = [Task_ModelView_Api, ]
 
     def delete_task_run(self, task):
         try:
@@ -837,21 +828,6 @@ class Pipeline_ModelView_Base():
         #     item.pipeline_file = None
 
 
-    # 合并上下游关系
-    # @pysnooper.snoop(watch_explode=('pipeline'))
-    def merge_upstream(self, pipeline):
-        logging.info(pipeline)
-
-        dag_json = {}
-        # 根据参数生成args字典。一层嵌套的形式
-        for arg in pipeline.__dict__:
-            if len(arg) > 5 and arg[:5] == 'task.':
-                task_upstream = getattr(pipeline, arg)
-                dag_json[arg[5:]] = {
-                    "upstream": task_upstream if task_upstream else []
-                }
-        if dag_json:
-            pipeline.dag_json = json.dumps(dag_json)
 
     # @pysnooper.snoop(watch_explode=('item'))
     def pre_add(self, item):
@@ -911,7 +887,6 @@ class Pipeline_ModelView_Base():
 
         item.name = item.name.replace('_', '-')[0:54].lower()
         # item.alert_status = ','.join(item.alert_status)
-        self.merge_upstream(item)
         self.pipeline_args_check(item)
         item.change_datetime = datetime.datetime.now()
         if item.parameter:
@@ -935,7 +910,7 @@ class Pipeline_ModelView_Base():
                 item.cron_time = ''
                 raise MyappException(__("crontab 格式错误"))
 
-            org = item.project.org
+            org = item.project.user_org
             if not org or org == 'public':
                 flash(__('无法保障公共集群的稳定性，定时任务请选择专门的日更集群项目组'), 'warning')
 
@@ -975,21 +950,29 @@ class Pipeline_ModelView_Base():
 
         # 删除所有的workflow
         # 只是删除了数据库记录，但是实例并没有删除，会重新监听更新的。
-        db.session.query(Task).filter_by(pipeline_id=pipeline.id).delete(synchronize_session=False)
-        db.session.commit()
-        db.session.query(Workflow).filter_by(foreign_key=str(pipeline.id)).delete(synchronize_session=False)
-        db.session.commit()
-        db.session.query(Workflow).filter(Workflow.labels.contains(f'"pipeline-id": "{str(pipeline.id)}"')).delete(synchronize_session=False)
-        db.session.commit()
-        db.session.query(RunHistory).filter_by(pipeline_id=pipeline.id).delete(synchronize_session=False)
-        db.session.commit()
-
+        try:
+            db.session.query(Task).filter_by(pipeline_id=pipeline.id).delete()
+            db.session.commit()
+        except Exception as e:
+            pass
+        try:
+            db.session.query(Workflow).filter_by(foreign_key=str(pipeline.id)).delete(synchronize_session=False)
+            db.session.commit()
+            db.session.query(Workflow).filter(Workflow.labels.contains(f'"pipeline-id": "{str(pipeline.id)}"')).delete(synchronize_session=False)
+            db.session.commit()
+        except Exception as e:
+            print(e)
+        try:
+            db.session.query(RunHistory).filter_by(pipeline_id=pipeline.id).delete()
+            db.session.commit()
+        except Exception as e:
+            pass
     @expose_api(description="我的pipeline列表",url="/my/list/")
     def my(self):
         try:
             user_id = g.user.id
             if user_id:
-                pipelines = db.session.query(Pipeline).filter_by(created_by_fk=user_id).all()
+                pipelines = db.session.query(Pipeline).filter_by(created_by_fk=user_id).order_by(Pipeline.id.desc()).all()
                 back = []
                 for pipeline in pipelines:
                     back.append(pipeline.to_json())
@@ -1039,7 +1022,8 @@ class Pipeline_ModelView_Base():
                         db_crd.change_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                         db.session.commit()
             except Exception as e:
-                print(e)
+                pass
+                # print(e)
 
     def check_pipeline_perms(user_fun):
         # @pysnooper.snoop()
@@ -1138,7 +1122,7 @@ class Pipeline_ModelView_Base():
         print('begin upload and run pipeline %s' % pipeline.name)
         pipeline.version_id = ''
         if not pipeline.pipeline_file:
-            flash("请先编排任务，并进行保存后再运行整个任务流",'warning')
+            flash(__("请先编排任务，并进行保存后再运行整个任务流"),'warning')
             return redirect('/pipeline_modelview/api/web/%s' % pipeline.id)
         try:
             crd_name = run_pipeline(pipeline, json.loads(pipeline.pipeline_file))  # 会根据版本号是否为空决定是否上传
@@ -1199,6 +1183,9 @@ class Pipeline_ModelView_Base():
             url = f'/frontend/commonRelation?backurl=/workflow_modelview/api/web/dag/{cluster}/{namespace}/{workflow_name}'
             return redirect(url)
         else:
+            message = __('未发现之前启动的任务流实例，请先运行该实例')
+            return render_template('close.html', data=str(message).replace('<br>', '\n'))
+
             url = '/frontend/showOutLink?url=%2Fstatic%2Fappbuilder%2Fvison%2Findex.html%3Fpipeline_id%3D'+str(pipeline_id)
             return redirect(url)
 
@@ -1209,7 +1196,7 @@ class Pipeline_ModelView_Base():
     def web_monitoring(self, pipeline_id):
         pipeline = db.session.query(Pipeline).filter_by(id=int(pipeline_id)).first()
 
-        url = "http://"+pipeline.project.cluster.get('HOST', request.host).split('|')[-1]+conf.get('GRAFANA_TASK_PATH')+ pipeline.name
+        url = "//"+pipeline.project.cluster.get('HOST', request.host).split('|')[-1]+conf.get('GRAFANA_TASK_PATH')+ pipeline.name
         return redirect(url)
         # else:
         #     flash('no running instance', 'warning')
@@ -1307,12 +1294,6 @@ class Pipeline_ModelView_Base():
             raise e
 
         return redirect(request.referrer)
-
-
-class Pipeline_ModelView(Pipeline_ModelView_Base, MyappModelView):
-    datamodel = SQLAInterface(Pipeline)
-    # base_order = ("changed_on", "desc")
-    # order_columns = ['changed_on']
 
 
     @action("muldelete", "删除", "确定删除所选记录?", "fa-trash", single=False)

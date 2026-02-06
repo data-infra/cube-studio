@@ -15,8 +15,9 @@ import deepspeed
 from deepspeed.pipe import PipelineModule
 from deepspeed.utils import RepeatingLoader
 
+KFJ_CREATOR = os.getenv('KFJ_CREATOR','admin')
 
-def cifar_trainset(local_rank, dl_path='/mnt/admin/pipeline/example/deepspeed/'):
+def cifar_trainset(local_rank, dl_path=f'/mnt/{KFJ_CREATOR}/pipeline/example/deepspeed/'):
     transform = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),

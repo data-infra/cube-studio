@@ -29,17 +29,17 @@ class Notebook(Model,AuditMixinNullable,MyappModelBase):
     id = Column(Integer, primary_key=True,comment='id主键')
     project_id = Column(Integer, ForeignKey('project.id'), nullable=False,comment='项目组id')  # 定义外键
     project = relationship(
-        "Project", foreign_keys=[project_id]
+        "Project", foreign_keys=[project_id], lazy='selectin'
     )
     name = Column(String(200), unique = True, nullable=True,comment='英文名')
     describe = Column(String(200), nullable=True,comment='描述')
     namespace = Column(String(200), nullable=True,default='jupyter',comment='命名空间')
-    images=Column(String(200), nullable=True,default='',comment='镜像')
+    images=Column(String(1000), nullable=True,default='',comment='镜像')
     ide_type = Column(String(100), default='jupyter',comment='ide类型')
     working_dir = Column(String(200), default='',comment='工作目录')
     env = Column(String(400),default='',comment='环境变量') #
     volume_mount = Column(String(2000), default='kubeflow-user-workspace(pvc):/mnt',comment='挂载')  #
-    node_selector = Column(String(200), default='cpu=true,notebook=true',comment='机器选择器')  #
+    node_selector = Column(String(200), default='cpu=true;notebook=true',comment='机器选择器')  #
     image_pull_policy = Column(Enum('Always', 'IfNotPresent',name='image_pull_policy'), nullable=True, default='Always',comment='镜像拉取策略')
     resource_memory = Column(String(100), default='10G',comment='申请内存')
     resource_cpu = Column(String(100), default='10',comment='申请cpu')
@@ -117,14 +117,30 @@ class Notebook(Model,AuditMixinNullable,MyappModelBase):
     @property
     def status(self):
         try:
-            k8s_client = py_k8s.K8s(self.cluster.get('KUBECONFIG',''))
-            # 优化，可以考虑整体查询，然后放cache里面
-            pods = k8s_client.get_pods(namespace=self.namespace,pod_name=self.name)
-            if pods and len(pods)>0:
-                status = pods[0]['pod_substatus']
-                k8s_dash_url = f'/k8s/web/search/{self.cluster["NAME"]}/{self.namespace}/{self.name}'
-                url = Markup(f'<a target=_blank style="color:#008000;" href="{k8s_dash_url}">{status}</a>')
-                return url
+            expand = json.loads(self.expand) if self.expand else {}
+            status = expand.get('status','online')
+            if status == 'online':
+                k8s_client = py_k8s.K8s(self.cluster.get('KUBECONFIG',''))
+                # 优化，可以考虑整体查询，然后放cache里面
+                # jupyter_pods = cache.get(f'jupyter_pods_'+self.cluster['NAME'])
+                # if not(jupyter_pods):
+                #     jupyter_pods = k8s_client.get_pods(namespace=self.namespace)
+                #     cache.set('jupyter_pods_'+self.cluster['NAME'], jupyter_pods,timeout=5)
+                # pods = [pod for pod in jupyter_pods if pod['name']==self.name]
+                # if not pods:
+                #     pods = k8s_client.get_pods(namespace=self.namespace,pod_name=self.name)
+                # 不提前全量，因为用户界面有很多过滤条件，查询的始终是少数的。全量查询反而慢
+                pods = k8s_client.get_pods(namespace=self.namespace, pod_name=self.name)
+                if pods and len(pods)>0:
+                    status = pods[0]['pod_substatus']
+                    pod_ip = pods[0]['pod_ip']
+                    expand = json.loads(self.expand) if self.expand else {}
+                    expand['pod_ip']=pod_ip
+                    self.expand = json.dumps(expand,ensure_ascii=False)
+                    db.session.commit()
+                    k8s_dash_url = f'/k8s/web/search/{self.cluster["NAME"]}/{self.namespace}/{self.name}'
+                    url = Markup(f'<a target=_blank style="color:#008000;" href="{k8s_dash_url}">{status}</a>')
+                    return url
 
         except Exception as e:
             print(e)

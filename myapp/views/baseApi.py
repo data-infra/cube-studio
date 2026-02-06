@@ -66,6 +66,7 @@ from flask import (
 )
 from flask_appbuilder.exceptions import FABException, InvalidOrderByColumnFABException
 from flask_appbuilder.security.decorators import permission_name, protect, has_access
+from myapp.views.base import has_access_api
 from flask_appbuilder.api import BaseModelApi, BaseApi, ModelRestApi
 from sqlalchemy.sql import sqltypes
 from myapp import app, appbuilder, db, event_logger, cache
@@ -935,6 +936,7 @@ class MyappModelRestApi(ModelRestApi):
     # 添加关联model的字段
     def merge_related_field_info(self, response, **kwargs):
         try:
+            response['model_name'] = self.datamodel.obj.__tablename__
             add_info = {}
             if self.related_views:
                 for related_views_class in self.related_views:
@@ -1069,7 +1071,9 @@ class MyappModelRestApi(ModelRestApi):
 
     @expose("/<int:pk>", methods=["GET"])
     # @pysnooper.snoop(depth=4)
-    def api_show(self, pk, **kwargs):
+    def get(self, pk, **kwargs):
+        if 'can_show' not in self.base_permissions:
+            return self.response_error(403, message='no permission to show')
 
         # from flask_appbuilder.models.sqla.interface import SQLAInterface
         item = self.datamodel.get(pk, self._base_filters)
@@ -1129,7 +1133,9 @@ class MyappModelRestApi(ModelRestApi):
 
     @expose("/", methods=["GET"])
     # @pysnooper.snoop(watch_explode=('select_cols'))
-    def api_list(self, **kwargs):
+    def get_list(self, **kwargs):
+        if 'can_list' not in self.base_permissions:
+            return self.response_error(403, message='no permission to list')
         _response = dict()
 
         try:
@@ -1307,7 +1313,9 @@ class MyappModelRestApi(ModelRestApi):
 
     @event_logger.log_this
     @expose("/", methods=["POST"])
-    def api_add(self):
+    def post(self):
+        if 'can_add' not in self.base_permissions:
+            return self.response_error(403, message='no permission to add')
         self.src_item_json = {}
         if not request.is_json:
             return self.response_error(400, message="Request is not JSON")
@@ -1375,7 +1383,9 @@ class MyappModelRestApi(ModelRestApi):
     @event_logger.log_this
     @expose("/<int:pk>", methods=["PUT"])
     # @pysnooper.snoop(watch_explode=('item','data','field'))
-    def api_edit(self, pk):
+    def put(self, pk):
+        if 'can_edit' not in self.base_permissions:
+            return self.response_error(403, message='no permission to edit')
 
         item = self.datamodel.get(pk, self._base_filters)
         if not item:
@@ -1456,7 +1466,7 @@ class MyappModelRestApi(ModelRestApi):
                 **back_data,
             )
         except IntegrityError as e:
-            traceback.print_exc()  
+            traceback.print_exc()
             return self.response_error(422, message=str(e.orig))
         except Exception as e1:
             print("An error occurred:", e1)
@@ -1466,7 +1476,9 @@ class MyappModelRestApi(ModelRestApi):
     @event_logger.log_this
     @expose("/<int:pk>", methods=["DELETE"])
     # @pysnooper.snoop()
-    def api_delete(self, pk):
+    def delete(self, pk):
+        if 'can_delete' not in self.base_permissions:
+            return self.response_error(403, message='no permission to delete')
         item = self.datamodel.get(pk, self._base_filters)
         if not item:
             message = '未查询到当前记录，可能是系统缓存未更新，请重试'

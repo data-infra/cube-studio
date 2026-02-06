@@ -30,13 +30,13 @@ class Service_Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     describe = Column(String(200),nullable=False)
     project_id = Column(Integer, ForeignKey('project.id'),nullable=False)
     project = relationship(
-        "Project", foreign_keys=[project_id]
+        "Project", foreign_keys=[project_id], lazy='selectin'
     )
     dag_json = Column(Text,nullable=False,default='{}')
     namespace=Column(String(100),default='service')
     env = Column(String(500),default='')
     run_id = Column(String(100))
-    node_selector = Column(String(100), default='cpu=true,train=true')
+    node_selector = Column(String(100), default='cpu=true;train=true')
     images = Column(String(200), nullable=False)
     working_dir = Column(String(100),default='')
     command = Column(String(1000),default='')

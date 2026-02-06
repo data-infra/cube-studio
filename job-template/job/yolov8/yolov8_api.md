@@ -66,6 +66,18 @@
 }
 ```
 
+# python调用示例
+
+```python
+import requests, base64, json
+image_path = "https://cube-studio.oss-cn-hangzhou.aliyuncs.com/pipeline/media-download/train2014/COCO_train2014_000000000597.jpg"
+url = "http://xx.xx.xx.xx/predict"
+data = {"image": base64.b64encode(open(image_path, "rb").read()).decode('utf-8')}
+headers = {'Content-Type': 'application/json'}
+response = requests.post(url, headers=headers, data=json.dumps(data))
+print(response.json())
+```
+
 # 自动化标注接口
 ```
 /labelstudio

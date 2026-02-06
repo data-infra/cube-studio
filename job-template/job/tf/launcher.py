@@ -247,7 +247,9 @@ def make_tfjob(name,num_workers,image,working_dir,command):
         pod_spec['template']['spec']['containers'][0]['resources']['requests'][GPU_RESOURCE_NAME] = int(gpu_num)
         pod_spec['template']['spec']['containers'][0]['resources']['limits'][GPU_RESOURCE_NAME] = int(gpu_num)
     elif int(gpu_num)==-1:
-        pass
+        pod_spec['template']['spec']['containers'][0]['securityContext']={
+            "privileged": True
+        }
     else:
         # 添加禁用指令
         pod_spec['template']['spec']['containers'][0]['env'].append({

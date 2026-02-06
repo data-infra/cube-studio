@@ -497,9 +497,9 @@ def draw_parallel(df):
 # @pysnooper.snoop()
 def draw(chart_type,file_path):
     try:
-        if '.csv' in file_path:
+        if file_path.endswith('.csv'):
             example = pandas.read_csv(file_path, header=0)
-        elif '.json' in file_path:
+        elif file_path.endswith('.json'):
             example = json.load(open(file_path))
         else:
             return ''

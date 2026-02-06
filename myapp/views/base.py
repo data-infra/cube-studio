@@ -2,6 +2,7 @@ import datetime
 import functools
 import logging
 import traceback
+import pysnooper
 from typing import Any, Dict
 from flask_appbuilder.forms import GeneralModelConverter
 from flask import get_flashed_messages
@@ -94,7 +95,7 @@ def has_access(f):
     f._permission_name = permission_str
     return functools.update_wrapper(wraps, f)
 
-
+# @pysnooper.snoop()
 def has_access_api(f):
     """
         Use this decorator to enable granular security permissions to your API methods.
@@ -109,36 +110,41 @@ def has_access_api(f):
     else:
         permission_str = f.__name__
 
+    # @pysnooper.snoop()
     def wraps(self, *args, **kwargs):
-        permission_str = "{}{}".format(PERMISSION_PREFIX, f._permission_name)
-        if self.method_permission_name:
-            _permission_name = self.method_permission_name.get(f.__name__)
-            if _permission_name:
-                permission_str = "{}{}".format(PERMISSION_PREFIX, _permission_name)
-        if (permission_str in self.base_permissions and
-                self.appbuilder.sm.has_access(
-                    permission_str,
-                    self.class_permission_name
-                )):
-            return f(self, *args, **kwargs)
-        else:
-            logging.warning(
-                LOGMSG_ERR_SEC_ACCESS_DENIED.format(
-                    permission_str,
-                    self.__class__.__name__
+        try:
+            permission_str = "{}{}".format(PERMISSION_PREFIX, f._permission_name)
+            if self.method_permission_name:
+                _permission_name = self.method_permission_name.get(f.__name__)
+                if _permission_name:
+                    permission_str = "{}{}".format(PERMISSION_PREFIX, _permission_name)
+            if (permission_str in self.base_permissions and
+                    self.appbuilder.sm.has_access(
+                        permission_str,
+                        self.class_permission_name
+                    )):
+                return f(self, *args, **kwargs)
+            else:
+                logging.warning(
+                    LOGMSG_ERR_SEC_ACCESS_DENIED.format(
+                        permission_str,
+                        self.__class__.__name__
+                    )
                 )
-            )
-            response = make_response(
-                jsonify(
-                    {
-                        'message': str(FLAMSG_ERR_SEC_ACCESS_DENIED),
-                        'severity': 'danger'
-                    }
-                ),
-                401
-            )
-            response.headers['Content-Type'] = "application/json"
-            return response
+                response = make_response(
+                    jsonify(
+                        {
+                            'message': str(FLAMSG_ERR_SEC_ACCESS_DENIED),
+                            'severity': 'danger'
+                        }
+                    ),
+                    403
+                )
+                response.headers['Content-Type'] = "application/json"
+                return response
+        except Exception as e:
+            pass
+        return f(self, *args, **kwargs)
 
     f._permission_name = permission_str
     return functools.update_wrapper(wraps, f)
@@ -298,410 +304,6 @@ class MyappListWidget(ListWidget):
     template = "myapp/fab_overrides/list.html"
 
 
-# model 页面基本视图
-class MyappModelView(ModelView):
-    api_type = 'web'
-    datamodel = None
-    page_size = 100
-    list_widget = MyappListWidget
-    src_item_object = None  # 原始model对象
-    src_item_json = {}  # 原始model对象的json
-    check_redirect_list_url = None
-    search_widget = MySearchWidget
-    help_url = ''
-    list_title =''
-    add_title = ''
-    edit_title = ''
-    show_title = ''
-    pre_add_web = None
-    pre_update_web = None
-    post_list = None
-    pre_show = None
-    post_show = None
-    check_edit_permission = None
-    label_title = ''
-    expand_columns={}
-    conv = GeneralModelConverter(datamodel)
-    pre_list = None
-    user_permissions = {
-        "can_add": True,
-        "can_edit": True,
-        "can_delete": True,
-        "can_show": True
-    }
-
-    # 建构响应体
-    @staticmethod
-    # @pysnooper.snoop()
-    def response(code, **kwargs):
-        """
-            Generic HTTP JSON response method
-
-        :param code: HTTP code (int)
-        :param kwargs: Data structure for response (dict)
-        :return: HTTP Json response
-        """
-        # 添flash的信息
-        flashes = session.get("_flashes", [])
-
-        # flashes.append((category, message))
-        session["_flashes"] = []
-
-        _ret_json = jsonify(kwargs)
-        resp = make_response(_ret_json, code)
-        flash_json = []
-        for f in flashes:
-            flash_json.append([f[0], f[1]])
-        resp.headers["api_flashes"] = json.dumps(flash_json)
-        resp.headers["Content-Type"] = "application/json; charset=utf-8"
-        return resp
-
-    # 配置增删改查页面标题
-    def _init_titles(self):
-
-        self.help_url = conf.get('HELP_URL', {}).get(self.datamodel.obj.__tablename__, '') if self.datamodel else ''
-
-        """
-            Init Titles if not defined
-        """
-        class_name = self.datamodel.model_name
-        if self.label_title:
-            if not self.list_title:
-                self.list_title = __("遍历 ") + self.label_title
-            if not self.add_title:
-                self.add_title = __("添加 ") + self.label_title
-            if not self.edit_title:
-                self.edit_title = __("编辑 ") + self.label_title
-            if not self.show_title:
-                self.show_title = __("查看 ") + self.label_title
-        self.title = self.list_title
-    # 每个用户对当前记录的权限，base_permissions 是对所有记录的权限
-    def check_item_permissions(self, item):
-        self.user_permissions = {
-            "add": True,
-            "edit": True,
-            "delete": True,
-            "show": True
-        }
-
-    # 配置字段的中文描述
-    # @pysnooper.snoop()
-    def _gen_labels_columns(self, list_columns):
-        """
-            Auto generates pretty label_columns from list of columns
-        """
-        if hasattr(self.datamodel.obj, 'label_columns') and self.datamodel.obj.label_columns:
-            for col in self.datamodel.obj.label_columns:
-                self.label_columns[col] = self.datamodel.obj.label_columns[col]
-
-        for col in list_columns:
-            if not self.label_columns.get(col):
-                self.label_columns[col] = self._prettify_column(col)
-
-    # 获取列的中文显示
-    def lab(self, col):
-        if col in self.label_columns:
-            return _(self.label_columns[col])
-        return _(self._prettify_column(col))
-
-    def pre_delete(self, item):
-        pass
-
-    def _get_search_widget(self, form=None, exclude_cols=None, widgets=None):
-        exclude_cols = exclude_cols or []
-        widgets = widgets or {}
-        widgets["search"] = self.search_widget(
-            route_base=self.route_base,
-            form=form,
-            include_cols=self.search_columns,
-            exclude_cols=exclude_cols,
-            filters=self._filters,
-            help_url=self.help_url
-        )
-        return widgets
-
-    def _get_list_widget(
-            self,
-            filters,
-            actions=None,
-            order_column="",
-            order_direction="",
-            page=None,
-            page_size=None,
-            widgets=None,
-            **args,
-    ):
-
-        """ get joined base filter and current active filter for query """
-        widgets = widgets or {}
-        actions = actions or self.actions
-        page_size = page_size or self.page_size
-        if not order_column and self.base_order:
-            order_column, order_direction = self.base_order
-        joined_filters = filters.get_joined_filters(self._base_filters)
-        count, lst = self.datamodel.query(
-            joined_filters,
-            order_column,
-            order_direction,
-            page=page,
-            page_size=page_size,
-        )
-        if self.post_list:
-            lst = self.post_list(lst)
-        pks = self.datamodel.get_keys(lst)
-
-        # serialize composite pks
-        pks = [self._serialize_pk_if_composite(pk) for pk in pks]
-
-        widgets["list"] = self.list_widget(
-            label_columns=self.label_columns,
-            include_columns=self.list_columns,
-            value_columns=self.datamodel.get_values(lst, self.list_columns),
-            order_columns=self.order_columns,
-            formatters_columns=self.formatters_columns,
-            page=page,
-            page_size=page_size,
-            count=count,
-            pks=pks,
-            actions=actions,
-            filters=filters,
-            modelview_name=self.__class__.__name__,
-        )
-        return widgets
-
-    @expose("/list/")
-    @has_access
-    def list(self):
-        if self.pre_list:
-            self.pre_list()
-        widgets = self._list()
-        res = self.render_template(
-            self.list_template, title=self.list_title, widgets=widgets
-        )
-        return res
-
-    @expose("/show/<pk>", methods=["GET"])
-    @has_access
-    def show(self, pk):
-        pk = self._deserialize_pk_if_composite(pk)
-
-        if self.pre_show:
-            src_item_object = self.datamodel.get(pk, self._base_filters)
-            self.pre_show(src_item_object)
-        widgets = self._show(pk)
-        return self.render_template(
-            self.show_template,
-            pk=pk,
-            title=self.show_title,
-            widgets=widgets,
-            related_views=self._related_views,
-        )
-
-    # @pysnooper.snoop(watch_explode=('item'))
-    def _add(self):
-        """
-            Add function logic, override to implement different logic
-            returns add widget or None
-        """
-        is_valid_form = True
-        get_filter_args(self._filters)
-        exclude_cols = self._filters.get_relation_cols()
-        form = self.add_form.refresh()
-
-        if request.method == "POST":
-            self._fill_form_exclude_cols(exclude_cols, form)
-            if form.validate():
-                self.process_form(form, True)
-                item = self.datamodel.obj()
-
-                try:
-                    form.populate_obj(item)
-                    self.pre_add(item)
-                except Exception as e:
-                    flash(str(e), "error")
-                else:
-                    # print(item.to_json())
-                    if self.datamodel.add(item):
-                        self.post_add(item)
-                    flash(*self.datamodel.message)
-                finally:
-                    return None
-            else:
-                is_valid_form = False
-        if is_valid_form:
-            self.update_redirect()
-        return self._get_add_widget(form=form, exclude_cols=exclude_cols)
-
-    @expose("/add", methods=["GET", "POST"])
-    @has_access
-    def add(self):
-        self.src_item_json = {}
-        if request.method == 'GET' and self.pre_add_web:
-            try:
-                self.pre_add_web()
-                self.conv = GeneralModelConverter(self.datamodel)
-                self.add_form = self.conv.create_form(
-                    self.label_columns,
-                    self.add_columns,
-                    self.description_columns,
-                    self.validators_columns,
-                    self.add_form_extra_fields,
-                    self.add_form_query_rel_fields,
-                )
-            except Exception as e:
-                print(e)
-                return redirect(self.get_redirect())
-
-        widget = self._add()
-        if not widget:
-            if self.check_redirect_list_url:
-                return redirect(self.check_redirect_list_url)
-            return self.post_add_redirect()
-        else:
-            return self.render_template(
-                self.add_template, title=self.add_title, widgets=widget
-            )
-
-    # @pysnooper.snoop(watch_explode=('item'))
-    def _edit(self, pk):
-        """
-            Edit function logic, override to implement different logic
-            returns Edit widget and related list or None
-        """
-        is_valid_form = True
-        pages = get_page_args()
-        page_sizes = get_page_size_args()
-        orders = get_order_args()
-        get_filter_args(self._filters)
-        exclude_cols = self._filters.get_relation_cols()
-
-        item = self.datamodel.get(pk, self._base_filters)
-        if not item:
-            abort(404)
-        # convert pk to correct type, if pk is non string type.
-        pk = self.datamodel.get_pk_value(item)
-
-        if request.method == "POST":
-            form = self.edit_form.refresh(request.form)
-
-            # fill the form with the suppressed cols, generated from exclude_cols
-            self._fill_form_exclude_cols(exclude_cols, form)
-            # trick to pass unique validation
-            form._id = pk
-            if form.validate():
-                self.process_form(form, False)
-
-                try:
-                    form.populate_obj(item)
-                    self.pre_update(item)
-                except Exception as e:
-                    flash(str(e), "error")
-                else:
-                    if self.datamodel.edit(item):
-                        self.post_update(item)
-                    flash(*self.datamodel.message)
-                finally:
-                    return None
-            else:
-                is_valid_form = False
-        else:
-            # Only force form refresh for select cascade events
-            form = self.edit_form.refresh(obj=item)
-            # Perform additional actions to pre-fill the edit form.
-            self.prefill_form(form, pk)
-
-        widgets = self._get_edit_widget(form=form, exclude_cols=exclude_cols)
-        widgets = self._get_related_views_widgets(
-            item,
-            filters={},
-            orders=orders,
-            pages=pages,
-            page_sizes=page_sizes,
-            widgets=widgets,
-        )
-        if is_valid_form:
-            self.update_redirect()
-        return widgets
-
-    @event_logger.log_this
-    @expose("/edit/<pk>", methods=["GET", "POST"])
-    @has_access
-    def edit(self, pk):
-        pk = self._deserialize_pk_if_composite(pk)
-        self.src_item_object = self.datamodel.get(pk, self._base_filters)
-
-        if request.method == 'GET' and self.pre_update_web and self.src_item_object:
-            try:
-                self.pre_update_web(self.src_item_object)
-                self.conv = GeneralModelConverter(self.datamodel)
-                # 重新更新，而不是只在初始化时更新
-                self.edit_form = self.conv.create_form(
-                    self.label_columns,
-                    self.edit_columns,
-                    self.description_columns,
-                    self.validators_columns,
-                    self.edit_form_extra_fields,
-                    self.edit_form_query_rel_fields,
-                )
-            except Exception as e:
-                print(e)
-                self.update_redirect()
-                return redirect(self.get_redirect())
-
-        if self.src_item_object:
-            self.src_item_json = self.src_item_object.to_json()
-
-        # if self.check_redirect_list_url:
-        try:
-            if self.check_edit_permission:
-                has_permission = self.check_edit_permission(self.src_item_object)
-                if not has_permission:
-                    self.update_redirect()
-                    url = self.get_redirect()
-                    return redirect(url)
-
-        except Exception as e:
-            print(e)
-            flash(str(e), 'warning')
-            self.update_redirect()
-            return redirect(self.get_redirect())
-
-        widgets = self._edit(pk)
-
-        if not widgets:
-            return self.post_edit_redirect()
-        else:
-            return self.render_template(
-                self.edit_template,
-                title=self.edit_title,
-                widgets=widgets,
-                related_views=self._related_views,
-            )
-
-    @event_logger.log_this
-    @expose("/delete/<pk>")
-    @has_access
-    def delete(self, pk):
-        pk = self._deserialize_pk_if_composite(pk)
-        self.src_item_object = self.datamodel.get(pk, self._base_filters)
-        if self.src_item_object:
-            self.src_item_json = self.src_item_object.to_json()
-        if self.check_redirect_list_url:
-            try:
-                if self.check_edit_permission:
-                    if not self.check_edit_permission(self.src_item_object):
-                        flash(str('no permission delete'), 'warning')
-                        return redirect(self.check_redirect_list_url)
-            except Exception as e:
-                print(e)
-                flash(str(e), 'warning')
-                return redirect(self.check_redirect_list_url)
-        self._delete(pk)
-        url = url_for(f"{self.endpoint}.list")
-        return redirect(url)
-        # return self.post_delete_redirect()
-
-
 from flask_appbuilder.widgets import GroupFormListWidget
 from flask import (
     abort,
@@ -767,7 +369,7 @@ class CompactCRUDMixin(BaseCRUDView):
         }
 
     @expose("/list/", methods=["GET", "POST"])
-    @has_access
+    # @has_access
     def list(self):
         list_widgets = self._list()
         return self.render_template(
@@ -775,7 +377,7 @@ class CompactCRUDMixin(BaseCRUDView):
         )
 
     @expose("/delete/<pk>")
-    @has_access
+    # @has_access
     def delete(self, pk):
         pk = self._deserialize_pk_if_composite(pk)
         self._delete(pk)
@@ -783,15 +385,6 @@ class CompactCRUDMixin(BaseCRUDView):
         if pk == edit_pk:
             self.del_key("session_form_edit_pk")
         return redirect(self.get_redirect())
-
-
-# 可以多选的列表页面
-class ListWidgetWithCheckboxes(ListWidget):
-    """An alternative to list view that renders Boolean fields as checkboxes
-
-    Works in conjunction with the `checkbox` view."""
-
-    template = "myapp/fab_overrides/list_with_checkboxes.html"
 
 
 def validate_json(form, field):  # noqa

@@ -28,14 +28,14 @@ class NNI(Model,AuditMixinNullable,MyappModelBase):
     job_type = Column(Enum('Job',name='job_type'),nullable=True,default='Job',comment='任务类型')
     project_id = Column(Integer, ForeignKey('project.id'), nullable=False,comment='项目组id')  # 定义外键
     project = relationship(
-        "Project", foreign_keys=[project_id]
+        "Project", foreign_keys=[project_id], lazy='selectin'
     )
     name = Column(String(200), unique = True, nullable=False,comment='英文名')
     namespace = Column(String(200), nullable=True,default='automl',comment='命名空间')
     describe = Column(Text,comment='描述')
     parallel_trial_count = Column(Integer,default=3,comment='最大并行数')
     parallel_trial_type = Column(String(100), default='multi-process', comment='并行方式')
-    maxExecDuration = Column(Integer,default=3600,comment='最大执行时长')
+    max_exec_duration = Column(Integer,default=3600,comment='最大执行时长')
     max_trial_count = Column(Integer,default=12,comment='最大搜索次数')
     max_failed_trial_count = Column(Integer,default=3,comment='最大失败次数')
     objective_type = Column(Enum('maximize','minimize',name='objective_type'),nullable=False,default='maximize',comment='搜索目标类型')
@@ -52,7 +52,7 @@ class NNI(Model,AuditMixinNullable,MyappModelBase):
     job_worker_command = Column(String(200), nullable=True, default='',comment='执行命令')
     working_dir = Column(String(200), default='',comment='启动目录')  # 挂载
     volume_mount = Column(String(2000), default='kubeflow-user-workspace(pvc):/mnt',comment='挂载')  # 挂载
-    node_selector = Column(String(100), default='cpu=true,train=true',comment='机器选择器')  # 挂载
+    node_selector = Column(String(100), default='cpu=true;train=true',comment='机器选择器')  # 挂载
     image_pull_policy = Column(Enum('Always', 'IfNotPresent',name='image_pull_policy'), nullable=False, default='Always',comment='镜像拉取策略')
     resource_memory = Column(String(100), default='1G',comment='申请内存')
     resource_cpu = Column(String(100), default='1',comment='申请cpu')

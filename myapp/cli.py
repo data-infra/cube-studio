@@ -5,6 +5,7 @@ from datetime import datetime
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 import json
+import csv
 from myapp import app, appbuilder, db, security_manager
 from myapp.models.model_team import Project, Project_User
 from myapp.models.model_job import Repository, Images, Job_Template, Pipeline, Task
@@ -35,8 +36,6 @@ def replace_git(content):
     content = content.replace('ccr.ccs.tencentyun.com/cube-studio', conf.get('REPOSITORY_ORG', '').strip('/'))
     return json.loads(content)
 
-
-
 # https://dormousehole.readthedocs.io/en/latest/cli.html
 @app.cli.command('init')
 # @pysnooper.snoop()
@@ -45,6 +44,9 @@ def init():
         """Inits the Myapp application"""
         # 添加所有接口的权限示例记录
         appbuilder.add_permissions(update_perms=True)  # update_perms为true才会检测新权限
+        security_manager.add_role('Gamma')
+        security_manager.add_role('Public')
+        security_manager.add_role('Admin')
         security_manager.sync_role_definitions()
     except Exception as e:
         print(e)
@@ -52,7 +54,6 @@ def init():
     init_dir='myapp/init' if conf.get('BABEL_DEFAULT_LOCALE','zh')=='zh' else "myapp/init-en"
     # 初始化创建项目组
     try:
-
         def add_project(project_type, name, describe, expand={}):
             if not expand:
                 expand={
@@ -66,6 +67,8 @@ def init():
                     project.type = project_type
                     project.name = name
                     project.describe = describe
+                    project.created_by_fk = 1
+                    project.changed_by_fk = 1
                     project.expand = json.dumps(expand, ensure_ascii=False, indent=4)
                     db.session.add(project)
                     db.session.commit()
@@ -91,7 +94,6 @@ def init():
 
         add_project('job-template', __('基础命令'), __('python/bash等直接在服务器命令行中执行命令的模板'), {"index": 1})
         add_project('job-template', __('数据导入导出'), __('集群与用户机器或其他集群之间的数据迁移'), {"index": 2})
-        add_project('job-template', __('数据预处理'), __('结构化话数据特征处理'), {"index": 3})
         add_project('job-template', __('数据处理工具'), __('数据的单机或分布式处理任务,ray/spark/hadoop/volcanojob'), {"index": 4})
         add_project('job-template', __('特征处理'), __('特征处理相关功能'), {"index": 5})
         add_project('job-template', __('图像处理'), __('图像处理相关功能'), {"index": 5.1})
@@ -102,8 +104,6 @@ def init():
         add_project('job-template', __('机器学习算法'), __('传统机器学习，lr/决策树/gbdt/xgb/fm等'), {"index": 7})
         add_project('job-template', __('深度学习'), __('深度框架训练，tf/pytorch/mxnet/mpi/horovod/kaldi等'), {"index": 8})
         add_project('job-template', __('分布式加速'), __('分布式训练加速框架'), {"index": 9})
-        add_project('job-template', __('tf分布式'), __('tf相关的训练，模型校验，离线预测等功能'), {"index": 10})
-        add_project('job-template', __('pytorch分布式'), __('pytorch相关的训练，模型校验，离线预测等功能'), {"index": 11})
         add_project('job-template', __('模型处理'), __('模型压缩转换处理相关的组件模板'), {"index": 13})
         add_project('job-template', __('模型服务化'), __('模型服务化部署相关的组件模板'), {"index": 14})
         add_project('job-template', __('推荐类模板'), __('推荐领域常用的任务模板'), {"index": 15})
@@ -276,16 +276,7 @@ def init():
                 db.session.rollback()
         else:
             return
-            # pipeline_model.describe = pipeline['describe']
-            # pipeline_model.dag_json = json.dumps(pipeline['dag_json'], indent=4, ensure_ascii=False).replace('_', '-')
-            # pipeline_model.created_by_fk = 1
-            # pipeline_model.changed_by_fk = 1
-            # pipeline_model.global_env = pipeline['global_env']
-            # pipeline_model.project_id = org_project.id
-            # pipeline_model.parameter = json.dumps(pipeline.get('parameter', {}))
-            # pipeline_model.expand = json.dumps(pipeline.get('expand', {}), indent=4, ensure_ascii=False)
-            # print('update pipeline %s' % pipeline['name'])
-            # db.session.commit()
+
 
         # 创建task
         for task in tasks:
@@ -316,21 +307,6 @@ def init():
                     db.session.rollback()
             else:
                 pass
-                # task_model.label = task['label']
-                # task_model.args = json.dumps(task['args'], indent=4, ensure_ascii=False)
-                # task_model.volume_mount = task.get('volume_mount', '')
-                # task_model.node_selector = task.get('node_selector', 'cpu=true,train=true,org=public')
-                # task_model.retry = int(task.get('retry', 0))
-                # task_model.timeout = int(task.get('timeout', 0))
-                # task_model.resource_memory = task.get('resource_memory', '2G')
-                # task_model.resource_cpu = task.get('resource_cpu', '2')
-                # task_model.resource_gpu = task.get('resource_gpu', '0')
-                # task_model.created_by_fk = 1
-                # task_model.changed_by_fk = 1
-                # task_model.pipeline_id = pipeline_model.id
-                # task_model.job_template_id = job_template.id
-                # print('update task %s' % task['name'])
-                # db.session.commit()
 
         pipeline_model.dag_json = pipeline_model.fix_dag_json()  # 修正 dag_json
         # 没有设置位置的时候，修正pipeline
@@ -454,7 +430,7 @@ def init():
         print('begin init dataset')
         datasets = db.session.query(Dataset).all()  # 空白数据集才初始化
         if not datasets:
-            import csv
+
             init_file = os.path.join(init_dir, 'init-dataset.csv')
             if os.path.exists(init_file):
                 csv_reader = csv.reader(open(init_file, mode='r', encoding='utf-8-sig'))
@@ -647,10 +623,12 @@ def init():
                 print('add aihub ', end=' ')
                 for data in aihubs:
                     name = data.get('name', '')
-                    print(name, end=' ')
+
                     label = data.get('label', '')
                     describe = data.get('describe', '')
                     uuid = data.get('uuid', '')
+                    if not describe:
+                        describe = label
                     if name and label and describe and uuid:
                         aihub = db.session.query(Aihub).filter_by(uuid=uuid).first()
                         if not aihub:
@@ -693,10 +671,6 @@ def init():
     except Exception as e:
         print(e)
         # traceback.print_exc()
-
-    # 复制cube-studio代码（aihub和sdk）
-    from myapp.tasks.schedules import cp_cubestudio
-    cp_cubestudio()
 
     def add_chat(chat_path):
         from myapp.models.model_chat import Chat
@@ -811,8 +785,10 @@ def init():
                 pipelines = json.load(open(init_file, mode='r'))
                 pipelines = replace_git(pipelines)
                 for pipeline in pipelines:
+                    project = db.session.query(Project).filter_by(name='public').first()
+                    project_id = project.id if project else 1
                     db.session.add(ETL_Pipeline(
-                        project_id=1, created_by_fk=1,changed_by_fk=1,
+                        project_id=project_id, created_by_fk=1,changed_by_fk=1,
                         name=pipeline.get('name',''), config=json.dumps(pipeline.get('config',{}),indent=4,ensure_ascii=False),
                         describe=pipeline.get('describe','pipeline example'),workflow=pipeline.get('workflow','airflow'),
                         dag_json=json.dumps(pipeline.get('dag_json',{}),indent=4,ensure_ascii=False)))
@@ -820,7 +796,7 @@ def init():
                     print('添加etl pipeline成功')
     except Exception as e:
         print(e)
-        # traceback.print_exc()
+        traceback.print_exc()
 
 
     # 添加nni超参搜索
@@ -834,8 +810,10 @@ def init():
                 nnis = json.load(open(init_file, mode='r'))
                 nnis = replace_git(nnis)
                 for nni in nnis:
+                    project = db.session.query(Project).filter_by(name='public').first()
+                    project_id = project.id if project else 1
                     db.session.add(NNI(
-                        project_id=1, created_by_fk=1,changed_by_fk=1,
+                        project_id=project_id, created_by_fk=1,changed_by_fk=1,
                         job_type=nni.get('job_type','Job'),name=nni.get('name','test'+uuid.uuid4().hex[:4]),namespace=nni.get('namespace','automl'),
                         describe=nni.get('describe', ''),parallel_trial_count=nni.get('parallel_trial_count', 3),max_trial_count=nni.get('max_trial_count', 12),
                         objective_type=nni.get('objective_type', 'maximize'),objective_goal=nni.get('objective_goal', 0.99),objective_metric_name=nni.get('objective_metric_name', 'accuracy'),
@@ -862,9 +840,10 @@ def init():
         from myapp.models.model_docker import Docker
         docker = db.session.query(Docker).all()
         if len(docker) == 0:
-
+            project = db.session.query(Project).filter_by(name='public').first()
+            project_id = project.id if project else 1
             db.session.add(Docker(
-                project_id=1,
+                project_id=project_id,
                 created_by_fk=1,
                 changed_by_fk=1,
                 describe='build python environment',

@@ -37,10 +37,7 @@ from .baseApi import (
 from myapp import security_manager
 from myapp import app, appbuilder, db, event_logger, cache
 import time
-from .base import (
-    MyappFilter,
-    MyappModelView,
-)
+from .base import MyappFilter
 from flask_appbuilder import expose
 import datetime, json
 
@@ -344,8 +341,7 @@ class NNI_ModelView_Base():
         user_repositorys = db.session.query(Repository).filter(Repository.created_by_fk == g.user.id).all()
         image_pull_secrets = list(set(image_pull_secrets + [rep.hubsecret for rep in user_repositorys]))
         nodeSelector = nni.get_node_selector()
-        nodeSelector = nodeSelector.split(',')
-        nodeSelector = dict([x.strip().split('=') for x in nodeSelector])
+        nodeSelector,nodeAffinity = core.get_node_selector(nodeSelector)
 
         volume_mount = nni.volume_mount.rstrip(',')+f",{conf.get('WORKSPACE_HOST_PATH', '/data/k8s/kubeflow/pipeline/workspace')}/{nni.created_by.username}/nni/{nni.name}/log/(hostpath):/tmp/nni-experiments/"
         k8s_volumes, k8s_volume_mounts = k8s_client.get_volume_mounts(volume_mount, nni.created_by.username)
@@ -561,7 +557,7 @@ trialConcurrency: {nni.parallel_trial_count}
 trialCommand: {nni.job_worker_command}
 trialCodeDirectory: {nni.working_dir}  
 trialGpuNumber: {nni.resource_gpu[:nni.resource_gpu.index('(')] if '(' in nni.resource_gpu else nni.resource_gpu}
-maxExperimentDuration: {nni.maxExecDuration}s
+maxExperimentDuration: {nni.max_exec_duration}s
 maxTrialNumber: {nni.max_trial_count}
 experimentWorkingDirectory: /mnt/{nni.created_by.username}/nni/{nni.name}/log/
 logLevel: info

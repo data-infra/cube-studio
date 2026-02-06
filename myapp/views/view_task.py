@@ -32,11 +32,7 @@ from flask import (
     g,
     redirect, render_template
 )
-from .base import (
-    get_user_roles,
-    MyappModelView,
-)
-from myapp.views.base import CompactCRUDMixin
+
 from flask_appbuilder import expose
 import datetime, time, json
 
@@ -72,8 +68,10 @@ class Task_ModelView_Base():
     show_columns = ['name', 'label', 'pipeline', 'job_template', 'volume_mount', 'command', 'overwrite_entrypoint',
                     'working_dir', 'args_html', 'resource_memory', 'resource_cpu', 'resource_gpu', 'resource_rdma', 'timeout', 'retry',
                     'skip', 'created_by', 'changed_by', 'created_on', 'changed_on', 'monitoring_html']
-    add_columns = ['job_template', 'name', 'label', 'pipeline', 'volume_mount', 'command', 'working_dir', 'skip']
-    edit_columns = ['name', 'label', 'volume_mount', 'command', 'working_dir', 'skip']
+    add_columns = ['name', 'label', 'job_template', 'pipeline', 'working_dir', 'command', 'args', 'volume_mount', 'resource_memory', 'resource_cpu', 'resource_gpu', 'resource_rdma', 'timeout', 'retry', 'skip',
+                   'expand']
+    edit_columns = ['name', 'label', 'working_dir', 'command', 'args', 'volume_mount', 'resource_memory',
+                    'resource_cpu', 'resource_gpu', 'resource_rdma', 'timeout', 'retry', 'skip', 'expand']
     base_order = ('id', 'desc')
     order_columns = ['id']
     search_columns = ['pipeline', 'name', 'label']
@@ -206,7 +204,10 @@ class Task_ModelView_Base():
         else:
             if 'volume_mount' in self.add_columns:
                 self.add_columns.remove('volume_mount')
-        self.edit_columns = self.add_columns
+
+        self.edit_columns = self.add_columns.copy()
+        self.edit_columns.remove('job_template')
+        self.edit_columns.remove('pipeline')
 
     pre_update_web = pre_add_web
 
@@ -495,9 +496,9 @@ class Task_ModelView_Base():
         resource_cpu = task.job_template.get_env('TASK_RESOURCE_CPU') if task.job_template.get_env('TASK_RESOURCE_CPU') and 'run-' in run_id else task.resource_cpu
         resource_gpu = task.job_template.get_env('TASK_RESOURCE_GPU') if task.job_template.get_env('TASK_RESOURCE_GPU') and 'run-' in run_id else task.resource_gpu
         resource_memory = task.job_template.get_env('TASK_RESOURCE_MEMORY') if task.job_template.get_env('TASK_RESOURCE_MEMORY') and 'run-' in run_id else task.resource_memory
-        hostAliases=conf.get('HOSTALIASES')
-        if task.job_template.hostAliases:
-            hostAliases += "\n" + task.job_template.hostAliases
+        host_aliases=conf.get('HOSTALIASES')
+        if task.job_template.host_aliases:
+            host_aliases += "\n" + task.job_template.host_aliases
 
         image_pull_secrets = conf.get('HUBSECRET', [])
         from myapp.models.model_job import Repository
@@ -524,7 +525,7 @@ class Task_ModelView_Base():
                                     image_pull_policy=conf.get('IMAGE_PULL_POLICY', 'Always'),
                                     image_pull_secrets=image_pull_secrets,
                                     image=image,
-                                    hostAliases=hostAliases,
+                                    hostAliases=host_aliases,
                                     env=task_env,
                                     privileged=task.job_template.privileged,
                                     accounts=task.job_template.accounts,
@@ -856,12 +857,6 @@ class Task_ModelView_Base():
 
         flash(__("未检测到当前task正在运行的容器"), category='success')
         return redirect('/pipeline_modelview/api/web/%s' % str(task.pipeline.id))
-
-class Task_ModelView(Task_ModelView_Base, MyappModelRestApi):
-    datamodel = SQLAInterface(Task)
-    route_base = '/task_modelview'
-
-appbuilder.add_api(Task_ModelView)
 
 # # 添加api
 class Task_ModelView_Api(Task_ModelView_Base, MyappModelRestApi):

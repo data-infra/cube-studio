@@ -13,7 +13,7 @@ from sqlalchemy.orm import backref, relationship
 from myapp.models.base import MyappModelBase
 
 from flask_appbuilder.models.decorators import renders
-from flask import Markup
+from flask import Markup,g
 from sqlalchemy import String,Column,Integer,ForeignKey,UniqueConstraint
 
 
@@ -65,8 +65,8 @@ class Project(Model,AuditMixinNullable,MyappModelBase):
             expand = json.loads(self.expand) if self.expand else {}
             node_selector = expand.get('node_selector', '')
             if 'org' in expand:
-                node_selector+=',org='+expand['org']
-            node_selector = ','.join(list(set([x for x in node_selector.split(',') if x])))
+                node_selector+=';org='+expand['org']
+            node_selector = ';'.join(list(set([x for x in node_selector.split(';') if x])))
             return node_selector
         except Exception as e:
             print(e)
@@ -165,12 +165,27 @@ class Project(Model,AuditMixinNullable,MyappModelBase):
 
     @property
     def cluster_name(self):
+        try:
+            expand = json.loads(self.expand) if self.expand else {}
+            project_cluster = expand.get('cluster','')
+            if project_cluster:
+                return project_cluster
+        except Exception as e:
+            print(e)
         return self.cluster['NAME']
 
     @property
     def org(self):
         expand = json.loads(self.expand) if self.expand else {}
         return expand.get('org','public')
+
+    @property
+    def user_org(self):
+        user = db.session.query(Project_User).filter(Project_User.project_id==self.id).filter(Project_User.user_id==g.user.id).first()
+        user_org = self.org
+        if user and user.org:
+            user_org = ','.join([x for x in user.org.split(',') if x in self.org.split(',')])
+        return user_org
 
     @property
     def job_template(self):
@@ -200,15 +215,20 @@ class Project_User(Model,AuditMixinNullable,MyappModelBase):
         "Project",
         backref=backref("user", cascade="all, delete-orphan"),
         foreign_keys=[project_id],
+        lazy = 'selectin'
     )
     user_id = Column(Integer, ForeignKey("ab_user.id"),nullable=False,comment='用户id')
     user = relationship(
         "MyUser",
         backref=backref("user", cascade="all, delete-orphan"),
         foreign_keys=[user_id],
+        lazy = 'selectin'
     )
     role = Column(Enum('dev', 'ops','creator',name='role'),nullable=False,default='dev',comment='角色')
     quota = Column(String(2000), nullable=True, default='',comment='用户在该项目中可以使用的资源额度')
+    org = Column(String(200), nullable=True, default='',comment='用户成员可用资源组')
+    expand = Column(Text(65536), default='{}', comment='扩展参数')
+
     export_parent = "project"
 
     def __repr__(self):

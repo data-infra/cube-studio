@@ -1,0 +1,1 @@
+wget https://download.pytorch.org/models/deeplabv3_resnet50_coco-cd0a2569.pth

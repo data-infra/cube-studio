@@ -35,10 +35,7 @@ from myapp import security_manager
 from myapp.views.view_team import filter_join_org_project
 
 from .base import (
-    DeleteMixin,
-    get_user_roles,
     MyappFilter,
-    MyappModelView,
 )
 
 from flask_appbuilder import expose

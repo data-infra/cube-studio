@@ -178,15 +178,15 @@ from flask_babel import lazy_gettext as _
 class MySelect2Widget(object):
     extra_classes = None
 
-    def __init__(self, extra_classes=None, style=None, multiple=False, new_web=True, value='', can_input=False, conten2choices=False, retry_info=False):
+    def __init__(self, extra_classes=None, style=None, multiple=False, new_web=True, value='', can_input=False, conten2choices=False, retry_info=False,readonly=0):
         self.extra_classes = extra_classes
         self.style = style or u"width:350px"
         self.multiple = multiple
         self.value = value
-        self.new_web = new_web
         self.can_input = can_input
         self.conten2choices = conten2choices
         self.retry_info = retry_info
+        self.readonly = readonly
 
     # @pysnooper.snoop()
     def __call__(self, field, **kwargs):
@@ -203,13 +203,10 @@ class MySelect2Widget(object):
             kwargs['multiple'] = True
         if 'required' not in kwargs and 'required' in getattr(field, 'flags', []):
             kwargs['required'] = True
-        if self.new_web:
-            fun = "set_change('%s')" % field.name
-        else:
-            fun = ''
 
-        html = ['''<select %s  id=%s onchange="%s">''' %
-                (html_params(name=field.name, **kwargs), field.name, fun)]
+
+        html = ['''<select %s  id=%s>''' %
+                (html_params(name=field.name, **kwargs), field.name)]
         for val, label, selected in field.iter_choices():
             if self.value:
                 if str(val) == str(self.value):

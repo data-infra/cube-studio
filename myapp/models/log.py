@@ -34,7 +34,7 @@ class Log(Model,MyappModelBase):
 
     user_id = Column(Integer, ForeignKey("ab_user.id"),comment='用户id')
     user = relationship(
-        MyUser, foreign_keys=[user_id]
+        MyUser, foreign_keys=[user_id], lazy='selectin'
     )
     action = Column(String(512),comment='动作')
     method = Column(String(50),comment='方法')

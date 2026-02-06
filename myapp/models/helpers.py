@@ -292,6 +292,7 @@ class AuditMixinNullable(AuditMixin):
             "MyUser",
             primaryjoin="%s.created_by_fk == MyUser.id" % cls.__name__,
             enable_typechecks=False,
+            lazy='selectin'
         )
 
     @declared_attr
@@ -300,6 +301,7 @@ class AuditMixinNullable(AuditMixin):
             "MyUser",
             primaryjoin="%s.changed_by_fk == MyUser.id" % cls.__name__,
             enable_typechecks=False,
+            lazy='selectin'
         )
 
     # 会生成数据库中的列

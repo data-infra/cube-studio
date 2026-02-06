@@ -1777,6 +1777,25 @@
     "job_template_args": {
     }
   },
+  "model-prune": {
+    "project_name": "模型处理",
+    "image_name": "python:3.9",
+    "gitpath": "/job-template/job/model-prune",
+    "image_describe": "大模型剪枝",
+    "job_template_name": "model-prune",
+    "job_template_describe": "大模型剪枝(企业版)",
+    "job_template_command": "python3 launcher.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 6,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/model-distillation"
+    },
+    "job_template_args": {
+    }
+  },
   "model-register": {
     "project_name": "模型服务化",
     "image_name": "ccr.ccs.tencentyun.com/cube-studio/model_register:20230501",
@@ -2252,7 +2271,7 @@
     }
   },
   "media-download": {
-    "project_name": "多媒体类模板",
+    "project_name": "视频处理",
     "image_name": "ccr.ccs.tencentyun.com/cube-studio/video-audio:20250301",
     "gitpath": "/job-template/job/video-audio",
     "image_describe": "分布式媒体文件处理",
@@ -2313,7 +2332,7 @@
     }
   },
   "video-img": {
-    "project_name": "多媒体类模板",
+    "project_name": "视频处理",
     "image_name": "ccr.ccs.tencentyun.com/cube-studio/video-audio:20250301",
     "gitpath": "/job-template/job/video-audio",
     "image_describe": "分布式媒体文件处理",
@@ -2360,7 +2379,7 @@
     }
   },
   "video-audio": {
-    "project_name": "多媒体类模板",
+    "project_name": "视频处理",
     "image_name": "ccr.ccs.tencentyun.com/cube-studio/video-audio:20250301",
     "gitpath": "/job-template/job/video-audio",
     "image_describe": "分布式媒体文件处理",
@@ -2596,13 +2615,13 @@
     "job_template_args": {
     }
   },
-  "qwen2": {
+  "qwen3": {
     "project_name": "大模型",
     "image_name": "python:3.9",
     "gitpath": "/job-template/job/llama_factory",
-    "image_describe": "qwen2",
-    "job_template_name": "qwen2",
-    "job_template_describe": "qwen2 lora微调(企业版)",
+    "image_describe": "qwen3",
+    "job_template_name": "qwen3",
+    "job_template_describe": "qwen3 lora微调(企业版)",
     "job_template_version": "Release",
     "job_template_workdir": "/root/llama_factory",
     "job_template_command": "python start.py",
@@ -2684,6 +2703,28 @@
     "job_template_args": {
     }
   },
+  "paddleocr-vl": {
+    "project_name": "文本处理",
+    "image_name": "python3.9",
+    "gitpath": "/job-template/job/paddleocr-vl",
+    "image_describe": "文件图片内容提取",
+    "job_template_name": "paddleocr-vl",
+    "job_template_describe": "文件图片内容提取(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 0,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/paddleocr-vl",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
   "nlp-clean-data": {
     "project_name": "文本处理",
     "image_name": "python:3.9",
@@ -2747,6 +2788,28 @@
     "job_template_args": {
     }
   },
+  "nlp-analyze-data": {
+    "project_name": "文本处理",
+    "image_name": "python:3.9",
+    "gitpath": "/job-template/job/nlp-process",
+    "image_describe": "文本数据统计",
+    "job_template_name": "nlp-analyze-data",
+    "job_template_describe": "文本数据统计，质量评估(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python analyze-data.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 4,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/nlp-process",
+      "enterprise": true
+    },
+    "job_template_args":{
+    }
+  },
   "question-generation": {
     "project_name": "文本处理",
     "image_name": "python:3.9",
@@ -2761,7 +2824,7 @@
     "job_template_account": "",
     "job_template_env": "",
     "job_template_expand": {
-      "index": 4,
+      "index": 5,
       "rec_job_template": "自定义镜像",
       "help_url": "/job-template/job/nlp-process"
     },
@@ -2782,7 +2845,7 @@
     "job_template_account": "",
     "job_template_env": "",
     "job_template_expand": {
-      "index": 5,
+      "index": 6,
       "rec_job_template": "自定义镜像",
       "help_url": "/job-template/job/nlp-process"
     },
@@ -2803,9 +2866,30 @@
     "job_template_account": "",
     "job_template_env": "",
     "job_template_expand": {
-      "index": 6,
+      "index": 7,
       "rec_job_template": "自定义镜像",
       "help_url": "/job-template/job/nlp-process"
+    },
+    "job_template_args": {
+    }
+  },
+  "vision-quality-assessment": {
+    "project_name": "图像处理",
+    "image_name": "python:3.9",
+    "gitpath": "/job-template/job/vision-process",
+    "image_describe": "视觉算法类的数据处理",
+    "job_template_name": "vision-quality-assessment",
+    "job_template_describe": "图片质量评估(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "",
+    "job_template_command": "python image-data-check.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 0,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/vision-process"
     },
     "job_template_args": {
     }
@@ -2953,6 +3037,63 @@
       "index": 7,
       "rec_job_template": "自定义镜像",
       "help_url": "/job-template/job/vision-process"
+    },
+    "job_template_args": {
+    }
+  },
+  "audio-augment": {
+    "project_name": "音频处理",
+    "image_name": "python:3.9",
+    "gitpath": "/job-template/job/voice-process",
+    "image_describe": "音频数据增强",
+    "job_template_name": "audio-augment",
+    "job_template_describe": "音频数据增强(企业版)",
+    "job_template_workdir": "/app",
+    "job_template_command": "python augment-audio-dataset.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_expand": {
+      "index": 1,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/voice-process"
+    },
+    "job_template_args": {
+    }
+  },
+  "audio-clean": {
+    "project_name": "音频处理",
+    "image_name": "python:3.9",
+    "gitpath": "/job-template/job/voice-process",
+    "image_describe": "音频数据清洗",
+    "job_template_name": "audio-clean",
+    "job_template_describe": "音频数据清洗(企业版)",
+    "job_template_workdir": "/app",
+    "job_template_command": "python clean-audio-dataset.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_expand": {
+      "index": 2,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/voice-process"
+    },
+    "job_template_args": {
+    }
+  },
+  "audio-quality-assessment": {
+    "project_name": "音频处理",
+    "image_name": "python:3.9",
+    "gitpath": "/job-template/job/voice-process",
+    "image_describe": "音频质量评估",
+    "job_template_name": "audio-quality-assessment",
+    "job_template_describe": "音频质量评估(企业版)",
+    "job_template_workdir": "/app",
+    "job_template_command": "python audio-dataset-eval.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_expand": {
+      "index": 3,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/voice-process"
     },
     "job_template_args": {
     }

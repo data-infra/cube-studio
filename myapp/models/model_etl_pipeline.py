@@ -23,7 +23,7 @@ class ETL_Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     describe = Column(String(200),nullable=False,comment='描述')
     project_id = Column(Integer, ForeignKey('project.id'),nullable=False,comment='项目组id')  # 定义外键
     project = relationship(
-        "Project", foreign_keys=[project_id]
+        "Project", foreign_keys=[project_id], lazy='selectin'
     )
     workflow = Column(String(200),nullable=True,comment='调度引擎')   #
     dag_json = Column(Text(65536),nullable=True,default='{}',comment='pipeline的上下游关系')  #

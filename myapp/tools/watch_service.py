@@ -5,12 +5,12 @@ from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 from kubernetes import client
 from kubernetes import watch
-from myapp.utils.py.py_k8s import K8s
 from myapp.project import push_message
 from myapp import app, cache
 from myapp.utils.celery import session_scope
 conf = app.config
-
+from kubernetes import config
+import pysnooper
 cluster = os.getenv('ENVIRONMENT', '').lower()
 if not cluster:
     logging.info('no cluster %s' % cluster)
@@ -19,7 +19,12 @@ else:
     clusters = conf.get('CLUSTERS', {})
     if clusters and cluster in clusters:
         kubeconfig = clusters[cluster].get('KUBECONFIG', '')
-        K8s(kubeconfig)
+        if not kubeconfig:
+            kubeconfig = os.getenv('KUBECONFIG', '')
+        if kubeconfig and os.path.exists(kubeconfig) and ''.join(open(kubeconfig).readlines()).strip():
+            config.kube_config.load_kube_config(config_file=kubeconfig)
+        else:
+            config.load_incluster_config()
     else:
         logging.error('no kubeconfig in cluster %s' % cluster)
         exit(1)
@@ -30,8 +35,8 @@ from datetime import datetime, timezone, timedelta
 
 # @pysnooper.snoop()
 def listen_service():
-    w = watch.Watch()
     while (True):
+        w = watch.Watch()
         try:
             logging.info('begin listen')
             for event in w.stream(client.CoreV1Api().list_pod_for_all_namespaces,timeout_seconds=60):  # label_selector=label,

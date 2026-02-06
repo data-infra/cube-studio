@@ -386,7 +386,9 @@ def create_worker_deploy(header_name,worker_name):
         worker_deploy['spec']['template']['spec']['containers'][0]['resources']['requests'][GPU_RESOURCE_NAME] = int(gpu_num)
         worker_deploy['spec']['template']['spec']['containers'][0]['resources']['limits'][GPU_RESOURCE_NAME] = int(gpu_num)
     elif int(gpu_num)==-1:
-        pass
+        worker_deploy['spec']['template']['spec']['containers'][0]['securityContext']={
+            "privileged": True
+        }
     else:
         # 添加禁用指令
         worker_deploy['spec']['template']['spec']['containers'][0]['env'].append({

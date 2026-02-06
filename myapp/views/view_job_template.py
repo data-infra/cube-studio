@@ -31,10 +31,7 @@ from flask import (
     request
 )
 
-from .base import (
-    get_user_roles,
-    MyappFilter,
-)
+from .base import MyappFilter
 from flask_appbuilder import expose
 from myapp.views.view_team import Project_Filter,Creator_Filter
 import datetime, time, json
@@ -69,7 +66,7 @@ class Job_Template_ModelView_Base():
         "modified": {"type": "ellip2", "width": 200},
     }
     add_columns = ['project', 'images', 'name', 'version', 'describe', 'workdir', 'entrypoint', 'volume_mount',
-                   'job_args_definition', 'args', 'env', 'hostAliases', 'privileged', 'accounts', 'demo', 'expand']
+                   'job_args_definition', 'args', 'env', 'host_aliases', 'privileged', 'accounts', 'demo', 'expand']
     edit_columns = add_columns
 
     base_filters = [["id", Job_Tempalte_Filter, lambda: []]]
@@ -134,7 +131,7 @@ class Job_Template_ModelView_Base():
             description= _('使用模板的task自动添加的环境变量，支持模板变量。<br>书写格式:每行一个环境变量env_key=env_value'),
             widget=MyBS3TextAreaFieldWidget(rows=3),  # 传给widget函数的是外层的field对象，以及widget函数的参数
         ),
-        "hostAliases": StringField(
+        "host_aliases": StringField(
             _('域名解析'),
             default='',
             description= _('添加到容器内的host映射。<br>书写格式:每行一个dns解析记录，ip host1 host2，<br>示例：1.1.1.1 example1.oa.com example2.oa.com'),
@@ -218,11 +215,11 @@ class Job_Template_ModelView_Base():
 
         core.validate_json(item.demo)
 
-        if item.hostAliases:
+        if item.host_aliases:
             # if not item.images.entrypoint:
             #     raise MyappException('images entrypoint not exist')
             all_host = {}
-            all_rows = re.split('\r|\n', item.hostAliases)
+            all_rows = re.split('\r|\n', item.host_aliases)
             all_rows = [all_row.strip() for all_row in all_rows if all_row.strip()]
             for row in all_rows:
                 hosts = row.split(' ')
@@ -233,11 +230,11 @@ class Job_Template_ModelView_Base():
                     else:
                         all_host[hosts[0]] = hosts[1:]
 
-            hostAliases = ''
+            host_aliases = ''
             for ip in all_host:
-                hostAliases += ip + " " + " ".join(all_host[ip])
-                hostAliases += '\n'
-            item.hostAliases = hostAliases.strip()
+                host_aliases += ip + " " + " ".join(all_host[ip])
+                host_aliases += '\n'
+            item.host_aliases = host_aliases.strip()
 
         task_args = json.loads(item.demo)
         job_args = json.loads(item.args)
@@ -296,7 +293,7 @@ class Job_Template_ModelView_Base():
         try:
             for job_template in job_templates:
                 new_job_template = job_template.clone()
-                new_job_template.name = new_job_template.name + "_copy_" + uuid.uuid4().hex[:4]
+                new_job_template.name = new_job_template.name + "-copy-" + uuid.uuid4().hex[:4]
                 new_job_template.created_on = datetime.datetime.now()
                 new_job_template.changed_on = datetime.datetime.now()
                 db.session.add(new_job_template)
@@ -330,16 +327,16 @@ class Job_Template_ModelView_Api(Job_Template_ModelView_Base, MyappModelRestApi)
     datamodel = SQLAInterface(Job_Template)
     page_size = 1000
     route_base = '/job_template_modelview/api'
-    # add_columns = ['project', 'images', 'name', 'version', 'describe', 'args', 'env','hostAliases', 'privileged','accounts', 'demo','expand']
+    # add_columns = ['project', 'images', 'name', 'version', 'describe', 'args', 'env','host_aliases', 'privileged','accounts', 'demo','expand']
     add_columns = ['project', 'images', 'name', 'version', 'describe', 'workdir', 'entrypoint', 'volume_mount', 'args',
-                   'env', 'hostAliases', 'privileged', 'accounts', 'expand']
+                   'env', 'host_aliases', 'privileged', 'accounts', 'expand']
     edit_columns = add_columns
     # list_columns = ['project','name','version','creator','modified']
     list_columns = ['project', 'name', 'version', 'describe', 'images', 'workdir', 'entrypoint', 'args', 'demo', 'env',
-                    'hostAliases', 'privileged', 'accounts', 'created_by', 'changed_by', 'created_on', 'changed_on',
+                    'host_aliases', 'privileged', 'accounts', 'created_by', 'changed_by', 'created_on', 'changed_on',
                     'expand']
     show_columns = ['project', 'name', 'version', 'describe', 'images', 'workdir', 'entrypoint', 'args', 'demo', 'env',
-                    'hostAliases', 'privileged', 'expand']
+                    'host_aliases', 'privileged', 'expand']
 
 
 appbuilder.add_api(Job_Template_ModelView_Api)
@@ -348,13 +345,13 @@ appbuilder.add_api(Job_Template_ModelView_Api)
 class Job_Template_fab_ModelView_Api(Job_Template_ModelView_Base, MyappModelRestApi):
     datamodel = SQLAInterface(Job_Template)
     route_base = '/job_template_fab_modelview/api'
-    # add_columns = ['project', 'images', 'name', 'version', 'describe', 'args', 'env','hostAliases', 'privileged','accounts', 'demo','expand']
+    # add_columns = ['project', 'images', 'name', 'version', 'describe', 'args', 'env','host_aliases', 'privileged','accounts', 'demo','expand']
     add_columns = ['project', 'images', 'name', 'version', 'describe', 'workdir', 'entrypoint', 'volume_mount', 'args',
-                   'env', 'hostAliases', 'privileged', 'accounts', 'expand']
+                   'env', 'host_aliases', 'privileged', 'accounts', 'expand']
     page_size = 1000
     edit_columns = add_columns
     list_columns = ['project', 'name', 'version', 'creator', 'modified']
     show_columns = ['project', 'images', 'name', 'version', 'describe', 'workdir', 'entrypoint', 'volume_mount', 'args',
-                    'env', 'hostAliases', 'privileged', 'accounts', 'expand']
+                    'env', 'host_aliases', 'privileged', 'accounts', 'expand']
 
 appbuilder.add_api(Job_Template_fab_ModelView_Api)

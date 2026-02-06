@@ -1,12 +1,13 @@
 import copy
 import math
+import traceback
+
 from flask import Markup,g
 from flask_appbuilder.baseviews import expose_api
 from jinja2 import Environment, BaseLoader, DebugUndefined
 from myapp import app, appbuilder, db, cache
 from flask import request
 
-from flask_appbuilder import CompactCRUDMixin, expose
 from .baseFormApi import (
     MyappFormRestApi
 )
@@ -44,7 +45,7 @@ def node_traffic():
                     # print(node_allocated_resources)
                     all_node_json[cluster_name][node['hostip']].update(node_allocated_resources)
             except Exception as e:
-                print(e)
+                traceback.print_exc()
 
         cache.set("total_resource_node_traffic_data",all_node_json,timeout=10)
 
@@ -106,10 +107,9 @@ def node_traffic():
         cluster_config = conf.get('CLUSTERS', {}).get(cluster_name, {})
         grafana_url = "//" + cluster_config.get('HOST', request.host).split('|')[-1].strip() + conf.get('GRAFANA_CLUSTER_PATH')
         for ip in nodes:
-            node_dashboard_url = "//"+ cluster_config.get('HOST', request.host).split('|')[-1].strip() + conf.get('K8S_DASHBOARD_CLUSTER') + '#/node/%s?namespace=default' % nodes[ip]['name']
             org = nodes[ip]['labels'].get('org', 'unknown')
-            enable_train = nodes[ip]['labels'].get('train', 'true')
             if g.user.is_admin():
+                node_dashboard_url = "//" + cluster_config.get('HOST', request.host).split('|')[-1].strip() + conf.get('K8S_DASHBOARD_CLUSTER', '/k8s/dashboard/cluster/') + '#/node/%s?namespace=default' % nodes[ip]['name']
                 ip_html = '<a target="_blank" href="%s">%s</a>' % (node_dashboard_url, ip if nodes[ip]['status']=='Ready' else f'<del>{ip}</del>')
             else:
                 ip_html = ip if nodes[ip]['status']=='Ready' else f'<del>{ip}</del>'
@@ -150,7 +150,7 @@ def node_traffic():
                 gpu_used_temp = round(float(nodes[ip].get(f'used_{gpu_mfrs_temp}',0)), 2)
                 gpu_used += gpu_used_temp
 
-            # 限制如果不是自己加入的空间，则不显示
+            # 限制如果不是自己加入的资源组，则不显示
             if joined_cluster_org:
                 if (cluster_name+"-"+org) not in joined_cluster_org:
                     continue
@@ -178,9 +178,9 @@ def node_traffic():
             global_cluster_load[cluster_name]['gpu_req'] += round(float(gpu_used), 2)
             global_cluster_load[cluster_name]['gpu_all'] += round(float(gpu_total))
 
+    message = Markup('<div style="padding:20px"><table>%s</table></div>' % message)
     # 集群整体利用率的数据保持60s才过期
     cache.set('total_resource_global_cluster_load',global_cluster_load,timeout=60)
-    message = Markup('<div style="padding:20px"><table>%s</table></div>' % message)
 
     data = {
         'content': message,
@@ -266,7 +266,7 @@ def pod_resource():
 
                     # print(all_tasks_json)
             except Exception as e:
-                print(e)
+                traceback.print_exc()
 
         cache.set("total_resource_pod_resource_data",all_tasks_json,timeout=10)
 

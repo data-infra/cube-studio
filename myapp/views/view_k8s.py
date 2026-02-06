@@ -1,6 +1,8 @@
 import copy
 import json
 import re
+import traceback
+
 import humanize
 import flask
 import pysnooper, os
@@ -14,7 +16,6 @@ from flask import g, flash, request, render_template, send_from_directory, send_
 import datetime, time
 from myapp import app, appbuilder, db, event_logger,cache
 from .base import BaseMyappView
-from flask_appbuilder import CompactCRUDMixin, expose
 
 from myapp.utils.py.py_k8s import K8s
 default_status_icon = '<svg t="1755008266851" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7363" id="mx_n_1755008266852" width="15" height="15"><path d="M512 512m-370.78857422 0a370.78857422 370.78857422 0 1 0 741.57714844 0 370.78857422 370.78857422 0 1 0-741.57714844 0Z" fill="#f3b146" p-id="7364"></path></svg>'
@@ -180,7 +181,7 @@ class K8s_View(BaseMyappView):
             response = make_response(send_file(pod_name, as_attachment=True, conditional=True))
             return response
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return str(e)
 
     # 返回获取pod日志
@@ -211,7 +212,7 @@ class K8s_View(BaseMyappView):
             logs = ansi_escape.sub('', logs)
             return logs
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return str(e)
 
     # 返回获取pod的信息
@@ -320,7 +321,7 @@ class K8s_View(BaseMyappView):
                 return redirect(request.referrer)
             return jsonify({
                 "status": 0,
-                "message": __("删除完成。查看被删除pod是否完成。")+f"{cluster.get('HOST', request.host).split('|')[-1]}"+conf.get('K8S_DASHBOARD_CLUSTER','/k8s/dashboard/cluster/')+f"#/search?namespace={namespace}&q={pod_name}",
+                "message": __("删除完成。查看被删除pod是否完成。")+f"{cluster.get('HOST', request.host).split('|')[-1]}"+conf.get('K8S_DASHBOARD_USER','/k8s/dashboard/user1/')+f"#/search?namespace={namespace}&q={pod_name}",
                 "result": {}
             })
 
@@ -356,7 +357,7 @@ class K8s_View(BaseMyappView):
         if '127.0.0.1' in request.host or 'localhost' in request.host:
             return redirect(host_url+f'{self.route_base}/web/log/{cluster_name}/{namespace}/{pod_name}{("/"+container_name) if container_name else ""}')
 
-        pod_url = host_url + conf.get('K8S_DASHBOARD_CLUSTER','/k8s/dashboard/cluster/') + "#/log/%s/%s/pod?namespace=%s&container=%s" % (namespace, pod_name, namespace, container_name if container_name else pod_name)
+        pod_url = host_url + conf.get('K8S_DASHBOARD_USER','/k8s/dashboard/user1/') + "#/log/%s/%s/pod?namespace=%s&container=%s" % (namespace, pod_name, namespace, container_name if container_name else pod_name)
         print(pod_url)
         kubeconfig = all_clusters[cluster_name].get('KUBECONFIG', '')
 
@@ -422,9 +423,9 @@ class K8s_View(BaseMyappView):
             else:
                 return redirect(host_url + f'{self.route_base}/web/debug/{cluster_name}/{namespace}/{pod_name}')
         if container_name:
-            pod_url = host_url + conf.get('K8S_DASHBOARD_CLUSTER','/k8s/dashboard/cluster/') + '#/shell/%s/%s/%s?namespace=%s' % (namespace, pod_name, container_name, namespace)
+            pod_url = host_url + conf.get('K8S_DASHBOARD_USER','/k8s/dashboard/user1/') + '#/shell/%s/%s/%s?namespace=%s' % (namespace, pod_name, container_name, namespace)
         else:
-            pod_url = host_url + conf.get('K8S_DASHBOARD_CLUSTER','/k8s/dashboard/cluster/') + '#/shell/%s/%s?namespace=%s' % (namespace, pod_name, namespace)
+            pod_url = host_url + conf.get('K8S_DASHBOARD_USER','/k8s/dashboard/user1/') + '#/shell/%s/%s?namespace=%s' % (namespace, pod_name, namespace)
         # print(pod_url)
         data = {
             "url": pod_url,
@@ -461,7 +462,7 @@ class K8s_View(BaseMyappView):
         # 打开iframe页面
         host_url = "//"+ conf.get("CLUSTERS", {}).get(cluster_name, {}).get("HOST", request.host).split('|')[-1]
 
-        pod_url = host_url + conf.get('K8S_DASHBOARD_CLUSTER','/k8s/dashboard/cluster/') + '#/pod/%s/%s?namespace=%s' % (namespace, pod_name, namespace)
+        pod_url = host_url + conf.get('K8S_DASHBOARD_USER','/k8s/dashboard/user1/') + '#/pod/%s/%s?namespace=%s' % (namespace, pod_name, namespace)
         # print(pod_url)
         data = {
             "url": pod_url,
@@ -507,7 +508,7 @@ class K8s_View(BaseMyappView):
             grafana_url = "//"+all_clusters[cluster_name].get('HOST', request.host).split('|')[-1]+conf.get("GRAFANA_TASK_PATH")+pod["name"]
             data_pod = [
                 Markup(status_icon.get(pod['pod_substatus'],default_status_icon)),
-                Markup(f'<a href="/k8s/web/pod/{cluster_name}/{namespace}/{pod["name"]}">{pod["name"]}</a>'),
+                Markup(f'<a href="/k8s/web/pod/{cluster_name}/{namespace}/{pod["name"]}">{pod["name"]}</a>') if g.user.is_admin() else Markup(pod["name"]),
                 Markup('<br>'.join([f'<div class="chip">{image}</div>' for image in pod['images']])),
                 pod['host_ip'],
                 pod['pod_substatus'],
@@ -564,7 +565,7 @@ class K8s_View(BaseMyappView):
             return redirect(host_url+f'{self.route_base}/web/search/{cluster_name}/{namespace}/{search}')
 
         search = search[:50]
-        pod_url = host_url+conf.get('K8S_DASHBOARD_CLUSTER','/k8s/dashboard/cluster/') + "#/search?namespace=%s&q=%s" % (namespace, search)
+        pod_url = host_url+conf.get('K8S_DASHBOARD_USER','/k8s/dashboard/user1/') + "#/search?namespace=%s&q=%s" % (namespace, search)
         data = {
             "url": pod_url,
             "target": 'div.kd-scroll-container',  # kd-logs-container  :nth-of-type(0)

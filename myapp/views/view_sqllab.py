@@ -7,7 +7,6 @@ from flask_appbuilder.baseviews import expose_api
 from myapp import app, appbuilder, db, event_logger, cache
 from flask import jsonify, g, request
 from .base import BaseMyappView
-from flask_appbuilder import CompactCRUDMixin, expose
 import pysnooper, datetime, time, json
 from myapp.utils.celery import session_scope
 import logging
@@ -113,7 +112,7 @@ class Sqllab_Query_View(BaseMyappView):
             #     for enginer in db_uri_demo:
             #         all_uri[enginer] = all_uri[enginer]+cache_uri[enginer]
         except Exception as e:
-            print(e)
+            traceback.print_exc()
 
         # print(all_uri)
         config = {

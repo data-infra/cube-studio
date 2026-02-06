@@ -36,11 +36,7 @@ from flask import (
     redirect,
     request
 )
-from .base import (
-    MyappFilter,
-    MyappModelView,
-
-)
+from .base import MyappFilter
 from .baseApi import (
     MyappModelRestApi
 )
@@ -72,8 +68,8 @@ INFERNENCE_CONFIGMAP={
 }
 INFERNENCE_COMMAND={
     "tfserving":"/usr/bin/tf_serving_entrypoint.sh --model_config_file=/config/models.config --monitoring_config_file=/config/monitoring.config --platform_config_file=/config/platform.config --rest_api_num_threads=300 --enable_batching=true",
-    "torch-server":"torchserve --start --model-store /models/$model_name/ --models $model_name=$model_name.mar --foreground --log-config /config/log4j2.xml",
-    "triton-server":'tritonserver --model-repository=/models/ --strict-model-config=true --log-verbose=1'
+    "torch-server":"cp $model_path /models/$model_name.mar && torchserve --start --model-store /models/ --models $model_name=$model_name.mar --ts-config=/config/config.properties --foreground",
+    "triton-server":'tritonserver --model-repository=/models/ --strict-model-config=true --log-verbose=1',
 }
 INFERNENCE_ENV={
     "tfserving":['TF_CPP_VMODULE=http_server=1','TZ=Asia/Shanghai']
@@ -284,8 +280,7 @@ triton-server：框架:地址。onnx:模型文件地址model.onnx，pytorch:torc
             _('流量分流'),
             default='',
             description= _('流量分流，将该服务的所有请求，按比例分流到目标服务上。格式 service1:20%,service2:30%，表示分流20%流量到service1，30%到service2'),
-            widget=BS3TextFieldWidget(),
-            validators=[Regexp('^[0-9a-z:,%]*$')]
+            widget=BS3TextFieldWidget()
         ),
 
         'shadow': StringField(
@@ -767,6 +762,7 @@ output %s
                     k8s_client.delete_configmap(namespace=namespace, name=name)
                     k8s_client.delete_crd(group='security.istio.io',version='v1beta1',plural='requestauthentications',namespace=namespace,name=name)
                     k8s_client.delete_crd(group='security.istio.io',version='v1beta1',plural='authorizationpolicies',namespace=namespace,name=name)
+                    k8s_client.delete_crd(group='batch.volcano.sh',version='v1alpha1',plural='jobs',namespace=namespace,name=name+"-vc")
         except Exception as e:
             print(e)
 
@@ -815,6 +811,8 @@ output %s
             if not service.deploy_history:
                 service.deploy_history=''
             service.deploy_history = service.deploy_history + "\n" + "clear: %s %s" % (g.user.username,datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            service.deploy_history  = service.deploy_history.strip()
+
             db.session.commit()
             flash(__('服务清理完成'), category='success')
         return redirect(conf.get('MODEL_URLS', {}).get('inferenceservice', ''))
@@ -928,10 +926,11 @@ output %s
 
 
         namespace = service.project.service_namespace
-
+        model_path = service.model_path.replace('{{creator}}', service.created_by.username).replace('$model_name', service.model_name)
         name = service.name
         command = service.command
-        command = command.replace('$model_path', service.model_path).replace('$model_name', service.model_name).replace("{{creator}}", service.created_by.username)
+        command = command.replace('$model_path', model_path).replace('$model_name', service.model_name).replace('$model_verison',service.model_version).replace("{{creator}}", service.created_by.username)
+
         deployment_replicas = service.min_replicas
         if stag == 'debug':
             name = stag + '-' + service.name
@@ -949,9 +948,11 @@ output %s
 
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(service.project.cluster.get('KUBECONFIG', ''))
-
-        config_datas = service.inference_config.strip().split("\n---") if service.inference_config else []
-        config_datas = [x.strip() for x in config_datas if x.strip()]
+        config_datas=[]
+        if service.inference_config.strip():
+            inference_config = service.inference_config.strip().replace('$model_path', model_path).replace('$model_name', service.model_name).replace('$model_version', service.model_version).replace("{{creator}}", service.created_by.username)
+            config_datas = inference_config.split("\n---")
+            config_datas = [x.strip() for x in config_datas if x.strip()]
         volume_mount = service.volume_mount
         # print('文件个数：', len(config_datas))
         config_data = {}
@@ -977,7 +978,7 @@ output %s
 
         pod_env = service.env.strip()
         pod_env += "\nKUBEFLOW_ENV=" + stag
-        pod_env += '\nKUBEFLOW_MODEL_PATH=' + (service.model_path if service.model_path else '')
+        pod_env += '\nKUBEFLOW_MODEL_PATH=' + (model_path if service.model_path else '')
         pod_env += '\nKUBEFLOW_MODEL_VERSION=' + service.model_version
         pod_env += '\nKUBEFLOW_MODEL_IMAGES=' + service.images
         pod_env += '\nKUBEFLOW_MODEL_NAME=' + service.model_name
@@ -988,13 +989,13 @@ output %s
         pod_env += "\nRESOURCE_MIN_REPLICAS=" + str(service.min_replicas)
         pod_env += "\nRESOURCE_MAX_REPLICAS=" + str(service.max_replicas)
         pod_env += "\nRESOURCE_GPU=" + str(gpu_num).replace('，',',').split(',')[-1]
-        pod_env += "\nMODEL_PATH=" + service.model_path.rstrip('/')
+        pod_env += "\nMODEL_PATH=" + model_path.rstrip('/')
         pod_env += "\nMODEL_NAME=" + service.model_name
         pod_env += "\nINFERENCE_NAME=" + name
         # pod_env += "\nSECRET=" + service.created_by.secret
 
         pod_env = pod_env.strip(',')
-        pod_env = pod_env.replace('$model_path',service.model_path).replace('$model_name',service.model_name).replace("{{creator}}", service.created_by.username)
+        pod_env = pod_env.replace('$model_path',model_path).replace('$model_name',service.model_name).replace('$model_version',service.model_version).replace("{{creator}}", service.created_by.username)
 
 
         sidecar_contaners = []
@@ -1037,8 +1038,6 @@ output %s
             }
             service.namespace=namespace
             db.session.commit()
-            service.namespace=namespace
-            db.session.commit()
             k8s_client.create_deployment(
                 namespace=namespace,
                 name=name,
@@ -1077,13 +1076,7 @@ output %s
         else:
             annotations = {}
         # print('deploy service')
-        # 端口改变才重新部署服务
-        disable_load_balancer = str(json.loads(service.expand).get('disable_load_balancer','false')).lower() if service.expand else 'false'
-        if disable_load_balancer=='true':
-            disable_load_balancer=True
-        else:
-            disable_load_balancer=False
-
+        disable_load_balancer = True if 'disable_load_balancer=true' in pod_env.lower().replace(' ','') else False
         k8s_client.create_service(
             namespace=namespace,
             name=name,
@@ -1251,6 +1244,7 @@ output %s
             service.model_status = 'online'
         service.deploy_history=service.deploy_history+"\n"+"deploy %s: %s %s"%(stag,g.user.username,datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         service.deploy_history = '\n'.join(service.deploy_history.split("\n")[-10:])
+        service.deploy_history = service.deploy_history.strip()
         db.session.commit()
         if stag == "debug":
             time.sleep(2)

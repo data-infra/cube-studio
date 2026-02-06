@@ -1579,6 +1579,26 @@ def checkip(ip):
     else:
         return False
 
+def get_cpu(resource_cpu):
+    cpu_type = None
+    try:
+        if resource_cpu:
+            # 英文括号
+            if '(' in resource_cpu:
+                cpu_type = re.findall(r"\((.+?)\)", resource_cpu)
+                cpu_type = cpu_type[0] if cpu_type else None
+            # 中文括号
+            if '（' in resource_cpu:
+                cpu_type = re.findall(r"（(.+?)）", resource_cpu)
+                cpu_type = cpu_type[0] if cpu_type else None
+
+            # 处理中文括号，和英文括号
+            resource_cpu = resource_cpu[0:resource_cpu.index('(')] if '(' in resource_cpu else resource_cpu
+            resource_cpu = resource_cpu[0:resource_cpu.index('（')] if '（' in resource_cpu else resource_cpu
+    except Exception as e:
+        print(e)
+    cpu_type = cpu_type.upper() if cpu_type else None
+    return resource_cpu, cpu_type
 
 def get_gpu(resource_gpu,resource_name=None):
     from myapp import conf,db
@@ -1587,6 +1607,7 @@ def get_gpu(resource_gpu,resource_name=None):
     if not resource_name:
         resource_name=conf.get('DEFAULT_GPU_RESOURCE_NAME','')
     gpu_type = None
+
     try:
         if resource_gpu:
             # 英文括号
@@ -2333,42 +2354,86 @@ def table_html(csv_path,features=None,zip_file=None):  # zip_file 用来表示�
     else:
         return df.to_html(escape=False,bold_rows=False,border=1)
 
+# @pysnooper.snoop()
+def notebook_cascade_demo(NOTEBOOK_IMAGES):
+    options=[]
+    if not NOTEBOOK_IMAGES:
+        options = [
+            {
+                "id": "zhejiang",
+                "value": "Zhejiang",
+                "children": [
+                    {
+                        "value": "hangzhou",
+                        "label": "Hangzhou",
+                        "children": [
+                            {
+                                "value": "xihu",
+                                "label": "West Lake",
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                "id": "jiangsu",
+                "value": "Jiangsu",
+                "children": [
+                    {
+                        "value": "nanjing",
+                        "label": "Nanjing",
+                        "children": [
+                            {
+                                "value": "zhonghuamen",
+                                "label": "Zhong Hua Men",
+                            },
+                        ],
+                    },
+                ],
+            },
+        ]
+    else:
+        for key in NOTEBOOK_IMAGES:
 
-def notebook_cascade_demo():
-    options = [
-        {
-            "id": "zhejiang",
-            "value": "Zhejiang",
-            "children": [
-                {
-                    "value": "hangzhou",
-                    "label": "Hangzhou",
-                    "children": [
-                        {
-                            "value": "xihu",
-                            "label": "West Lake",
-                        },
-                    ],
-                },
-            ],
-        },
-        {
-            "id": "jiangsu",
-            "value": "Jiangsu",
-            "children": [
-                {
-                    "value": "nanjing",
-                    "label": "Nanjing",
-                    "children": [
-                        {
-                            "value": "zhonghuamen",
-                            "label": "Zhong Hua Men",
-                        },
-                    ],
-                },
-            ],
-        },
-    ]
+            if type(NOTEBOOK_IMAGES[key])==str:
+                one_key = {
+                    "id": NOTEBOOK_IMAGES[key],
+                    "value": key,
+                }
+            else:
+                one_key1_arr=[]
+                for key1 in NOTEBOOK_IMAGES[key]:
+                    if type(NOTEBOOK_IMAGES[key][key1])==str:
+                        one_key1 = {
+                            "label": key1,
+                            "id": NOTEBOOK_IMAGES[key][key1],
+                            "value": NOTEBOOK_IMAGES[key][key1],
+                        }
+                    else:
+                        one_key2_arr=[]
+                        for key2 in NOTEBOOK_IMAGES[key][key1]:
+                            one_key2 = {
+                                "label": key2,
+                                "id": NOTEBOOK_IMAGES[key][key1][key2],
+                                "value": str(NOTEBOOK_IMAGES[key][key1][key2]),
+                            }
+                            one_key2_arr.append(one_key2)
+                        one_key1={
+                            "label": key1,
+                            "value": key1,
+                            "children": one_key2_arr
+                        }
+                    one_key1_arr.append(one_key1)
+
+                one_key = {
+                    "id": key,
+                    "value": key,
+                    "children": one_key1_arr
+                }
+
+            options.append(one_key)
+        pass
+    # print("options:",options)
     return options
 
 
@@ -2564,3 +2629,33 @@ def open_jupyter(label,dom_name=None):
         return f'''<a href="#" onclick="const path = document.getElementById('form_in_modal_{dom_name}')?.value || '/mnt/{{{{creator}}}}'; window.open(`/notebook_modelview/api/entry/jupyter?file_path=${{encodeURIComponent(path)}}`, '_blank'); return false;"> {label}</a>'''
     else:
         return f'<a target="_blank" href="/notebook_modelview/api/entry/jupyter?file_path=/mnt/{{{{creator}}}}/">{label}</a>'
+
+# nodeSelector中org为逗号分隔数组
+def get_node_selector(node_selector):
+    nodeSelector = {}
+    nodeAffinity = {}
+    if node_selector and '=' in node_selector:
+        for selector in re.split(';|\n|\t', node_selector):
+            selector = selector.strip()
+            if selector:
+                if 'org' == selector.strip().split('=')[0].strip() and ',' in selector:
+                    org = selector.strip().split('=')[1].strip().split(',')  # 资源组是个逗号分隔的数组
+                    nodeAffinity={
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                            "nodeSelectorTerms": [
+                                {
+                                    "matchExpressions": [
+                                        {
+                                            "key": "org",
+                                            "operator": "In",
+                                            "values": org
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                else:
+                    nodeSelector[selector.strip().split('=')[0].strip()] = selector.strip().split('=')[1].strip()
+
+    return nodeSelector,nodeAffinity

@@ -4,10 +4,10 @@ import shutil
 
 import requests
 # nlp 问答自动化标注 对接chatglm训练
-
-predictions_file = '/mnt/admin/pipeline/example/chatglm/predictions.json'
-label_dir = '/mnt/admin/pipeline/example/chatglm/label-result/'
-train_dir = '/mnt/admin/pipeline/example/chatglm/train.txt'
+KFJ_CREATOR = os.getenv('KFJ_CREATOR','admin')
+predictions_file = f'/mnt/{KFJ_CREATOR}/pipeline/example/chatglm/predictions.json'
+label_dir = f'/mnt/{KFJ_CREATOR}/pipeline/example/chatglm/label-result/'
+train_dir = f'/mnt/{KFJ_CREATOR}/pipeline/example/chatglm/train.txt'
 all_annotations={
 }
 instruction="你现在是一个问答模型，用于回答关于GitHub项目cube-studio的信息。文本："

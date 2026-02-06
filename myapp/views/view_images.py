@@ -1,5 +1,6 @@
 import os
 import re
+import traceback
 
 from flask_appbuilder.baseviews import expose_api
 
@@ -20,11 +21,6 @@ from myapp.forms import MyBS3TextAreaFieldWidget, MySelect2Widget
 from flask_appbuilder import expose
 from .baseApi import MyappModelRestApi
 from flask import g
-from .base import (
-    DeleteMixin,
-    MyappFilter,
-    MyappModelView,
-)
 from myapp import security_manager
 conf = app.config
 
@@ -132,9 +128,10 @@ class Repository_ModelView_Base():
                                             server=server
                                             )
                     except Exception as e1:
-                        print(e1)
+                        traceback.print_exc()
+                        # print(e1)
             except Exception as e:
-                print(e)
+                traceback.print_exc()
 
     def post_add(self, item):
         self.apply_hubsecret(item)

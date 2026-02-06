@@ -22,6 +22,6 @@ class UserAttribute(Model, AuditMixinNullable):
     id = Column(Integer, primary_key=True)  # pylint: disable=invalid-name
     user_id = Column(Integer, ForeignKey("ab_user.id"))
     user = relationship(
-        security_manager.user_model, backref="extra_attributes", foreign_keys=[user_id]
+        security_manager.user_model, backref="extra_attributes", foreign_keys=[user_id], lazy='selectin'
     )
 

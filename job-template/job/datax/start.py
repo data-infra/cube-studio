@@ -42,7 +42,7 @@ if __name__ == "__main__":
     config = config.replace('USERNAME',args.username)
     config = config.replace('PASSWORD',args.password)
     config = config.replace('HOST',args.host)
-    config = config.replace('DATABASE',args.database)
+    config = config.replace('DATABASE',args.databasen if '?' in args.database else (args.database+"?useUnicode=true&characterEncoding=utf8"))
     config = config.replace('TABLE', args.table)
     config = config.replace('COLUMNS', str(columns))
     config = config.replace('OUTDIR',outdir)

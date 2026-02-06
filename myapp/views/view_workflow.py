@@ -2,6 +2,7 @@ import copy
 import os
 import re
 import time
+import traceback
 
 import flask
 import pandas
@@ -32,11 +33,7 @@ from flask import (
     redirect
 )
 
-from .base import (
-    DeleteMixin,
-    MyappFilter,
-    MyappModelView,
-)
+from .base import MyappFilter
 from flask_appbuilder import expose
 import datetime, json
 
@@ -114,7 +111,7 @@ class Workflow_ModelView_Base():
             workflow.change_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             db.session.commit()
         except Exception as e:
-            print(e)
+            traceback.print_exc()
 
     # 基础批量删除
     # @pysnooper.snoop()
@@ -193,6 +190,7 @@ class Workflow_ModelView_Base():
         crd_info = conf.get('CRD_INFO', {}).get('workflow', {})
         try_num=3
         workflow_obj=None
+        workflow_model=None
         # 尝试三次查询
         while not workflow_obj and try_num>0:
             workflow_obj = k8s_client.get_one_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'], namespace=namespace, name=workflow_name)
@@ -266,7 +264,7 @@ class Workflow_ModelView_Base():
             "status": status_more
         }
 
-
+        pipeline = None
         if int(layout_config.get("pipeline-id", '0')):
             pipeline = db.session.query(Pipeline).filter_by(id=int(layout_config.get("pipeline-id", '0'))).first()
             if pipeline:
@@ -292,12 +290,13 @@ class Workflow_ModelView_Base():
                     "url": f"/workflow_modelview/api/stop/{workflow_model.id}"
                 }
             )
-        layout_config['right_button'].append(
-            {
-                "label": __("任务流"),
-                "url": f'/pipeline_modelview/api/web/{pipeline.id}'
-            }
-        )
+        if pipeline:
+            layout_config['right_button'].append(
+                {
+                    "label": __("任务流"),
+                    "url": f'/pipeline_modelview/api/web/{pipeline.id}'
+                }
+            )
         layout_config['detail'] = [
             [
                 {
@@ -313,7 +312,7 @@ class Workflow_ModelView_Base():
                 {
                     "name": "id",
                     "label": "id",
-                    "value": f'{pipeline.id}({pipeline.describe})'
+                    "value": f'{pipeline.id}({pipeline.describe})' if pipeline else 'unknown'
                 },
                 {
                     "name": "status",
@@ -353,7 +352,7 @@ class Workflow_ModelView_Base():
                 {
                     "name": "created_by",
                     "label": __("创建人"),
-                    "value": pipeline.created_by.username
+                    "value": pipeline.created_by.username if pipeline else "unknown"
                 },
                 {
                     "name": "run_user",
@@ -471,9 +470,9 @@ class Workflow_ModelView_Base():
                         fill_child(self, ui_node['children'], child)
                         dag.append(ui_node)
                     except Exception as e:
-                        print(e)
+                        traceback.print_exc()
             except Exception as e:
-                print(e)
+                traceback.print_exc()
 
         fill_child(self, dag_config, workflow_name)
         return layout_config, dag_config, self.node_detail_config, workflow_obj
@@ -759,74 +758,7 @@ class Workflow_ModelView_Base():
             }
         ]
 
-        tab3 = [
-            {
-                "tabName": __("在线日志"),
-                "content": [
-                    {
-                        "groupName": __("在线日志"),
-                        "groupContent": {
-                            "value": f'/k8s/web/log/{cluster_name}/{namespace}/{pod_name}/main' if pod_status == 'Running' else __("pod未发现"),
-                            "type": 'iframe' if pod_status == 'Running' else "html"
-                        }
-                    }
-                ],
-                "bottomButton": []
-            }
-        ]
-
-        tab4 = [
-            {
-                "tabName": __("在线调试"),
-                "content": [
-                    {
-                        "groupName": __("在线调试"),
-                        "groupContent": {
-                            "value": f'/k8s/web/exec/{cluster_name}/{namespace}/{pod_name}/main' if pod_status == 'Running' else __("pod已停止运行"),
-                            "type": 'iframe' if pod_status == 'Running' else 'html'
-                        }
-                    }
-                ],
-                "bottomButton": []
-            }
-        ]
-
-        tab5 = [
-            {
-                "tabName": __("相关容器"),
-                "content": [
-                    {
-                        "groupName": __("相关容器"),
-                        "groupContent": {
-                            "value": {
-                                "url": host_url+conf.get('K8S_DASHBOARD_CLUSTER','/k8s/dashboard/cluster/')+f"#/search?namespace={namespace}&q={pod_name}",
-                                "target": "div.kd-chrome-container.kd-bg-background",
-                            } if pod_status else __("pod未发现"),
-                            "type": 'iframe' if pod_status else "html"
-                        }
-                    }
-                ],
-                "bottomButton": []
-            }
-        ]
-
-        tab6 = [
-            {
-                "tabName": __("资源使用情况"),
-                "content": [
-                    {
-                        "groupName": __("资源使用情况"),
-                        "groupContent": {
-                            "value": {
-                                "url": host_url + conf.get('GRAFANA_TASK_PATH', '/grafana/d/pod-info/pod-info?var-pod=') + pod_name,
-                            },
-                            "type": 'iframe'
-                        }
-                    }
-                ],
-                "bottomButton": []
-            }
-        ]
+        tip = __("提示：仅企业版支持任务结果、模型指标、数据集可视化预览")
         tab7 = [
             {
                 "tabName": __("结果可视化"),
@@ -834,7 +766,7 @@ class Workflow_ModelView_Base():
                     {
                         "groupName": "",
                         "groupContent": {
-                            "value": Markup("提示：仅企业版支持任务结果、模型指标、数据集可视化预览"),
+                            "value": Markup(tip),
                             # options的值
                             "type": 'html'
                         }
@@ -855,8 +787,7 @@ class Workflow_ModelView_Base():
                        'sunburst-visualMap.json', 'scatter-effect.json','multiple-lines.json']
                 not_can = ['bar3d-punch-card.json', 'simple-surface.json']# 不行的。
 
-                # if '.json' in file and file in []:
-                if '.json' in file and file in can:
+                if file.endswith('.json') and file in can:
                     echart_option = ''.join(open(file_path).readlines())
                     # print(echart_option)
                     tab7[0]['content'].append(

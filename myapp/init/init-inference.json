@@ -39,6 +39,7 @@
     "volume_mount": "kubeflow-user-workspace(pvc):/mnt",
     "resource_memory": "5G",
     "resource_cpu": "5",
+    "inference_config": "---config.properties\n\ninference_address=http://0.0.0.0:8080\nmanagement_address=http://0.0.0.0:8081\nmetrics_address=http://0.0.0.0:8082\ncors_allowed_origin=*\ncors_allowed_methods=GET, POST, PUT, OPTIONS\ncors_allowed_headers=X-Custom-Header\nnumber_of_netty_threads=32\nenable_metrics_api=true\njob_queue_size=1000\nenable_envvars_config=true\nasync_logging=true\ndefault_response_timeout=120\nmax_request_size=6553500\n",
     "expand": {
     }
   },

@@ -14,9 +14,10 @@ all_classes=['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train
          'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear',
          'hair drier', 'toothbrush']
 
-predictions_file = '/mnt/admin/pipeline/example/yolo/predictions.json'
-label_dir = '/mnt/admin/pipeline/example/yolo/coco-result/'
-train_dir = '/mnt/admin/pipeline/example/yolo/dataset/'
+KFJ_CREATOR = os.getenv('KFJ_CREATOR','admin')
+predictions_file = f'/mnt/{KFJ_CREATOR}/pipeline/example/yolo/predictions.json'
+label_dir = f'/mnt/{KFJ_CREATOR}/pipeline/example/yolo/coco-result/'
+train_dir = f'/mnt/{KFJ_CREATOR}/pipeline/example/yolo/dataset/'
 all_annotations={
 }
 
@@ -91,6 +92,27 @@ for task_id in all_annotations:
         else:
 
             print(f"请求失败，状态码: {response.status_code}")
+
+    elif '/labelstudio/data/upload' in image:
+        image = 'http://labelstudio.kubeflow:8080' + image
+        headers = {'Authorization': f'Token {os.getenv("SECRET", "")[:40]}'}
+        response = requests.get(image, headers=headers)
+        name = image[image.rindex("/") + 1:]
+        image_path = os.path.join(train_dir, 'images/train', name)
+
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+        # 确保请求成功
+        if response.status_code == 200:
+            # 将视频内容写入本地文件
+            with open(image_path, "wb") as file:
+                file.write(response.content)
+                all_train_image.append(image_path)
+                print(f"文件已成功保存到: {image_path}")
+        else:
+            print(f"请求失败，状态码: {response.status_code}")
+
     else:
         if os.path.exists(image):
             name = os.path.basename(image)

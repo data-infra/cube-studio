@@ -75,6 +75,7 @@ export interface IADUGTemplateInfo {
     enable_favorite: boolean
     echart: boolean
     page_size: number
+    model_name?: string  // 当前视图的名称，用于子视图中标识父视图字段
 }
 
 export interface IColumnRelateItem {

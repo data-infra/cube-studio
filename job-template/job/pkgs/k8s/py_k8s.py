@@ -468,16 +468,6 @@ class K8s():
                 status = crd_object['status']['conditions'][-1]['type']  # tfjob和experiment是这种结构
         return status
 
-    # @pysnooper.snoop(watch_explode=('ya_str',))
-    def get_one_crd_yaml(self, group, version, plural, namespace, name):
-        try:
-            crd_object = self.CustomObjectsApi.get_namespaced_custom_object(group=group, version=version, namespace=namespace, plural=plural, name=name)
-            ya = yaml.load(json.dumps(crd_object))
-            ya_str = yaml.safe_dump(ya, default_flow_style=False)
-            return ya_str
-        except Exception as e:
-            print(e)
-        return ''
 
     # @pysnooper.snoop(watch_explode=('crd_object'))
     def get_one_crd(self, group, version, plural, namespace, name):

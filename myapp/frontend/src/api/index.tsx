@@ -148,11 +148,18 @@ axios.interceptors.response.use(
             if (error.response.status === 401) {
                 handleTips.trigger('登录超时，需要重新登录');
                 handleTips.gotoLogin();
-            }
-            if (error.response.status === 502) {
+            } else if (error.response.status === 502) {
                 handleTips.trigger('网络连接中...');
             } else {
-                handleTips.trigger(errMsg);
+                // 检查是否配置了静默模式（用于特定组件）
+                const silentMode = error.config?.headers?.['X-Silent-Error'];
+                if (silentMode) {
+                    // 静默模式：只在控制台输出，不显示弹窗
+                    console.error('请求错误:', error.response.status, errMsg);
+                } else {
+                    // 正常模式：显示错误弹窗
+                    handleTips.trigger(errMsg);
+                }
             }
             // throw new Error(`${data ? data.msg : error.response.status}`);
         }

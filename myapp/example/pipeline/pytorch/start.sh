@@ -4,9 +4,9 @@ pip config set global.index-url https://mirrors.aliyun.com/pypi/simple
 # pip install torch==2.0.1+cu118 torchvision==0.15.2+cu118 torchaudio==2.0.2 tensorboardX --index-url https://download.pytorch.org/whl/cu118
 pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 tensorboardX
 
-pip install tensorboardX pysnooper requests
+pip install numpy==1.26.4
 
-#export NCCL_IB_HCA=mlx5   # 需要适配
+#export NCCL_IB_HCA=mlx5   # 需要适配,ib或者roce 都行
 #export NCCL_IB_TC=136
 # export NCCL_IB_SL=5   # 需要适配，可不填
 # export NCCL_IB_GID_INDEX=0    # 需要适配，可不填

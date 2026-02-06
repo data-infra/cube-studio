@@ -36,7 +36,7 @@ class Service(Model,AuditMixinNullable,MyappModelBase,service_common):
     id = Column(Integer, primary_key=True,comment='id主键')
     project_id = Column(Integer, ForeignKey('project.id'),comment='项目组id')
     project = relationship(
-        Project, foreign_keys=[project_id]
+        Project, foreign_keys=[project_id], lazy='selectin'
     )
 
     name = Column(String(100), nullable=False,unique=True,comment='英文名')   # Used to generate pod service and vs
@@ -48,7 +48,7 @@ class Service(Model,AuditMixinNullable,MyappModelBase,service_common):
     args = Column(Text,default='',comment='启动参数')
     env = Column(Text,default='',comment='环境变量')
     volume_mount = Column(String(2000),default='',comment='挂载')
-    node_selector = Column(String(100),default='cpu=true,serving=true',comment='机器选择器')
+    node_selector = Column(String(100),default='cpu=true;serving=true',comment='机器选择器')
     replicas = Column(Integer,default=1,comment='副本')
     ports = Column(String(100),default='80',comment='端口')
     resource_memory = Column(String(100),default='2G',comment='申请内存')
@@ -204,7 +204,7 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
     id = Column(Integer, primary_key=True,comment='id主键')
     project_id = Column(Integer, ForeignKey('project.id'),comment='项目组id')
     project = relationship(
-        Project, foreign_keys=[project_id]
+        Project, foreign_keys=[project_id], lazy='selectin'
     )
 
     name = Column(String(100), nullable=True,unique=True,comment='英文名')
@@ -229,7 +229,7 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
     args = Column(Text,default='',comment='启动参数')
     env = Column(Text,default='',comment='环境变量')
     volume_mount = Column(String(2000),default='',comment='挂载')
-    node_selector = Column(String(100),default='cpu=true,serving=true',comment='机器选择器')
+    node_selector = Column(String(100),default='cpu=true;serving=true',comment='机器选择器')
     min_replicas = Column(Integer,default=1,comment='最小副本数')
     max_replicas = Column(Integer, default=1,comment='最大副本数')
     hpa = Column(String(400), default='',comment='弹性伸缩')

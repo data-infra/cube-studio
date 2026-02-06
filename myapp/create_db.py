@@ -22,5 +22,7 @@ def init_db():
         cursor.execute(sql)
         conn.commit()
 
+        cursor.close()
+        conn.close()
 
 init_db()

@@ -3,7 +3,7 @@ import re
 from flask_login import current_user
 import logging
 import jwt
-
+from flask_jwt_extended import current_user as current_user_jwt
 import pysnooper
 from flask import current_app
 from flask_appbuilder.security.sqla import models as ab_models
@@ -52,12 +52,14 @@ from flask_appbuilder.forms import DynamicForm
 
 # expand user
 from flask_appbuilder.security.sqla.models import User,Role
-from sqlalchemy import Column, String
-
+from sqlalchemy import Column, String,Integer,ForeignKey
+from sqlalchemy.orm import backref, relationship
+from sqlalchemy.ext.declarative import declared_attr
 
 from myapp.models.base import MyappModelBase
 class MyUser(User,MyappModelBase):
     __tablename__ = 'ab_user'
+    nickname = Column(String(200))   # 昵称
     org = Column(String(200))   # Organization
     quota = Column(String(2000))  # 资源配额
     active = Column(Boolean,default=True)
@@ -130,13 +132,13 @@ class MyUserRemoteUserModelView_Base():
     label_title = _('用户')
     datamodel = SQLAInterface(MyUser)
 
-    base_permissions = ['can_list', 'can_edit', 'can_add', 'can_show','can_userinfo']
+    base_permissions = ['can_list', 'can_edit', 'can_add', 'can_show']
 
-    list_columns = ["username", "active", "roles"]
+    list_columns = ["username",'nickname', "active", "roles"]
 
-    edit_columns = ["username",'password', "active", "email", "roles", 'org']
-    add_columns = ["username",'password', "email", "roles", 'org']
-    show_columns = ["username", "active",'email','org','password', "roles",'secret']
+    edit_columns = ["username",'nickname','password', "active", "email", "roles", 'org']
+    add_columns = ["username",'nickname','password', "email", "roles", 'org']
+    show_columns = ["username", 'nickname', "active",'email','org', "roles",'secret','password']
     describe_columns={
         "roles": "Admin角色拥有管理员权限，Gamma为普通用户角色"
     }
@@ -146,6 +148,7 @@ class MyUserRemoteUserModelView_Base():
         "first_name": _("姓"),
         "last_name": _("名"),
         "username": _("用户名"),
+        'nickname':_("昵称"),
         "password": _("密码"),
         "active": _("激活"),
         "email": _("邮箱"),
@@ -165,13 +168,13 @@ class MyUserRemoteUserModelView_Base():
     spec_label_columns = label_columns
 
     order_columns=['id']
-    search_columns = ["username", 'org']
+    search_columns = ["username",'nickname', 'org']
     base_order = ('id', 'desc')
     # 个人查看详情额展示的信息
     user_show_fieldsets = [
         (
             _("用户信息"),
-            {"fields": ["username", "active", "roles", "email",'secret','org']},
+            {"fields": ["username",'nickname', "active", "roles", "email",'secret','org']},
         )
     ]
     show_fieldsets = user_show_fieldsets
@@ -182,6 +185,12 @@ class MyUserRemoteUserModelView_Base():
             validators=[DataRequired(), Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$")],
             widget=BS3TextFieldWidget(),
             description=_("用户名只能由小写字母、数字、-组成"),
+        ),
+        "nickname": StringField(
+            _("昵称"),
+            validators=[DataRequired()],
+            widget=BS3TextFieldWidget(),
+            description=_("中文名"),
         ),
         "password": StringField(
             _("密码"),
@@ -201,20 +210,6 @@ class MyUserRemoteUserModelView_Base():
     }
     edit_form_extra_fields = add_form_extra_fields
 
-    @expose("/userinfo/")
-    # @has_access
-    def userinfo(self):
-        item = self.datamodel.get(g.user.id, self._base_filters)
-        widgets = self._get_show_widget(
-            g.user.id, item, show_fieldsets=self.user_show_fieldsets
-        )
-        self.update_redirect()
-        return self.render_template(
-            self.show_template,
-            title=self.user_info_title,
-            widgets=widgets,
-            appbuilder=self.appbuilder,
-        )
 
     # 添加默认gamma角色
     # @pysnooper.snoop()
@@ -261,57 +256,6 @@ class MyUserRemoteUserModelView(MyUserRemoteUserModelView_Base,UserModelView):
     datamodel = SQLAInterface(MyUser)
 
 
-class UserInfoEditView(SimpleFormView):
-
-    class UserInfoEdit(DynamicForm):
-        username = StringField(
-            _("用户名"),
-            validators=[DataRequired(), Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$")],
-            widget=BS3TextFieldWidget(),
-            description=_("用户名只能由小写字母、数字、-组成"),
-        )
-        password = StringField(
-            _("密码"),
-            validators=[DataRequired()],
-            widget=BS3TextFieldWidget(),
-            description=_("密码"),
-        )
-        email = StringField(
-            _("邮箱"),
-            validators=[DataRequired(), Regexp(".*@.*\..*")],
-            widget=BS3TextFieldWidget(),
-            description=_("填写邮箱地址"),
-        )
-        org = StringField(
-            _("组织架构"),
-            widget=BS3TextFieldWidget(),
-            description=_("组织架构，自行填写"),
-        )
-
-    form = UserInfoEdit
-    form_title = _("编辑用户信息")
-    redirect_url = "/"
-    message = _("用户信息修改完成")
-
-    def form_get(self, form):
-        item = self.appbuilder.sm.get_user_by_id(g.user.id)
-        # fills the form generic solution
-        for key, value in form.data.items():
-            if key == "csrf_token":
-                continue
-            form_field = getattr(form, key)
-            form_field.data = getattr(item, key)
-
-    def form_post(self, form):
-        form = self.form.refresh(request.form)
-        item = self.appbuilder.sm.get_user_by_id(g.user.id)
-        form.populate_obj(item)
-        if 'pbkdf2:sha256:' not in item.password:
-            item.password = generate_password_hash(item.password)
-        self.appbuilder.sm.update_user(item)
-        flash(as_unicode(self.message), "info")
-
-
 from myapp.project import MyCustomRemoteUserView
 from myapp.project import Myauthdbview
 # myapp自带的角色和角色权限，自定义了各种权限
@@ -330,9 +274,6 @@ class MyappSecurityManager(SecurityManager):
     # Account password authentication
     userdbmodelview = MyUserRemoteUserModelView
     authdbview = Myauthdbview
-
-    # userinfo edit view
-    userinfoeditview = UserInfoEditView
 
     # 构建启动前工作，认证
     @staticmethod
@@ -381,14 +322,9 @@ class MyappSecurityManager(SecurityManager):
     # 注册security菜单栏下的子菜单和链接
     # @pysnooper.snoop()
     def register_views(self):
-        if not self.appbuilder.app.config.get('FAB_ADD_SECURITY_VIEWS', True):
-            return
+
         # Security APIs
         self.appbuilder.add_api(self.security_api)
-
-        self.appbuilder.add_view_no_menu(self.userinfoeditview())
-
-
 
         if self.auth_type == AUTH_DB:
             self.user_view = self.userdbmodelview
@@ -411,29 +347,7 @@ class MyappSecurityManager(SecurityManager):
                 self.registeruser_view = self.registeruseroidview()
                 self.appbuilder.add_view_no_menu(self.registeruser_view)
 
-
         self.appbuilder.add_view_no_menu(self.auth_view)
-
-        self.user_view = self.appbuilder.add_view(
-            self.user_view,
-            "List Users",
-            icon="fa-user",
-            href="/users/list/?_flt_2_username=",
-            label=_("用户列表"),
-            category="Security",
-            category_icon="fa-cogs",
-            category_label=_("Security"),
-        )
-        role_view = self.appbuilder.add_view(
-            self.rolemodelview,
-            "List Roles",
-            icon="fa-group",
-            href="/roles/list/?_flt_2_name=",
-            label=_("角色列表"),
-            category="Security",
-            category_icon="fa-cogs",
-        )
-        role_view.related_views = [self.user_view.__class__]
 
     # @pysnooper.snoop()
     def add_org_user(self,username,first_name,last_name,org,email,roles,password="",hashed_password=""):
@@ -521,60 +435,36 @@ class MyappSecurityManager(SecurityManager):
 
         return user
 
-
-
-    READ_ONLY_MODEL_VIEWS = {
-        'link','Minio','Kubernetes Dashboard','Granfana','Wiki'
-    }
-
-
-    USER_MODEL_VIEWS = {
-        "UserDBModelView",
-        "UserLDAPModelView",
-        "UserOAuthModelView",
-        "UserOIDModelView",
-        "UserRemoteUserModelView",
-    }
-
-
-    # 只有admin才能看到的menu
+    # 只有admin才能看到的视图
     ADMIN_ONLY_VIEW_MENUS = {
-        "ResetPasswordView",
-        "RoleModelView",
-        "List Users",
-        "List Roles",
-        "UserStatsChartView",
-        "Base Permissions",
-        "Permission on Views/Menus",
-        "Action Log",
-        "Views/Menus",
-        "ViewMenuModelView",
-        "User's Statistics",
-        "Security",
-    } | USER_MODEL_VIEWS
-
-    ALPHA_ONLY_VIEW_MENUS = {}
+        "Node_ModelView_Api",
+        "Storage_ModelView_Api",
+        "User_ModelView_Api",
+        "Role_ModelView_Api",
+        "LOG_ModelView_Api"
+    }
     # 只有admin才有的权限
     ADMIN_ONLY_PERMISSIONS = {
         "can_override_role_permissions",
         "can_override_role_permissions",
-        # "can_approve",   # db owner需要授权approve 权限后才能授权
+        "can_approve",   # db owner需要授权approve 权限后才能授权
         "can_update_role",
     }
+    # 只读者的权限，也就是所有人都有的权限
+    PUBLIC_ONLY_PERMISSION = {"can_show", "can_list"}
 
-    READ_ONLY_PERMISSION = {"can_show", "can_list",'can_add'}
+    #
+    # @pysnooper.snoop()
+    def has_access(self, permission_name: str, view_name: str) -> bool:
+        if current_user.is_authenticated:
+            if current_user.is_admin():
+                return True
+            return self._has_view_access(g.user, permission_name, view_name)
+        elif current_user_jwt:
+            return self._has_view_access(current_user_jwt, permission_name, view_name)
+        else:
+            return self.is_item_public(permission_name, view_name)
 
-    ALPHA_ONLY_PERMISSIONS = {
-        "muldelete"
-    }
-
-    # 用户创建menu才有的权限
-    OBJECT_SPEC_PERMISSIONS = {
-        "can_only_access_owned_queries",
-    }
-
-    # 所有人都可以有的基本权限
-    ACCESSIBLE_PERMS = {"can_userinfo","can_request_access","can_approve"}
 
     # 获取用户是否有在指定视图上的指定权限名
     # @pysnooper.snoop()
@@ -584,8 +474,6 @@ class MyappSecurityManager(SecurityManager):
         if user.is_anonymous:
             return self.is_item_public(permission_name, view_name)
         return self._has_view_access(user, permission_name, view_name)
-
-
 
     # 获取用户具有指定权限的视图
     def user_view_menu_names(self, permission_name: str):
@@ -629,13 +517,6 @@ class MyappSecurityManager(SecurityManager):
         )
         self.add_permission_view_menu(permission_name, view_menu_name)
 
-    # 判断权限是否是user自定义权限
-    def is_user_defined_permission(self, perm):
-        return perm.permission.name in self.OBJECT_SPEC_PERMISSIONS
-
-
-
-
     # 初始化自定义角色，将对应的权限加到对应的角色上
     # @pysnooper.snoop()
     def sync_role_definitions(self):
@@ -646,10 +527,11 @@ class MyappSecurityManager(SecurityManager):
         # Creating default roles
         self.set_role("Admin", self.is_admin_pvm)
         self.set_role("Gamma", self.is_gamma_pvm)
-
+        self.set_role("Public", self.is_public_pvm)
         # commit role and view menu updates
         self.get_session.commit()
         self.clean_perms()
+
 
     # 清理权限
     def clean_perms(self):
@@ -684,14 +566,10 @@ class MyappSecurityManager(SecurityManager):
         sesh.merge(role)
         sesh.commit()
 
+
     # 看一个权限是否是只有admin角色该有的权限
     def is_admin_only(self, pvm):
-        # not readonly operations on read only model views allowed only for admins
-        if (
-            pvm.view_menu.name in self.READ_ONLY_MODEL_VIEWS
-            and pvm.permission.name not in self.READ_ONLY_PERMISSION
-        ):
-            return True
+
         return (
             pvm.view_menu.name in self.ADMIN_ONLY_VIEW_MENUS
             or pvm.permission.name in self.ADMIN_ONLY_PERMISSIONS
@@ -699,19 +577,26 @@ class MyappSecurityManager(SecurityManager):
 
     # 校验权限是否是默认所有人可接受的
     def is_accessible_to_all(self, pvm):
-        return pvm.permission.name in self.ACCESSIBLE_PERMS
+        return pvm.permission.name in self.PUBLIC_ONLY_PERMISSION
 
     # 看一个权限是否是admin角色该有的权限
     def is_admin_pvm(self, pvm):
-        return not self.is_user_defined_permission(pvm)
+        return True
 
-    # 看一个权限是否是gamma角色该有的权限
+    # 看一个权限是否是gamma角色该有的权限，只要不是admin特有的，就都给gamma
     def is_gamma_pvm(self, pvm):
-        # return False
-        return not (
-            self.is_user_defined_permission(pvm)
-            or self.is_admin_only(pvm)
-        ) or self.is_accessible_to_all(pvm)
+        return not self.is_admin_only(pvm)
+
+    # 看一个权限是否是public角色该有的权限，不是admin的视图并且是public的权限，才可以
+    def is_public_pvm(self, pvm):
+        if (
+            pvm.view_menu.name not in self.ADMIN_ONLY_VIEW_MENUS
+            and pvm.permission.name in self.PUBLIC_ONLY_PERMISSION
+        ):
+            return True
+
+        return False
+
 
 
     # 创建视图，创建权限，创建视图-权限绑定记录。

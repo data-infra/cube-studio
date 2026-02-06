@@ -1,5 +1,6 @@
 import os
 import re
+import traceback
 
 from flask_appbuilder.baseviews import expose_api
 
@@ -32,11 +33,7 @@ from flask import (
 from .baseApi import (
     MyappModelRestApi
 )
-from .base import (
-    DeleteMixin,
-    MyappFilter,
-    MyappModelView,
-)
+from .base import MyappFilter
 from flask_appbuilder import expose
 import datetime, time, json
 from myapp.views.view_team import Project_Join_Filter, filter_join_org_project
@@ -102,30 +99,37 @@ class Notebook_ModelView_Base():
             validators=[DataRequired()]
         )
 
-        # "project": QuerySelectField(
-        #     _('项目组'),
-        #     query_factory=filter_join_org_project,
-        #     allow_blank=True,
-        #     widget=Select2Widget()
-        # ),
-
         self.add_form_extra_fields['project'] = QuerySelectField(
             _('项目组'),
             default='',
             description= _('部署项目组，在切换项目组前注意先停止当前notebook'),
             query_factory=filter_join_org_project,
-            widget=MySelect2Widget(extra_classes="readonly" if notebook else None, new_web=False),
+            widget=MySelect2Widget(new_web=False),
         )
-        self.add_form_extra_fields['images'] = SelectField(
-            _('镜像'),
-            description= _('notebook基础环境镜像，如果显示不准确，请删除新建notebook'),
-            widget=MySelect2Widget(extra_classes="readonly" if notebook else None, new_web=False, can_input=True),
-            choices=[[x[0], x[1]] for x in conf.get('NOTEBOOK_IMAGES', [])],
-            validators=[DataRequired()]
-        )
+
+        NOTEBOOK_IMAGES = conf.get('NOTEBOOK_IMAGES', [])
+        if type(NOTEBOOK_IMAGES)==dict:
+            self.add_form_extra_fields['images'] = SelectField(
+                _('镜像'),
+                description=_('notebook基础环境镜像，如果显示不准确，请删除新建notebook'),
+                widget=MySelect2Widget(new_web=False, can_input=True),
+                choices=core.notebook_cascade_demo(NOTEBOOK_IMAGES),
+                validators=[DataRequired()]
+            )
+        elif type(NOTEBOOK_IMAGES)==list:
+            self.add_form_extra_fields['images'] = SelectField(
+                _('镜像'),
+                description=_('notebook基础环境镜像，如果显示不准确，请删除新建notebook'),
+                widget=MySelect2Widget(new_web=False, can_input=True),
+                choices=[[x[0], x[1]] for x in NOTEBOOK_IMAGES],
+                validators=[DataRequired()]
+            )
+
+
+
         self.add_form_extra_fields['node_selector'] = StringField(
             _('机器选择'),
-            default='cpu=true,notebook=true',
+            default='cpu=true;notebook=true',
             description= _("部署task所在的机器"),
             widget=BS3TextFieldWidget()
         )
@@ -199,7 +203,6 @@ class Notebook_ModelView_Base():
 
         item.resource_memory=core.check_resource_memory(item.resource_memory,self.src_item_json.get('resource_memory',None))
         item.resource_cpu = core.check_resource_cpu(item.resource_cpu,self.src_item_json.get('resource_cpu',None))
-        item.namespace = json.loads(item.project.expand).get('NOTEBOOK_NAMESPACE', conf.get('NOTEBOOK_NAMESPACE'))
         if not item.namespace:
             item.namespace = item.project.notebook_namespace
 
@@ -257,7 +260,7 @@ class Notebook_ModelView_Base():
             if str(self.src_item_json.get('project_id', '1')) != str(item.project.id):
                 src_project = db.session.query(Project).filter_by(id=int(self.src_item_json.get('project_id', '1'))).first()
                 if src_project and src_project.cluster['NAME'] != item.project.cluster['NAME']:
-                    self.base_muldelete([item],src_project.cluster['NAME'])
+                    self.base_stop([item],src_project.cluster['NAME'])
                     flash(__('发现集群更换，已帮你删除之前启动的notebook'), 'success')
 
     def post_add(self, item):
@@ -301,13 +304,16 @@ class Notebook_ModelView_Base():
     @expose_api(description="创建打开jupyter",url='/entry/jupyter', methods=['GET', 'DELETE'])
     def entry_jupyter(self):
         data=request.args
-        project_name=data.get('project_name','public')
-        name = data.get('name',g.user.username+'-pipeline').replace("_",'')[:56]
-        label = data.get('label','打开目录')
-        resource_memory = data.get('resource_memory',"10G")
-        resource_cpu = data.get('resource_cpu',"10")
-        volume_mount = data.get('volume_mount','kubeflow-user-workspace(pvc):/mnt')
-        file_path = data.get('file_path', '')   # 一定要是文件在 notebook的容器目录
+        name = data.get('name', g.user.username + '-pipeline').replace("_", '')[:56]
+        notebook = db.session.query(Notebook).filter(Notebook.name == name).first()
+        expand = json.loads(notebook.expand) if notebook and notebook.expand else {}
+
+        project_name=data.get('project_name',notebook.project.name if notebook else 'public')
+        label = data.get('label',notebook.describe if notebook else '打开目录')
+        resource_memory = data.get('resource_memory',notebook.resource_memory if notebook else "10G")
+        resource_cpu = data.get('resource_cpu',notebook.resource_cpu if notebook else "10")
+        volume_mount = data.get('volume_mount',notebook.volume_mount if notebook else 'kubeflow-user-workspace(pvc):/mnt')
+        file_path = data.get('file_path', expand.get('root',''))   # 一定要是文件在 notebook的容器目录
         if 'http://' in file_path or 'https://' in file_path:
             file_path = '/mnt/{{creator}}'
 
@@ -333,39 +339,39 @@ class Notebook_ModelView_Base():
 
         images = data.get('images',f'{conf.get("REPOSITORY_ORG","ccr.ccs.tencentyun.com/cube-studio/")}notebook:jupyter-ubuntu22.04')
         project = db.session.query(Project).filter(Project.name==project_name).filter(Project.type=='org').first()
-        notebook = db.session.query(Notebook).filter(Notebook.name==name).first()
         if not project:
             res = make_response("项目组%s不存在"%project_name)
             res.status_code = 405
             return res
 
-        if project:
-            if not notebook:
-                notebook = Notebook()
-            notebook.project = project
-            notebook.project_id = project.id
-            notebook.name = name
-            notebook.describe = label
-            notebook.images = images
-            notebook.ide_type = 'jupyter'
-            notebook.working_dir = ''
-            notebook.volume_mount = volume_mount
-            notebook.resource_memory = resource_memory
-            notebook.created_by=g.user
-            notebook.changed_by=g.user
-            notebook.resource_cpu = resource_cpu
-            if file_path.strip('/'):
-                notebook.expand = json.dumps({
-                    "root":file_path
-                })
-            if not notebook.id:
-                notebook.created_on=datetime.datetime.now()
-                db.session.add(notebook)
 
-            db.session.commit()
+        if not notebook:
+            notebook = Notebook()
+        notebook.project = project
+        notebook.project_id = project.id
+        notebook.name = name
+        notebook.describe = label
+        notebook.images = images
+        notebook.ide_type = 'jupyter'
+        notebook.working_dir = ''
+        notebook.volume_mount = volume_mount
+        notebook.resource_memory = resource_memory
+        notebook.created_by=g.user
+        notebook.changed_by=g.user
+        notebook.resource_cpu = resource_cpu
+        expand['status']='online'
+        if file_path.strip('/'):
+            expand['root'] = file_path
+        notebook.expand = json.dumps(expand)
+
+        if not notebook.id:
+            notebook.created_on=datetime.datetime.now()
+            db.session.add(notebook)
+
+        db.session.commit()
 
         notebook_id = notebook.id
-        k8s_client = K8s(notebook.cluster.get('KUBECONFIG', ''))
+        k8s_client = K8s(notebook.project.cluster.get('KUBECONFIG', ''))
         namespace = notebook.project.notebook_namespace
         del_namespace = notebook.namespace
         crd_info = conf.get('CRD_INFO', {}).get('virtualservice', {})
@@ -419,7 +425,7 @@ class Notebook_ModelView_Base():
             )
         except:
             exist_crd=None
-        host = notebook.project.cluster.get('HOST', request.host).split('|')[0].strip().split(':')[0]
+        host = notebook.project.cluster.get('HOST', request.host).split('|')[-1].strip().split(':')[0]
 
         if not exist_crd:
             # 创建vs
@@ -623,11 +629,6 @@ class Notebook_ModelView_Base():
                                    "--NotebookApp.allow_origin='*' "
                                    "--NotebookApp.base_url=%s" % (pre_command, notebook.mount, port, rewrite_url)]
 
-            # command = ["sh", "-c", "%s jupyter lab --notebook-dir=/ --ip=0.0.0.0 "
-            #                         "--no-browser --allow-root --port=%s "
-            #                         "--NotebookApp.token='' --NotebookApp.password='' "
-            #                         "--NotebookApp.allow_origin='*' "
-            #                         "--NotebookApp.base_url=%s" % (pre_command,port,rewrite_url)]
 
 
         elif notebook.ide_type=='theia':
@@ -641,7 +642,6 @@ class Notebook_ModelView_Base():
         image_pull_secrets = list(set(image_pull_secrets + [rep.hubsecret for rep in user_repositorys]))
 
         labels = {"app": notebook.name, 'user': notebook.created_by.username, 'pod-type': "notebook"}
-
         notebook_env = []
         if notebook.env:
             notebook_env = [x.strip() for x in notebook.env.split('\n') if x.strip()]
@@ -819,11 +819,14 @@ class Notebook_ModelView_Base():
                 k8s_client = K8s(conf.get('CLUSTERS').get(cluster).get('KUBECONFIG', ''))
                 namespace = item.namespace
                 k8s_client.delete_pods(namespace=namespace,pod_name=item.name)
+                commit_pod_name = "notebook-commit-%s-%s" % (item.created_by.username, str(item.id))
+                k8s_client.delete_pods(namespace=namespace, pod_name=commit_pod_name)
                 k8s_client.delete_service(namespace=namespace,name=item.name)
                 k8s_client.delete_service(namespace=namespace, name=(item.name + "-external").lower()[:60].strip('-'))
                 crd_info = conf.get("CRD_INFO", {}).get('virtualservice', {})
                 if crd_info:
                     k8s_client.delete_crd(group=crd_info['group'], version=crd_info['version'],plural=crd_info['plural'], namespace=item.namespace, name="notebook-jupyter-%s" % item.name.replace('_', '-'))
+                    # k8s_client.delete_crd(group=crd_info['group'], version=crd_info['version'],plural=crd_info['plural'], namespace=item.namespace,name="ssh-notebook-jupyter-%s" % item.name.replace('_', '-'))
 
                 expand = json.loads(item.expand) if item.expand else {}
                 expand['status']='offline'

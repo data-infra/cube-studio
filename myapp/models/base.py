@@ -32,7 +32,7 @@ class MyappModelBase():
         "privileged": _("特权模式"),
         "accounts": _("k8s账号"),
         "images_url": _("镜像"),
-        "hostAliases": _("host"),
+        "host_aliases": _("host"),
         "overwrite_entrypoint": _("覆盖原始启动命令"),
         "command": _("启动命令"),
         "working_dir": _("启动目录"),
@@ -76,6 +76,7 @@ class MyappModelBase():
         "dag_json": _("流向图"),
         "dag_json_html": _("流向图"),
         "username": _("用户名"),
+        "nickname":_("昵称"),
         "schedule_type": _("调度类型"),
         "cron_time": _("调度周期"),
         "global_args": _("全局参数"),
@@ -320,18 +321,18 @@ class MyappModelBase():
         # 不使用用户的填写，完全平台决定
         gpu_num = core.get_gpu(resource_gpu)[0]
         if type(gpu_num)==str and ',' in gpu_num:
-            node_selector = node_selector.replace('cpu=true', 'vgpu=true') + ",vgpu=true,%s=true" % model_type
+            node_selector = node_selector.replace('cpu=true', 'vgpu=true') + ";vgpu=true;%s=true" % model_type
         elif gpu_num>=1 or gpu_num==-1:
-            node_selector = node_selector.replace('cpu=true', 'gpu=true') + ",gpu=true,%s=true"%model_type
+            node_selector = node_selector.replace('cpu=true', 'gpu=true') + ";gpu=true;%s=true"%model_type
         elif 1>gpu_num>0:
-            node_selector = node_selector.replace('cpu=true', 'vgpu=true') + ",vgpu=true,%s=true" % model_type
+            node_selector = node_selector.replace('cpu=true', 'vgpu=true') + ";vgpu=true;%s=true" % model_type
         else:
-            node_selector = node_selector.replace('gpu=true', 'cpu=true') + ",cpu=true,%s=true"%model_type
+            node_selector = node_selector.replace('gpu=true', 'cpu=true') + ";cpu=true;%s=true"%model_type
         if 'org' not in node_selector:
-            node_selector += ',org=public'
-        node_selector = re.split(',|;|\n|\t', str(node_selector))
+            node_selector += ';org=public'
+        node_selector = re.split(';|\n|\t', str(node_selector))
         node_selector = [selector.strip() for selector in node_selector if selector.strip()]
-        node_selector = ','.join(list(set(node_selector)))
+        node_selector = ';'.join(list(set(node_selector)))
         return node_selector
 
 

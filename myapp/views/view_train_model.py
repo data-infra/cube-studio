@@ -1,4 +1,5 @@
 import re
+import traceback
 
 from flask_appbuilder.baseviews import expose_api
 
@@ -28,11 +29,7 @@ from flask import (
     redirect,
     request, jsonify
 )
-from .base import (
-    DeleteMixin,
-    MyappFilter,
-    MyappModelView,
-)
+from .base import MyappFilter
 from .baseApi import (
     MyappModelRestApi
 )

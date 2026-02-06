@@ -1,7 +1,7 @@
 import re
 
 from flask_appbuilder.baseviews import expose_api
-
+from flask_appbuilder.fieldwidgets import BS3TextFieldWidget, Select2Widget, Select2ManyWidget
 from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
@@ -14,33 +14,22 @@ from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from flask_appbuilder.fieldwidgets import Select2Widget, BS3TextFieldWidget
 from myapp.exceptions import MyappException
 from myapp import db, security_manager
-from myapp.forms import MyBS3TextFieldWidget, MyBS3TextAreaFieldWidget, MySelect2Widget
+from myapp.forms import MyBS3TextFieldWidget, MyBS3TextAreaFieldWidget, MySelect2Widget, MySelectMultipleField
 from wtforms.validators import DataRequired, Regexp, Length, regexp
 from flask import (
     flash,
-    g
+    g, request
 )
 import pysnooper
-from .base import (
-    get_user_roles,
-    MyappFilter,
-    MyappModelView,
-)
+from .base import MyappFilter
 from .baseApi import (
     MyappModelRestApi
 )
 import json
 from myapp.utils.py.py_k8s import K8s
-from flask_appbuilder import CompactCRUDMixin, expose
 
-# # 获取某类project分组
-# class Project_users_Filter(MyappFilter):
-#     # @pysnooper.snoop()
-#     def apply(self, query, value):
-#         # user_roles = [role.name.lower() for role in list(get_user_roles())]
-#         # if "admin" in user_roles:
-#         #     return query.filter(Project.type == value).order_by(Project.id.desc())
-#         return query.filter(self.model.field == value)
+from ..models.model_job import Repository
+
 
 # 自己是创建者的才显示,id排序显示
 class Creator_Filter(MyappFilter):
@@ -65,13 +54,16 @@ class Project_User_ModelView_Base():
     label_title = _('组成员')
     datamodel = SQLAInterface(Project_User)
     add_columns = ['project', 'user', 'role']
-    edit_columns = add_columns
-    list_columns = ['user', 'role']
+    edit_columns = ['project','user', 'role']
+    list_columns = ['user', 'role', 'org']
 
     add_form_query_rel_fields = {
         "project": [["name", Project_Join_Filter, 'org']]
     }
     # base_filters = [["id", Project_users_Filter, __('org')]]
+    spec_label_columns = {
+        "org": _("资源组")
+    }
 
     add_form_extra_fields = {
         "project": QuerySelectField(
@@ -92,8 +84,23 @@ class Project_User_ModelView_Base():
     }
     edit_form_extra_fields = add_form_extra_fields
 
-    def pre_add_req(self,req_json,*args,**kwargs):
 
+    # @pysnooper.snoop(watch_explode=('req_json'))
+    def set_column(self, project_user):
+        self.edit_form_extra_fields['user'] =  SelectField(
+            _('用户'),
+            description=_('英文名(小写字母、数字、-组成)，最长50个字符'),
+            widget=MySelect2Widget(readonly=1),
+            default=project_user.user.id,
+            choices=[[project_user.user.id, project_user.user.username]],
+            validators=[DataRequired()]
+        )
+
+    pre_update_web = set_column
+    # pre_add_web = set_column
+
+    def pre_add_req(self,req_json,*args,**kwargs):
+        # 普通用户不能添加其他人进组
         if g.user and g.user.is_admin():
             return req_json
         creators = db.session().query(Project_User).filter_by(project_id=req_json.get('project')).filter_by(role='creator').all()
@@ -122,9 +129,6 @@ class Project_User_ModelView_Base():
 class Project_User_ModelView_Api(Project_User_ModelView_Base, MyappModelRestApi):
     datamodel = SQLAInterface(Project_User)
     route_base = '/project_user_modelview/api'
-    # add_columns = ['user', 'role']
-    add_columns = ['project', 'user', 'role']
-    edit_columns = add_columns
 
 
 appbuilder.add_api(Project_User_ModelView_Api)
@@ -134,9 +138,6 @@ appbuilder.add_api(Project_User_ModelView_Api)
 class Project_Filter(MyappFilter):
     # @pysnooper.snoop()
     def apply(self, query, value):
-        # user_roles = [role.name.lower() for role in list(get_user_roles())]
-        # if "admin" in user_roles:
-        #     return query.filter(Project.type == value).order_by(Project.id.desc())
         return query.filter(self.model.type == value).order_by(self.model.id.desc())
 
 

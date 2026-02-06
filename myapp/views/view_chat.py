@@ -41,9 +41,7 @@ from flask_appbuilder import expose
 import threading
 import queue
 from .base import (
-    DeleteMixin,
-    MyappFilter,
-    MyappModelView,
+    MyappFilter
 )
 from myapp import cache
 conf = app.config
@@ -190,7 +188,7 @@ class Chat_View_Base():
     service_config = '''
 openai接口类型
 {
-    "llm_url": "",  # 请求的url
+    "llm_url": "http://xxx.xx/v1/",  # 请求的url
     "llm_headers": {
         "xxxxx": "xxxxxx"   # 额外添加的header
     },
@@ -288,7 +286,7 @@ aihub接口类型
             description= _('接口类型，并不一定是openai，只需要符合http请求响应格式即可'),
             widget=Select2Widget(),
             default='openai',
-            choices=[[x, x] for x in ["openai",'aihub','chatbi',_('召回列表')]],
+            choices=[[x, x] for x in ["openai",'aihub',_('召回列表')]],
             validators=[]
         ),
         "service_config": StringField(

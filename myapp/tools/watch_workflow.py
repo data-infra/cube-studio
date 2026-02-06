@@ -18,7 +18,7 @@ from myapp.models.model_job import (
     Task,
     RunHistory
 )
-
+from kubernetes import config
 from myapp.utils.celery import session_scope
 conf = app.config
 prometheus = Prometheus(conf.get('PROMETHEUS', ''))
@@ -31,8 +31,12 @@ else:
     clusters = conf.get('CLUSTERS', {})
     if clusters and cluster in clusters:
         kubeconfig = clusters[cluster].get('KUBECONFIG', '')
-        K8s(kubeconfig)
-        # k8s_config.kube_config.load_kube_config(config_file=kubeconfig)
+        if not kubeconfig:
+            kubeconfig = os.getenv('KUBECONFIG', '')
+        if kubeconfig and os.path.exists(kubeconfig) and ''.join(open(kubeconfig).readlines()).strip():
+            config.kube_config.load_kube_config(config_file=kubeconfig)
+        else:
+            config.load_incluster_config()
     else:
         logging.error('no kubeconfig in cluster %s' % cluster)
         exit(1)

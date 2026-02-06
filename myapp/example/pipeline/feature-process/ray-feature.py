@@ -1,7 +1,7 @@
 import ray,os
 import pandas
 import numpy
-
+KFJ_CREATOR = os.getenv('KFJ_CREATOR','admin')
 @ray.remote
 def generate_features(file_path,i):
     print(file_path,i)
@@ -18,7 +18,7 @@ def generate_features(file_path,i):
 
 def main():
     # 读取数据
-    file_path='/mnt/admin/pipeline/example/feature-process/data-test1.csv'
+    file_path=f'/mnt/{KFJ_CREATOR}/pipeline/example/feature-process/data-test1.csv'
 
     # 使用Ray并行生成特征
     features = ray.get([generate_features.remote(file_path,i) for i in range(0,10)])
@@ -26,7 +26,7 @@ def main():
     # 合并所有生成的特征
     final_features = pandas.concat(features)
     print(final_features)
-    final_features.to_csv('/mnt/admin/pipeline/example/feature-process/result.csv',index=False)
+    final_features.to_csv(f'/mnt/{KFJ_CREATOR}/pipeline/example/feature-process/result.csv',index=False)
 
 
 if __name__ == "__main__":

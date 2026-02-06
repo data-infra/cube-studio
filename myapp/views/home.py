@@ -3,6 +3,7 @@ import json
 import logging
 import os.path
 import random
+import traceback
 
 from flask_appbuilder.baseviews import expose_api
 from flask_babel import gettext as __
@@ -23,24 +24,6 @@ from flask import stream_with_context, request
 class Myapp(BaseMyappView):
     route_base = '/myapp'
     default_view = 'home'  # 设置进入蓝图的默认访问视图（没有设置网址的情况下）
-
-    # @expose_api(description="全局首页",url='/welcome')
-    # @expose_api(description="个人首页",url='/profile/<username>/')
-    # def welcome(self, username=None):
-    #     if not g.user or not g.user.get_id():
-    #         return redirect(appbuilder.get_url_for_login)
-    #     if username:
-    #         msg = 'Hello ' + username + " !"
-    #     else:
-    #         msg = 'Hello ' + g.user.username + " !"
-    #
-    #     # 返回模板
-    #     return self.render_template('hello.html', msg=msg)
-
-    @expose_api(description="首页",url='/home')
-    def home(self):
-        # 返回模板
-        return self.render_template('home.html')
 
     @expose_api(description="顶部右侧导航按钮",url='/navbar_right')
     def navbar_right(self):

@@ -79,7 +79,7 @@ export const securitySettingConfig: IRouterConfigPlusItem[] = [
                 title: '日志列表',
                 menu_type: 'iframe',
                 icon: <SettingOutlined style={{ marginRight: 8 }} />,
-                element: lazy2Compont(() => import("./pages/IframeTemplate"), { url: '/logmodelview/list/' })
+                element: lazy2Compont(() => import("./pages/IframeTemplate"), { url: '/log_modelview/api/' })
             },
         ]
     },
@@ -111,7 +111,7 @@ export const routerConfigPlus: IRouterConfigPlusItem[] = [
     {
         path: '/',
         index: true,
-        element: lazy2Compont(() => import("./pages/IframeTemplate"), { url: '/myapp/home' })
+        element: lazy2Compont(() => import("./pages/Home/Home") as any)
     },
     {
         path: '/showData',
@@ -127,7 +127,7 @@ export const routerConfigPlus: IRouterConfigPlusItem[] = [
     {
         path: '/user',
         icon: <UserOutlined style={{ fontSize: 18 }} />,
-        element: lazy2Compont(() => import("./pages/IframeTemplate"), { url: '/users/userinfo/' })
+        element: lazy2Compont(() => import("./pages/UserCenter") as any)
     },
     { path: '*', element: <Page404 /> },
 ]

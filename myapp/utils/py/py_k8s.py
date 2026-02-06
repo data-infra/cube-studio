@@ -16,19 +16,37 @@ import threading
 import logging
 from myapp import conf
 from myapp.utils import core
+from kubernetes.config import kube_config,load_incluster_config
 
 class K8s():
 
-    def __init__(self, file_path=None,cluster_name=''):  # kubeconfig
+    def _create_api_client(self, file_path):
+        """为每个实例创建独立的 ApiClient"""
+        client_config = client.Configuration()
+
         if not file_path:
             file_path = conf.get('CLUSTERS',{}).get(conf.get('ENVIRONMENT'),{}).get('KUBECONFIG','')
-        kubeconfig = os.getenv('KUBECONFIG', '')
+        if not file_path:
+            file_path = os.getenv('KUBECONFIG', '')
+
         if file_path and os.path.exists(file_path) and ''.join(open(file_path).readlines()).strip():
-            config.kube_config.load_kube_config(config_file=file_path)
-        elif kubeconfig:
-            config.kube_config.load_kube_config(config_file=kubeconfig)
+            # 加载指定文件的配置
+            kube_config.load_kube_config(
+                config_file=file_path,
+                client_configuration=client_config
+            )
         else:
-            config.load_incluster_config()
+            # 使用默认配置
+            load_incluster_config(client_configuration=client_config)
+
+        client_config.verify_ssl = False
+        return client.ApiClient(client_config)
+
+    def __init__(self, file_path=None,cluster_name=''):  # kubeconfig
+
+        # 为每个实例创建独立的 ApiClient
+        api_client = self._create_api_client(file_path)
+
         self.kubeconfig = file_path
         self.cluster_name = cluster_name
 
@@ -37,11 +55,13 @@ class K8s():
         if not cluster_name and file_path:
             self.cluster_name = file_path.split('/')[-1].replace('-kubeconfig','')
 
-        self.v1 = client.CoreV1Api()
-        self.AppsV1Api = client.AppsV1Api()
-        self.NetworkingV1Api = client.NetworkingV1Api()
-        self.CustomObjectsApi = client.CustomObjectsApi()
-        self.rbacvi = client.RbacAuthorizationV1Api()
+        self.v1 = client.CoreV1Api(api_client)
+        self.AppsV1Api = client.AppsV1Api(api_client)
+        self.NetworkingV1Api = client.NetworkingV1Api(api_client)
+        self.CustomObjectsApi = client.CustomObjectsApi(api_client)
+        self.rbacvi = client.RbacAuthorizationV1Api(api_client)
+        self.autoscalev2 = client.AutoscalingV2Api(api_client)
+        self.autoscalev1 = client.AutoscalingV1Api(api_client)
         self.v1.api_client.configuration.verify_ssl = False  # 只能设置 /usr/local/lib/python3.9/dist-packages/kubernetes/client/configuration.py:   self.verify_ssl= True ---> False
         self.gpu_resource=conf.get('GPU_RESOURCE',{})
         self.vgpu_resource = conf.get('VGPU_RESOURCE', {})
@@ -117,7 +137,7 @@ class K8s():
             message = [condition.message for condition in pod.status.conditions if condition.type == 'Ready' and str(condition.status).lower() == 'false' and condition.message]
             if message:
                 pod_substatus = 'Starting'
-
+        message = [msg for msg in message if msg]   # 去除none的类型
         containers = pod.spec.containers
         # mem = [container.resources.requests for container in containers]
         memory = [self.to_memory_GB(container.resources.requests.get('memory', '0G')) for container in containers if
@@ -542,17 +562,6 @@ class K8s():
                     crd_object['status']['conditions']) > 0:
                 status = crd_object['status']['conditions'][-1]['type']  # tfjob和experiment是这种结构
         return status
-
-    # @pysnooper.snoop(watch_explode=('ya_str',))
-    def get_one_crd_yaml(self, group, version, plural, namespace, name):
-        try:
-            crd_object = self.CustomObjectsApi.get_namespaced_custom_object(group=group, version=version, namespace=namespace, plural=plural, name=name)
-            ya = yaml.load(json.dumps(crd_object))
-            ya_str = yaml.safe_dump(ya, default_flow_style=False)
-            return ya_str
-        except Exception as e:
-            print(e)
-        return ''
 
     # @pysnooper.snoop(watch_explode=('crd_object'))
     def get_one_crd(self, group, version, plural, namespace, name):
@@ -1140,6 +1149,7 @@ class K8s():
         #           timeoutSeconds: 5
 
         # 端口检测或者脚本检测   8080:/health    shell:python /health.py
+        readiness_probe=None
         if health:
             if health[0:health.index(":")] == 'shell':
                 command = health.replace("shell:").split(' ')
@@ -1169,7 +1179,7 @@ class K8s():
             env=env_list,
             security_context=k8s_security_context,
             ports=ports_k8s,
-            readiness_probe=readiness_probe if health else None
+            readiness_probe=readiness_probe
         )
 
 
@@ -1194,11 +1204,11 @@ class K8s():
             annotations['scheduling.k8s.io/group-name'] = 'my-podgroup'
 
         image_pull_secrets = [client.V1LocalObjectReference(image_pull_secret) for image_pull_secret in image_pull_secrets]
-        affinity = None
+        affinity = client.V1Affinity(node_affinity=None,pod_anti_affinity=None,pod_affinity=None)
         nodeSelector = {}
         if node_selector and '=' in node_selector:
             nodeSelector = {}
-            for selector in re.split(',|;|\n|\t', node_selector):
+            for selector in re.split(';|\n|\t', node_selector):
                 selector = selector.strip()
                 if selector:
                     nodeSelector[selector.strip().split('=')[0].strip()] = selector.strip().split('=')[1].strip()
@@ -1209,13 +1219,11 @@ class K8s():
             nodeSelector['gpu-type'] = gpu_type
         # 独占模式，尽量聚集在一个，避免卡零碎
         if gpu_num >= 1:
+            nodeSelector.pop('cpu', None)
             nodeSelector['gpu'] = 'true'
             labels['gpu']='true'
             # 优先选择gpu卡占用的地方，这样不容易造成卡的零碎化占用
-            affinity = client.V1Affinity(
-                node_affinity=None,
-                pod_anti_affinity=None,
-                pod_affinity=client.V1PodAffinity(
+            affinity.pod_affinity = client.V1PodAffinity(
                 preferred_during_scheduling_ignored_during_execution=[
                     client.V1WeightedPodAffinityTerm(
                         pod_affinity_term=client.V1PodAffinityTerm(
@@ -1226,8 +1234,8 @@ class K8s():
                                 }
                             )
                         ),
-                        weight=10)])
-                )
+                        weight=10)]
+            )
         k8s_volumes, k8s_volume_mounts = self.get_volume_mounts(volume_mount, username)
 
         containers = [self.make_container(name=name,
@@ -1392,7 +1400,7 @@ class K8s():
 
     # 创建notebook
     def create_crd(self,group,version,plural,namespace,body):
-        crd_objects = client.CustomObjectsApi().create_namespaced_custom_object(group=group, version=version, namespace=namespace, plural=plural,body=body)
+        crd_objects = self.CustomObjectsApi.create_namespaced_custom_object(group=group, version=version, namespace=namespace, plural=plural,body=body)
         return crd_objects
 
     # 创建pod
@@ -1453,25 +1461,6 @@ class K8s():
         )
 
         pod_spec.restart_policy = 'Always'  # dp里面必须是Always
-        # cpu任务， # 控制pod尽量分散到不同的机器上
-        if not resource_gpu or resource_gpu=='0':
-            pod_spec.affinity = client.V1Affinity(
-                pod_anti_affinity=client.V1PodAntiAffinity(
-                    preferred_during_scheduling_ignored_during_execution=[client.V1WeightedPodAffinityTerm(
-                        weight=10,
-                        pod_affinity_term=client.V1PodAffinityTerm(
-                            label_selector=client.V1LabelSelector(
-                                match_expressions=[client.V1LabelSelectorRequirement(
-                                    key=label[0],
-                                    operator='In',
-                                    values=[label[1]]
-                                )]
-                            ),
-                            topology_key="kubernetes.io/hostname"
-                        )
-
-                    ) for label in labels.items()]
-                ))
 
         return pod,pod_spec
 
@@ -1479,7 +1468,7 @@ class K8s():
     def delete_deployment(self, namespace, name=None, labels=None):
         if name:
             try:
-                client.AppsV1Api().delete_namespaced_deployment(name=name, namespace=namespace, grace_period_seconds=0)
+                self.AppsV1Api.delete_namespaced_deployment(name=name, namespace=namespace, grace_period_seconds=0)
             except ApiException as api_e:
                 if api_e.status != 404:
                     print(api_e)
@@ -1491,7 +1480,7 @@ class K8s():
                 labels_str = ','.join(labels_arr)
                 deploys = self.AppsV1Api.list_namespaced_deployment(namespace=namespace, label_selector=labels_str).items or []
                 for deploy in deploys:
-                    client.AppsV1Api().delete_namespaced_deployment(name=deploy.metadata.name, namespace=namespace, grace_period_seconds=0)
+                    self.AppsV1Api.delete_namespaced_deployment(name=deploy.metadata.name, namespace=namespace, grace_period_seconds=0)
             except ApiException as api_e:
                 if api_e.status != 404:
                     print(api_e)
@@ -1528,7 +1517,7 @@ class K8s():
         dp = v1_deployment.V1Deployment(api_version='apps/v1', kind='Deployment', metadata=metadata, spec=dp_spec)
         # print(dp.to_str())
         # try:
-        #     client.AppsV1Api().delete_namespaced_deployment(name, namespace)
+        #     self.AppsV1Api.delete_namespaced_deployment(name, namespace)
         # except Exception as e:
         #     print(e)
 
@@ -1541,11 +1530,11 @@ class K8s():
                 dp = self.AppsV1Api.create_namespaced_deployment(namespace, dp)
 
         # try:
-        #     dp = client.AppsV1Api().create_namespaced_deployment(namespace, dp)
+        #     dp = self.AppsV1Api.create_namespaced_deployment(namespace, dp)
         # except Exception as e:
         #     print(e)
         #     try:
-        #         client.AppsV1Api().patch_namespaced_deployment(name=name,namespace=namespace,body=dp)
+        #         self.AppsV1Api.patch_namespaced_deployment(name=name,namespace=namespace,body=dp)
         #     except Exception as e1:
         #         print(e1)
         # # time.sleep(2)
@@ -1555,7 +1544,7 @@ class K8s():
     def delete_statefulset(self, namespace, name=None, labels=None):
         if name:
             try:
-                client.AppsV1Api().delete_namespaced_stateful_set(name=name, namespace=namespace)
+                self.AppsV1Api.delete_namespaced_stateful_set(name=name, namespace=namespace)
             except ApiException as api_e:
                 if api_e.status != 404:
                     print(api_e)
@@ -1567,7 +1556,7 @@ class K8s():
                 labels_str = ','.join(labels_arr)
                 stss = self.AppsV1Api.list_namespaced_stateful_set(namespace=namespace, label_selector=labels_str).items or []
                 for sts in stss:
-                    client.AppsV1Api().delete_namespaced_stateful_set(name=sts.metadata.name, namespace=namespace)
+                    self.AppsV1Api.delete_namespaced_stateful_set(name=sts.metadata.name, namespace=namespace)
             except ApiException as api_e:
                 if api_e.status != 404:
                     print(api_e)
@@ -1733,7 +1722,7 @@ class K8s():
                     ]
                 }
             }
-
+            # 获取分流方法和比例
             def get_canary(gateway_service, canarys):
                 canarys = re.split(',|;', canarys)
                 des_canary = {}
@@ -1784,14 +1773,14 @@ class K8s():
                 crd_json['spec']['http'][0]['mirror_percent'] = mirror_percent
 
             try:
-                client.CustomObjectsApi().get_namespaced_custom_object(
+                self.CustomObjectsApi.get_namespaced_custom_object(
                     group=crd_info['group'],
                     version=crd_info['version'],
                     plural=crd_info['plural'],
                     name=name,
                     namespace=namespace
                 )
-                crd_objects = client.CustomObjectsApi().replace_namespaced_custom_object(
+                crd_objects = self.CustomObjectsApi.replace_namespaced_custom_object(
                     group=crd_info['group'],
                     version=crd_info['version'],
                     namespace=namespace,
@@ -1801,7 +1790,7 @@ class K8s():
                 )
             except ApiException as e:
                 if e.status == 404:
-                    crd_objects = client.CustomObjectsApi().create_namespaced_custom_object(
+                    crd_objects = self.CustomObjectsApi.create_namespaced_custom_object(
                         group=crd_info['group'],
                         version=crd_info['version'],
                         namespace=namespace,
@@ -1842,14 +1831,14 @@ class K8s():
             }
 
             try:
-                client.CustomObjectsApi().get_namespaced_custom_object(
+                self.CustomObjectsApi.get_namespaced_custom_object(
                     group=crd_info['group'],
                     version=crd_info['version'],
                     plural=crd_info['plural'],
                     name=name + '-8080',
                     namespace=namespace
                 )
-                crd_objects = client.CustomObjectsApi().replace_namespaced_custom_object(
+                crd_objects = self.CustomObjectsApi.replace_namespaced_custom_object(
                     group=crd_info['group'],
                     version=crd_info['version'],
                     namespace=namespace,
@@ -1859,7 +1848,7 @@ class K8s():
                 )
             except ApiException as e:
                 if e.status == 404:
-                    crd_objects = client.CustomObjectsApi().create_namespaced_custom_object(
+                    crd_objects = self.CustomObjectsApi.create_namespaced_custom_object(
                         group=crd_info['group'],
                         version=crd_info['version'],
                         namespace=namespace,
@@ -1909,14 +1898,14 @@ class K8s():
 
     def delete_hpa(self, namespace, name):
         try:
-            client.AutoscalingV2beta2Api().delete_namespaced_horizontal_pod_autoscaler(name=name,namespace=namespace,grace_period_seconds=0)
+            self.autoscalev2.delete_namespaced_horizontal_pod_autoscaler(name=name,namespace=namespace,grace_period_seconds=0)
         except ApiException as api_e:
             if api_e.status != 404:
                 print(api_e)
         except Exception as e:
             print(e)
         try:
-            client.AutoscalingV1Api().delete_namespaced_horizontal_pod_autoscaler(name=name,namespace=namespace,grace_period_seconds=0)
+            self.autoscalev1.delete_namespaced_horizontal_pod_autoscaler(name=name,namespace=namespace,grace_period_seconds=0)
         except ApiException as api_e:
             if api_e.status != 404:
                 print(api_e)
@@ -1929,7 +1918,7 @@ class K8s():
         hpa = re.split(',|;', hpa)
 
         hpa_json = {
-            "apiVersion": "autoscaling/v2beta2",  # 需要所使用的k8s集群启动了这个版本的hpa，可以通过 kubectl api-resources  查看使用的版本
+            "apiVersion": "autoscaling/v2",  # 需要所使用的k8s集群启动了这个版本的hpa，可以通过 kubectl api-resources  查看使用的版本
             "kind": "HorizontalPodAutoscaler",
             "metadata": {
                 "name": name,
@@ -2014,7 +2003,7 @@ class K8s():
         # )
         print(json.dumps(hpa_json, indent=4, ensure_ascii=False))
         try:
-            client.AutoscalingV2beta2Api().create_namespaced_horizontal_pod_autoscaler(namespace=namespace, body=hpa_json, pretty=True)
+            self.autoscalev2.create_namespaced_horizontal_pod_autoscaler(namespace=namespace, body=hpa_json, pretty=True)
         except ValueError as e:
             if str(e) == 'Invalid value for `conditions`, must not be `None`':
                 print(e)
@@ -2046,8 +2035,7 @@ class K8s():
     # @pysnooper.snoop(watch_explode=('item'))
     def get_node_metrics(self):
         back_metrics = []
-        cust = client.CustomObjectsApi()
-        metrics = cust.list_cluster_custom_object('metrics.k8s.io', 'v1beta1', 'nodes')  # All node metrics
+        metrics = self.CustomObjectsApi.list_cluster_custom_object('metrics.k8s.io', 'v1beta1', 'nodes')  # All node metrics
         items = metrics['items'] or []
         for item in items:
             back_metrics.append({
@@ -2063,12 +2051,11 @@ class K8s():
     # @pysnooper.snoop()
     def get_pod_metrics(self, namespace=None):
         back_metrics = []
-        cust = client.CustomObjectsApi()
         try:
             if namespace:
-                metrics = cust.list_namespaced_custom_object('metrics.k8s.io', 'v1beta1', namespace,'pods')  # Just pod metrics for the default namespace
+                metrics = self.CustomObjectsApi.list_namespaced_custom_object('metrics.k8s.io', 'v1beta1', namespace,'pods')  # Just pod metrics for the default namespace
             else:
-                metrics = cust.list_cluster_custom_object('metrics.k8s.io', 'v1beta1', 'pods')  # All Pod Metrics
+                metrics = self.CustomObjectsApi.list_cluster_custom_object('metrics.k8s.io', 'v1beta1', 'pods')  # All Pod Metrics
         except:
             return back_metrics
         items = metrics.get('items', [])
@@ -2244,7 +2231,8 @@ class K8s():
         except ApiException as e1:
             if e1.status == 404:
                 pass
-
+            else:
+                print(e1)
         except Exception  as e:
             pass
         return {}
@@ -2401,42 +2389,6 @@ class K8s():
         except Exception as e:
             print(e)
 
-    # 获取节点的使用量指标，但是没有gpu相关的
-    # @pysnooper.snoop()
-    def get_metric(self):
-        from kubernetes.client import ApiClient
-        import urllib3
-
-        # 禁用SSL警告（如果是自签名证书）
-        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-        # 创建API客户端
-        api_client = ApiClient()
-
-        try:
-            # 获取节点metrics（添加verify_ssl=False如果使用自签名证书）
-            response = api_client.call_api(
-                '/apis/metrics.k8s.io/v1beta1/nodes',
-                'GET',
-                auth_settings=['BearerToken'],
-                _preload_content=False,
-                _return_http_data_only=True,
-            )
-
-            # 解析响应数据
-            data = json.loads(response.data)
-            for node in data['items']:
-                print(f"Node: {node['metadata']['name']}")
-                print(f"CPU Usage: {node['usage']['cpu']}")
-                print(f"Memory Usage: {node['usage']['memory']}")
-                print("------")
-
-        except Exception as e:
-            print(f"Error fetching metrics: {str(e)}")
-            # 检查metrics-server是否安装
-            print("请确保已安装metrics-server，可通过以下命令检查:")
-            print("kubectl get deployment metrics-server -n kube-system")
-
 
 class K8SStreamThread(threading.Thread):
 
@@ -2487,9 +2439,10 @@ def check_status_time(status, hour=8):
     return status
 
 
-if __name__=='__main__':
-    k8s_client = K8s(file_path='kubeconfig/dev-kubeconfig')
 
-    print(k8s_client.get_node())
+if __name__=='__main__':
+    k8s_client = K8s()
+
+    k8s_client.get_all_node_allocated_resources()
 
 

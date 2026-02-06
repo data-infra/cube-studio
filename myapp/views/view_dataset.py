@@ -1,6 +1,7 @@
 import datetime
 import re
 import shutil
+import traceback
 import zipfile, pandas
 from flask_appbuilder import action
 from flask_appbuilder.baseviews import expose_api
@@ -23,9 +24,7 @@ from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 import importlib
 from .base import (
-    DeleteMixin,
-    MyappFilter,
-    MyappModelView,
+    MyappFilter
 )
 from myapp import app, appbuilder, db
 from flask_appbuilder import expose
@@ -333,8 +332,8 @@ example：
 
 
     # 将外部存储保存到本地存储中心
-    @expose("/download/<dataset_id>", methods=["GET", "POST"])
-    @expose("/download/<dataset_id>/<partition>", methods=["GET", "POST"])
+    @expose_api(description="下载指定数据集",url="/download/<dataset_id>", methods=["GET", "POST"])
+    @expose_api(description="下载指定数据集指定分片",url="/download/<dataset_id>/<partition>", methods=["GET", "POST"])
     def download_dataset(self, dataset_id, partition=''):
 
         # 生成下载链接
@@ -351,6 +350,7 @@ example：
         if '*' not in dataset.owner and g.user.username not in dataset.owner and not g.user.is_admin():
             return make_response(("Not authorized to download dataset", 401))
         try:
+
             download_url = []
             if dataset.path and dataset.path.strip():
                 # 如果存储在集群数据集中心
@@ -385,16 +385,16 @@ example：
                 "message": "success"
             })
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return jsonify({
                 "status": 1,
                 "result": '',
                 "message": str(e)
             })
 
-    @expose("/preview/<dataset_name>", methods=["GET", "POST"])
-    @expose("/preview/<dataset_name>/<dataset_version>", methods=["GET", 'POST'])
-    @expose("/preview/<dataset_name>/<dataset_version>/<dataset_segment>", methods=["GET", 'POST'])
+    @expose_api(description="预览指定数据集",url="/preview/<dataset_name>", methods=["GET", "POST"])
+    @expose_api(description="预览指定数据集指定版本",url="/preview/<dataset_name>/<dataset_version>", methods=["GET", 'POST'])
+    @expose_api(description="预览指定数据集指定版本指定分片",url="/preview/<dataset_name>/<dataset_version>/<dataset_segment>", methods=["GET", 'POST'])
     def preview(self):
         _args = request.get_json(silent=True) or {}
         _args.update(request.args)

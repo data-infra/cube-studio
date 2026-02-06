@@ -1,6 +1,8 @@
 import random
 import time
 import logging
+import traceback
+
 import pandas
 from flask_appbuilder.baseviews import expose_api
 
@@ -146,7 +148,7 @@ with (ip='{ip}',port='{port}',db_name='{pg_db_name}',user_name='{user_name}',pwd
         logging.info(hive_sql)
         return hive_sql
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return str(e)
 
 
@@ -301,6 +303,7 @@ class Dimension_table_ModelView_Api(MyappModelRestApi):
                 item.sqllchemy_uri=''
                 db.session.commit()
         except Exception as e:
+            traceback.print_exc()
             flash(__('测试数据库连通性失败，请重新配置数据库连接串'),'error')
             item.sqllchemy_uri = ''
             db.session.commit()
@@ -365,6 +368,7 @@ class Dimension_table_ModelView_Api(MyappModelRestApi):
                 dbsession.close()
                 flash(__('清空完成'), 'success')
         except Exception as e:
+            traceback.print_exc()
             flash(__('清空失败：') + str(e), 'error')
 
         url_path = conf.get('MODEL_URLS', {}).get("dimension") + f'?targetId={dim_id}'
@@ -983,14 +987,14 @@ class Dimension_remote_table_ModelView_Api(MyappModelRestApi):
     @expose_api(description="",url="/<dim_id>/api/<int:pk>", methods=["GET"])
     def dim_api_show(self, dim_id, pk, **kwargs):
         view_instance = self.set_model(dim_id)
-        return view_instance.api_show(pk, **kwargs)
+        return view_instance.get(pk, **kwargs)
 
     @expose_api(description="",url="/<dim_id>/api/", methods=["GET"])
     def dim_api_list(self, dim_id, **kwargs):
 
         view_instance = self.set_model(dim_id)
         try:
-            return view_instance.api_list(**kwargs)
+            return view_instance.get_list(**kwargs)
         except Exception as e:
             print(e)
 
@@ -1010,7 +1014,7 @@ class Dimension_remote_table_ModelView_Api(MyappModelRestApi):
         view_instance = self.set_model(dim_id)
 
         try:
-            return view_instance.api_add()
+            return view_instance.post()
         except Exception as e:
             print(e)
             flash(Markup(str(e)), 'error')
@@ -1024,12 +1028,12 @@ class Dimension_remote_table_ModelView_Api(MyappModelRestApi):
     # @pysnooper.snoop(watch_explode=('item','data'))
     def dim_api_edit(self, dim_id, pk):
         view_instance = self.set_model(dim_id)
-        return view_instance.api_edit(pk)
+        return view_instance.put(pk)
 
     @expose_api(description="",url="/<dim_id>/api/<pk>", methods=["DELETE"])
     def dim_api_delete(self, dim_id, pk):
         view_instance = self.set_model(dim_id)
-        return view_instance.api_delete(pk)
+        return view_instance.delete(pk)
 
     @expose_api(description="维表批量上传",url="/<dim_id>/api/upload/", methods=["POST"])
     # @pysnooper.snoop()

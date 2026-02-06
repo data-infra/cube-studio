@@ -44,7 +44,7 @@ class Repository(Model,AuditMixinNullable,MyappModelBase):
     @property
     def hubsecret_url(self):
         if g.user.is_admin():
-            url = conf.get('K8S_DASHBOARD_CLUSTER', '') + f'#/secret/pipeline/{self.hubsecret}?namespace=pipeline'
+            url = conf.get('K8S_DASHBOARD_CLUSTER', '/k8s/dashboard/cluster/') + f'#/secret/pipeline/{self.hubsecret}?namespace=pipeline'
             return Markup(f'<a target=_blank href="{url}">{self.hubsecret}</a>')
         else:
             return self.hubsecret
@@ -57,14 +57,14 @@ class Images(Model,AuditMixinNullable,MyappModelBase):
     id = Column(Integer, primary_key=True,comment='id主键')
     project_id = Column(Integer, ForeignKey('project.id'),comment='项目组id')
     project = relationship(
-        "Project", foreign_keys=[project_id]
+        "Project", foreign_keys=[project_id], lazy='selectin'
     )
 
     name = Column(String(500), nullable=False,comment='英文名')
     describe = Column(String(1000), nullable=False,comment='描述')
     repository_id = Column(Integer, ForeignKey('repository.id'),comment='仓库id')
     repository = relationship(
-        "Repository", foreign_keys=[repository_id]
+        "Repository", foreign_keys=[repository_id], lazy='selectin'
     )
     entrypoint=Column(String(2000),comment='入口点')
     dockerfile=Column(Text,comment='dockerfile')
@@ -87,15 +87,15 @@ class Job_Template(Model,AuditMixinNullable,MyappModelBase):
     id = Column(Integer, primary_key=True,comment='id主键')
     project_id = Column(Integer, ForeignKey('project.id'),comment='项目组id')
     project = relationship(
-        "Project", foreign_keys=[project_id]
+        "Project", foreign_keys=[project_id], lazy='selectin'
     )
     name = Column(String(500), nullable=False,unique=True,comment='英文名')
     version = Column(Enum('Release','Alpha',name='version'),nullable=False,default='Release',comment='版本')
     images_id = Column(Integer, ForeignKey('images.id'),comment='镜像id')
     images = relationship(
-        Images, foreign_keys=[images_id]
+        Images, foreign_keys=[images_id], lazy='selectin'
     )
-    hostAliases = Column(Text,comment='域名映射')   # host文件
+    host_aliases = Column(Text,comment='域名映射')   # host文件
     describe = Column(String(500), nullable=False,comment='描述')
     workdir=Column(String(400),comment='工作目录')
     entrypoint=Column(String(2000),comment='入口点')
@@ -151,7 +151,7 @@ class Job_Template(Model,AuditMixinNullable,MyappModelBase):
             expand=self.expand,
             entrypoint=self.entrypoint,
             workdir=self.workdir,
-            hostAliases=self.hostAliases,
+            host_aliases=self.host_aliases,
             env=self.env,
             volume_mount=self.volume_mount,
             privileged=self.privileged,
@@ -166,7 +166,7 @@ class Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     describe = Column(String(200),nullable=False,comment='描述')
     project_id = Column(Integer, ForeignKey('project.id'),nullable=False,comment='项目组id')
     project = relationship(
-        "Project", foreign_keys=[project_id]
+        "Project", foreign_keys=[project_id], lazy='selectin'
     )
     dag_json = Column(Text,nullable=False,default='{}',comment='上下游关系')
     namespace=Column(String(100),default='pipeline',comment='命名空间')
@@ -178,7 +178,7 @@ class Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     pipeline_argo_id = Column(String(100),comment='argo workflow id')
     version_id = Column(String(100),comment='workflow version id')
     run_id = Column(String(100),comment='workflow run id')
-    node_selector = Column(String(100), default='cpu=true,train=true',comment='机器选择器')
+    node_selector = Column(String(100), default='cpu=true;train=true',comment='机器选择器')
     image_pull_policy = Column(Enum('Always','IfNotPresent',name='image_pull_policy'),nullable=False,default='Always',comment='镜像拉取策略')
     parallelism = Column(Integer, nullable=False,default=1,comment='同一个pipeline，最大并行的task数目')  #
     alert_status = Column(String(100), default='Pending,Running,Succeeded,Failed,Terminated',comment=' 哪些状态会报警Pending,Running,Succeeded,Failed,Unknown,Waiting,Terminated')   #
@@ -515,11 +515,11 @@ class Task(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     label = Column(String(100), nullable=False,comment='中文名')   # 别名
     job_template_id = Column(Integer, ForeignKey('job_template.id'),comment='任务模板id')
     job_template = relationship(
-        "Job_Template", foreign_keys=[job_template_id]
+        "Job_Template", foreign_keys=[job_template_id], lazy='selectin'
     )
     pipeline_id = Column(Integer, ForeignKey('pipeline.id'),comment='任务流id')
     pipeline = relationship(
-        "Pipeline", foreign_keys=[pipeline_id]
+        "Pipeline", foreign_keys=[pipeline_id], lazy='selectin'
     )
     namespace = Column(String(100), default='pipeline', comment='命名空间')
     working_dir = Column(String(1000),default='',comment='启动目录')
@@ -527,7 +527,7 @@ class Task(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     overwrite_entrypoint = Column(Boolean,default=False,comment='是否覆盖模板中的入口点')
     args = Column(Text,comment='任务启动参数')
     volume_mount = Column(String(2000),default='kubeflow-user-workspace(pvc):/mnt',comment='挂载')   #
-    node_selector = Column(String(100),default='cpu=true,train=true',comment='机器选择器')   #
+    node_selector = Column(String(100),default='cpu=true;train=true',comment='机器选择器')   #
     resource_memory = Column(String(100),default='2G',comment='申请内存')
     resource_cpu = Column(String(100), default='2',comment='申请cpu')
     resource_gpu= Column(String(100), default='0',comment='申请gpu')
@@ -564,7 +564,7 @@ class Task(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
         project_node_selector = self.get_default_node_selector(self.pipeline.project.node_selector,self.resource_gpu,'train')
         gpu_type = core.get_gpu(self.resource_gpu)[1]
         if gpu_type:
-            project_node_selector+=',gpu-type='+gpu_type
+            project_node_selector+=';gpu-type='+gpu_type
         return project_node_selector
 
 
@@ -618,7 +618,7 @@ class RunHistory(Model,MyappModelBase):
     id = Column(Integer, primary_key=True,comment='id主键')
     pipeline_id = Column(Integer, ForeignKey('pipeline.id'),comment='任务流id')
     pipeline = relationship(
-        "Pipeline", foreign_keys=[pipeline_id]
+        "Pipeline", foreign_keys=[pipeline_id], lazy='selectin'
     )
     pipeline_file = Column(Text(655360), default='',comment='workflow yaml')
     pipeline_argo_id = Column(String(100),comment='任务流 argo id')   # 上传的pipeline id
@@ -711,28 +711,12 @@ class Crd:
         return Markup('<pre><code>' + self.info_json + '</code></pre>')
 
     @property
-    def namespace_url(self):
-        # user_roles = [role.name.lower() for role in list(g.user.roles)]
-        # if "admin" in user_roles:
-        url = conf.get('K8S_DASHBOARD_CLUSTER', '') + '#/search?namespace=%s&q=%s' % (self.namespace, self.name.replace('_', '-'))
-        return Markup(f'<a target=_blank href="{url}">{self.namespace}</a>')
-
-    @property
     def stop(self):
         return Markup(f'<a href="../stop/{self.id}">停止</a>')
 
 
 class Workflow(Model,Crd,MyappModelBase):
     __tablename__ = 'workflow'
-
-    @property
-    def namespace_url(self):
-        if self.pipeline:
-            url = conf.get('K8S_DASHBOARD_CLUSTER', '') + '#/search?namespace=%s&q=%s' % (self.namespace, self.pipeline.name.replace('_', '-'))
-            return Markup(f'<a target=_blank href="{url}">{self.namespace}</a>')
-        else:
-            url = conf.get('K8S_DASHBOARD_CLUSTER', '') + '#/search?namespace=%s&q=%s' % (self.namespace, self.name.replace('_', '-'))
-            return Markup(f'<a target=_blank href="{url}">{self.namespace}</a>')
 
     @property
     def run_history(self):
