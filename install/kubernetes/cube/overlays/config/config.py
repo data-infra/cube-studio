@@ -786,7 +786,8 @@ STORE_CONFIG = {
     "download_host":"https://xx.cos.ap-nanjing.myqcloud.com/"
 }
 
-K8S_DASHBOARD_CLUSTER = '/k8s/dashboard/user1/'  #
+K8S_DASHBOARD_CLUSTER = '/k8s/dashboard/cluster/'  #
+K8S_DASHBOARD_USER = '/k8s/dashboard/user1/'  #
 BLACK_PORT = [10250]   # 黑名单端口，cube-studio将不会占用这些端口，10250是kubelet的端口。
 
 K8S_NETWORK_MODE = 'iptables'   # iptables ipvs
@@ -896,6 +897,7 @@ CLUSTERS={
         "NAME":"dev",
         "KUBECONFIG":'/home/myapp/kubeconfig/dev-kubeconfig',
         "SERVICE_DOMAIN": 'service.local.com',
+        # "HOST": "192.168.0.100"   # 本地调试的时候这里更换为k8s的istio ingressgateway的ip并解开注释
     }
 }
 
