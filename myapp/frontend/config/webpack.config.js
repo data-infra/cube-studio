@@ -314,6 +314,11 @@ module.exports = function (webpackEnv) {
       alias: {
         // Path alias for cleaner imports
         '@': paths.appSrc,
+        // 兼容 Node 22 + Webpack5 对 ESM fully-specified 的严格解析：
+        // 某些依赖（如 @uiw/react-codemirror）导入 react/jsx-runtime 时不带扩展名，
+        // 这里显式指向 .js 入口，避免 "Can't resolve react/jsx-runtime" 报错。
+        'react/jsx-runtime': require.resolve('react/jsx-runtime.js'),
+        'react/jsx-dev-runtime': require.resolve('react/jsx-dev-runtime.js'),
         // Support React Native Web
         // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
         'react-native': 'react-native-web',
@@ -330,14 +335,15 @@ module.exports = function (webpackEnv) {
         // To fix this, we prevent you from importing files out of src/ -- if you'd like to,
         // please link the files into your node_modules/ and let module-resolution kick in.
         // Make sure your source files are compiled, as they will not be processed in any way.
-        new ModuleScopePlugin(paths.appSrc, [
-          paths.appPackageJson,
-          reactRefreshRuntimeEntry,
-          reactRefreshWebpackPluginRuntimeEntry,
-          babelRuntimeEntry,
-          babelRuntimeEntryHelpers,
-          babelRuntimeRegenerator,
-        ]),
+        // Node 22 下 ModuleScopePlugin 路径解析不兼容，会误拦 node_modules 中的合法导入（如 react/jsx-runtime）
+//         new ModuleScopePlugin(paths.appSrc, [
+//           paths.appPackageJson,
+//           reactRefreshRuntimeEntry,
+//           reactRefreshWebpackPluginRuntimeEntry,
+//           babelRuntimeEntry,
+//           babelRuntimeEntryHelpers,
+//           babelRuntimeRegenerator,
+//         ]),
       ],
     },
     module: {

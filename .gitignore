@@ -24,7 +24,6 @@ myapp/test
 /job-template/job/*/.ipynb_checkpoints/
 install/docker/kubeconfig/
 /aihub/deep-learning/chat-embedding/docs/
-/myapp/chatgpt-web/.pnpm-store/
 /myapp/flask_appbuilder/
 /myapp/utils/alipay/
 /dev/*
@@ -36,3 +35,11 @@ compile.py
 /install/docker/kubeconfig/
 /install/docker/project/
 /myapp/dm/
+/.vscode/
+/myapp/static/appbuilder/vison/
+/myapp/static/appbuilder/visonPlus/
+/myapp/static/appbuilder/frontend/
+/myapp/chatgpt-web/distChat/.superpowers/
+/.superpowers/
+myapp/config.py
+**/LC_MESSAGES/*.mo

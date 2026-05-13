@@ -149,13 +149,10 @@ kubectl delete -k cube/overlays
 kubectl apply -k cube/overlays
 
 # 配置入口
-kubectl patch svc istio-ingressgateway -n istio-system -p '{"spec":{"externalIPs":["'"$1"'"]}}'
 echo "打开网址：http://$1"
 
-# ipvs模式启动配置入口
-# kubectl patch svc istio-ingressgateway -n istio-system -p '{"spec":{"type":"NodePort"}}'
-# nodeport=`kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}'`
-# echo "打开网址：http://$1:$nodeport"
+
+
 
 
 

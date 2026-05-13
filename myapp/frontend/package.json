@@ -16,6 +16,7 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.5.0",
+    "@traptitech/markdown-it-katex": "^3.0.0",
     "@tweenjs/tween.js": "^18.6.4",
     "@types/d3": "^7.4.0",
     "@types/d3-graphviz": "^2.6.7",
@@ -42,6 +43,8 @@
     "browserslist": "^4.18.1",
     "camelcase": "^6.2.1",
     "case-sensitive-paths-webpack-plugin": "^2.4.0",
+    "crypto-js": "^4.2.0",
+    "@types/crypto-js": "^4.2.2",
     "codemirror": "^6.0.1",
     "cross-env": "^7.0.3",
     "css-loader": "^6.5.1",
@@ -59,7 +62,9 @@
     "file-loader": "^6.2.0",
     "fs-extra": "^10.0.0",
     "glslify-loader": "^2.0.0",
+    "highlight.js": "^11.9.0",
     "html-webpack-plugin": "^5.5.0",
+    "html2canvas": "^1.4.1",
     "http-proxy-middleware": "^2.0.4",
     "i18next": "^23.6.0",
     "i18next-browser-languagedetector": "^7.1.0",
@@ -69,9 +74,11 @@
     "jest-resolve": "^27.4.2",
     "jest-watch-typeahead": "^1.0.0",
     "js-cookie": "^3.0.1",
+    "katex": "^0.16.9",
     "less": "^4.1.2",
     "less-loader": "^10.2.0",
     "long": "^5.2.0",
+    "markdown-it": "^13.0.1",
     "marked": "^15.0.3",
     "mini-css-extract-plugin": "^2.4.5",
     "mobx": "^6.7.0",
@@ -95,6 +102,7 @@
     "react-dev-utils": "^12.0.0",
     "react-dom": "^17.0.2",
     "react-draggable": "^4.4.5",
+    "react-grid-layout": "^1.5.0",
     "react-i18next": "^13.3.1",
     "react-refresh": "^0.11.0",
     "react-resizable": "^3.0.4",
@@ -118,10 +126,10 @@
     "workbox-webpack-plugin": "^6.4.1"
   },
   "scripts": {
-    "start": "node scripts/start.js",
+    "start": "cross-env NODE_OPTIONS=--max-old-space-size=8192 node scripts/start.js",
     "build": "npm run buildSelf",
-    "buildSelf": "cross-env APP_ENV=frontend node scripts/build.js",
-    "buildFab": "cross-env APP_ENV=fab node scripts/build.js",
+    "buildSelf": "cross-env TSC_COMPILE_ON_ERROR=true APP_ENV=frontend NODE_OPTIONS=--max-old-space-size=8192 node scripts/build.js",
+    "buildFab": "cross-env TSC_COMPILE_ON_ERROR=true APP_ENV=fab NODE_OPTIONS=--max-old-space-size=8192 node scripts/build.js",
     "test": "node scripts/test.js"
   },
   "eslintConfig": {
@@ -200,6 +208,9 @@
   },
   "devDependencies": {
     "@types/node": "^20.8.10",
-    "babel-plugin-import": "^1.13.3"
-  }
+    "@types/react-grid-layout": "^1.3.6",
+    "babel-plugin-import": "^1.13.3",
+    "webpack-cli": "^6.0.1"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

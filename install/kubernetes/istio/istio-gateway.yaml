@@ -55,6 +55,8 @@ metadata:
     {}
 spec:
   type: LoadBalancer
+  # 保留客户端源 IP（不做 SNAT），使 Flask 能拿到真实 client IP
+  externalTrafficPolicy: Local
   ports:
     - name: status-port
       port: 15021

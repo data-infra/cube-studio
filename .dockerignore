@@ -1,5 +1,4 @@
 **/node_modules/
-myapp/chatgpt-web/src
 myapp/frontend
 myapp/vision
 myapp/visionPlus
@@ -8,3 +7,6 @@ myapp/test
 myapp/project-*
 .git
 .DS_Store
+install/docker/file
+install/docker/data
+dist

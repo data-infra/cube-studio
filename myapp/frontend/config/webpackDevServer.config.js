@@ -81,6 +81,14 @@ module.exports = function (proxy, allowedHost) {
       overlay: {
         errors: true,
         warnings: false,
+        // 过滤浏览器 ResizeObserver 的已知噪音，避免开发期被全屏红框打断。
+        runtimeErrors: (error) => {
+          const message = String((error && (error.message || error)) || '');
+          if (message.includes('ResizeObserver loop completed with undelivered notifications')) {
+            return false;
+          }
+          return true;
+        },
       },
     },
     devMiddleware: {

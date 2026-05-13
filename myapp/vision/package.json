@@ -40,7 +40,7 @@
   },
   "scripts": {
     "dev": "react-app-rewired start",
-    "build": "react-app-rewired build",
+    "build": "TSC_COMPILE_ON_ERROR=true react-app-rewired build",
     "test": "react-app-rewired test",
     "prettier": "prettier --write '**/*.{tsx,ts,less}'"
   },

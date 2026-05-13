@@ -16,9 +16,11 @@ function webpack(config) {
   };
 
   // plugin
+  // languages：MonacoWebpackPlugin 会按此列表只打包对应语言；
+  // data_analysis 算子的 PythonField 需要 python 语法高亮，必须把 python 加进来
   config.plugins.push(
     new MonacoWebpackPlugin({
-      languages: ['json', 'css', 'mysql', 'sql'],
+      languages: ['json', 'css', 'mysql', 'sql', 'python'],
     }),
   );
 
@@ -40,9 +42,10 @@ module.exports = {
     };
 
     // plugin
+    // 同上：把 python 加入打包语言，否则 PythonField 在生产环境无语法高亮
     config.plugins.push(
       new MonacoWebpackPlugin({
-        languages: ['json', 'mysql', 'css', 'sql'],
+        languages: ['json', 'mysql', 'css', 'sql', 'python'],
       }),
     );
 
