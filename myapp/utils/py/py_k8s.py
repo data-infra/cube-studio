@@ -285,7 +285,7 @@ class K8s():
             event['time'] = (event['first_timestamp'] + datetime.timedelta(hours=8)).strftime('%Y-%m-%d %H:%M:%S') if event.get('first_timestamp', None) else None
             if not event['time']:
                 event['time'] = (event['event_time'] + datetime.timedelta(hours=8)).strftime('%Y-%m-%d %H:%M:%S') if event.get('event_time', None) else None
-        events = sorted(events,key=lambda x:x.get('time',''))
+        events.reverse()
         return events
 
 
@@ -473,7 +473,8 @@ class K8s():
                     back_node['cpu'] = int(self.to_cpu(node.status.allocatable.get('cpu', '0')))
                     back_node['memory'] = int(self.to_memory_GB(node.status.allocatable.get('memory', '0')))
                     # back_node['gpu'] = int(node.status.allocatable.get('nvidia.com/gpu', '0'))
-                    back_node['labels'] = node.metadata.labels
+                    back_node['labels'] = node.metadata.labels if node.metadata.labels else {}
+                    back_node['annotations'] = node.metadata.annotations if node.metadata.annotations else {}
                     back_node['name'] = node.metadata.name
                     back_node['create_time'] = node.metadata.creation_timestamp
                     back_node['node_info'] = node.status.node_info.to_dict()

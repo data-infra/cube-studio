@@ -1,5 +1,6 @@
 import copy
 import csv
+import datetime
 import functools
 import json
 import logging
@@ -7,6 +8,8 @@ import re
 import traceback
 import urllib.parse
 import os
+import uuid
+
 from flask import Markup, Response, current_app, make_response, send_file, flash, g, jsonify, request, render_template
 from inspect import isfunction
 
@@ -251,6 +254,7 @@ class MyappModelRestApi(ModelRestApi):
     page_size = 100
     src_item_object = None  # 原始model对象
     src_item_json = {}  # 原始model对象的json
+    check_show_permission = None
     check_edit_permission = None
     check_delete_permission = None
     datamodel = None
@@ -1134,8 +1138,9 @@ class MyappModelRestApi(ModelRestApi):
     @expose("/", methods=["GET"])
     # @pysnooper.snoop(watch_explode=('select_cols'))
     def get_list(self, **kwargs):
-        if 'can_list' not in self.base_permissions:
-            return self.response_error(403, message='no permission to list')
+        # 如果是其他平台，或者组件通过接口调用，应该放开
+        # if 'can_list' not in self.base_permissions:
+        #     return self.response_error(403, message='no permission to list')
         _response = dict()
 
         try:
@@ -1314,8 +1319,9 @@ class MyappModelRestApi(ModelRestApi):
     @event_logger.log_this
     @expose("/", methods=["POST"])
     def post(self):
-        if 'can_add' not in self.base_permissions:
-            return self.response_error(403, message='no permission to add')
+        # 如果是其他平台，或者组件通过接口调用，应该放开
+        # if 'can_add' not in self.base_permissions:
+        #     return self.response_error(403, message='no permission to add')
         self.src_item_json = {}
         if not request.is_json:
             return self.response_error(400, message="Request is not JSON")
@@ -1384,8 +1390,9 @@ class MyappModelRestApi(ModelRestApi):
     @expose("/<int:pk>", methods=["PUT"])
     # @pysnooper.snoop(watch_explode=('item','data','field'))
     def put(self, pk):
-        if 'can_edit' not in self.base_permissions:
-            return self.response_error(403, message='no permission to edit')
+        # 如果是其他平台，或者组件通过接口调用，应该放开
+        # if 'can_edit' not in self.base_permissions:
+        #     return self.response_error(403, message='no permission to edit')
 
         item = self.datamodel.get(pk, self._base_filters)
         if not item:
@@ -1477,8 +1484,9 @@ class MyappModelRestApi(ModelRestApi):
     @expose("/<int:pk>", methods=["DELETE"])
     # @pysnooper.snoop()
     def delete(self, pk):
-        if 'can_delete' not in self.base_permissions:
-            return self.response_error(403, message='no permission to delete')
+        # 如果是其他平台，或者组件通过接口调用，应该放开
+        # if 'can_delete' not in self.base_permissions:
+        #     return self.response_error(403, message='no permission to delete')
         item = self.datamodel.get(pk, self._base_filters)
         if not item:
             message = '未查询到当前记录，可能是系统缓存未更新，请重试'

@@ -311,7 +311,8 @@ def update_dataset(task,dataset_id):
                             shutil.copy(local_path,remote_dir)
                         # 对文件夹要拷贝文件夹
                         if os.path.isdir(local_path):
-                            shutil.copytree(local_path,remote_dir)
+                            # remote_dir 已存在时允许合并，并覆盖同名文件
+                            shutil.copytree(local_path,remote_dir,dirs_exist_ok=True)
 
             elif dataset.download_url:
                 download_urls = dataset.download_url.split("\n")

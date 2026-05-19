@@ -9,7 +9,6 @@ from flask import get_flashed_messages
 from flask_appbuilder.actions import action
 from flask_appbuilder.forms import DynamicForm
 from flask_appbuilder.models.sqla.filters import BaseFilter
-from flask_appbuilder.widgets import ListWidget
 from myapp.forms import MySearchWidget
 from flask_babel import get_locale
 from flask_babel import gettext as __
@@ -32,6 +31,8 @@ from flask_appbuilder.urltools import (
 )
 from flask import (
     g,
+    redirect as flask_redirect,
+    request,
     Response,
 )
 
@@ -300,11 +301,6 @@ class BaseMyappView(BaseView):
         conf['alert_config'].update(self.alert_config)
 
 
-class MyappListWidget(ListWidget):
-    template = "myapp/fab_overrides/list.html"
-
-
-from flask_appbuilder.widgets import GroupFormListWidget
 from flask import (
     abort,
     flash,
@@ -315,76 +311,6 @@ from flask import (
     session,
     url_for,
 )
-
-
-class CompactCRUDMixin(BaseCRUDView):
-    """
-        Mix with ModelView to implement a list with add and edit on the same page.
-    """
-
-    @classmethod
-    def set_key(cls, k, v):
-        """Allows attaching stateless information to the class using the
-        flask session dict
-        """
-        k = cls.__name__ + "__" + k
-        session[k] = v
-
-    @classmethod
-    def get_key(cls, k, default=None):
-        """Matching get method for ``set_key``
-        """
-        k = cls.__name__ + "__" + k
-        if k in session:
-            return session[k]
-        else:
-            return default
-
-    @classmethod
-    def del_key(cls, k):
-        """Matching get method for ``set_key``
-        """
-        k = cls.__name__ + "__" + k
-        session.pop(k)
-
-    def _get_list_widget(self, **args):
-        """ get joined base filter and current active filter for query """
-        widgets = super(CompactCRUDMixin, self)._get_list_widget(**args)
-        session_form_widget = self.get_key("session_form_widget", None)
-
-        form_widget = None
-        if session_form_widget == "add":
-            form_widget = self._add().get("add")
-        elif session_form_widget == "edit":
-            pk = self.get_key("session_form_edit_pk")
-            if pk and self.datamodel.get(int(pk)):
-                form_widget = self._edit(int(pk)).get("edit")
-        return {
-            "list": GroupFormListWidget(
-                list_widget=widgets.get("list"),
-                form_widget=form_widget,
-                form_action=self.get_key("session_form_action", ""),
-                form_title=self.get_key("session_form_title", ""),
-            )
-        }
-
-    @expose("/list/", methods=["GET", "POST"])
-    # @has_access
-    def list(self):
-        list_widgets = self._list()
-        return self.render_template(
-            self.list_template, title=self.list_title, widgets=list_widgets
-        )
-
-    @expose("/delete/<pk>")
-    # @has_access
-    def delete(self, pk):
-        pk = self._deserialize_pk_if_composite(pk)
-        self._delete(pk)
-        edit_pk = self.get_key("session_form_edit_pk")
-        if pk == edit_pk:
-            self.del_key("session_form_edit_pk")
-        return redirect(self.get_redirect())
 
 
 def validate_json(form, field):  # noqa
