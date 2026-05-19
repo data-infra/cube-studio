@@ -10,7 +10,7 @@ import re
 import requests
 import copy
 import os
-KFJ_CREATOR = os.getenv('KFJ_CREATOR', 'admin')
+SECRET = os.getenv('SECRET',os.getenv('KFJ_CREATOR', 'admin'))
 KFJ_TASK_PROJECT_NAME = os.getenv('KFJ_TASK_PROJECT_NAME','public')
 KFJ_RUN_ID = os.getenv('KFJ_RUN_ID', '')
 KFJ_PIPELINE_ID = os.getenv('KFJ_PIPELINE_ID', '0')
@@ -21,7 +21,7 @@ def deploy(**kwargs):
     # print(kwargs)
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': KFJ_CREATOR
+        'Authorization': SECRET
     }
 
     # 获取项目组

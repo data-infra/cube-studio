@@ -10,7 +10,7 @@ import re
 import requests
 import copy
 import os
-KFJ_CREATOR = os.getenv('KFJ_CREATOR', 'admin')
+SECRET = os.getenv('SECRET',os.getenv('KFJ_CREATOR', 'admin'))
 
 host = os.getenv('HOST',os.getenv('KFJ_MODEL_REPO_API_URL','http://kubeflow-dashboard.infra')).strip('/')
 
@@ -19,7 +19,7 @@ def deploy(**kwargs):
     # print(kwargs)
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': KFJ_CREATOR
+        'Authorization': SECRET
     }
 
     # 获取项目组

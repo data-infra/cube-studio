@@ -13,6 +13,7 @@ import requests
 import copy
 import os
 KFJ_CREATOR = os.getenv('KFJ_CREATOR', 'admin')
+SECRET = os.getenv('SECRET',KFJ_CREATOR)
 KFJ_TASK_PROJECT_NAME = os.getenv('KFJ_TASK_PROJECT_NAME','public')
 
 host = os.getenv('HOST',os.getenv('KFJ_MODEL_REPO_API_URL','http://kubeflow-dashboard.infra')).strip('/')
@@ -38,7 +39,7 @@ def download(name,version,partition,save_dir,**kwargs):
     # print(kwargs)
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': KFJ_CREATOR
+        'Authorization': SECRET
     }
 
     # 获取项目组

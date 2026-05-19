@@ -55,10 +55,10 @@ RUN apt install -y openssh-server openssh-client
 # 安装
 RUN apt install -y -f python3-opencv ffmpeg
 RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple
-RUN pip3 install celery redis pyarrow requests_toolbelt cryptography tqdm fsspec aiohttp librosa flask werkzeug requests tornado Pillow pysnooper opencv-python numpy scipy matplotlib scikit-image ipython pyyaml visualdl filelock && rm -rf ~/.cache
+RUN pip3 install celery==5.4.0 redis==5.2.0 pyarrow==18.0.0 requests-toolbelt==1.0.0 cryptography==43.0.3 tqdm==4.67.0 fsspec==2024.10.0 aiohttp==3.11.6 librosa==0.10.2.post1 flask==3.1.0 werkzeug==3.1.3 requests==2.32.3 tornado==6.2 Pillow==11.0.0 pysnooper==1.2.1 opencv-python==4.10.0.84 numpy==2.0.2 scipy==1.13.1 matplotlib==3.9.2 scikit-image==0.24.0 ipython==8.18.1 pyyaml==6.0.2 visualdl==2.5.3 filelock==3.16.1 && rm -rf ~/.cache
 
-RUN pip install --upgrade pip && pip install tornado==6.2 gsutil simplejson sqlalchemy joblib scikit-learn jinja2 requests numpy pandas flask pymysql pysnooper pyyaml jupyterlab==3.4.8 voila notebook==6.4.12 && rm -rf /tmp/* /var/tmp/* /root/.cache
-RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/${CUDAVERSION} && rm -rf /tmp/* /var/tmp/* /root/.cache
+RUN pip install --upgrade "pip==24.3.1" && pip install tornado==6.2 gsutil==5.31 simplejson==3.19.3 sqlalchemy==2.0.36 joblib==1.4.2 scikit-learn==1.5.2 jinja2==3.1.4 requests==2.32.3 numpy==2.0.2 pandas==2.2.3 flask==3.1.0 pymysql==1.1.1 pysnooper==1.2.1 pyyaml==6.0.2 jupyterlab==3.6.3 voila==0.5.8 notebook==6.4.12 && rm -rf /tmp/* /var/tmp/* /root/.cache
+RUN pip3 install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/${CUDAVERSION} && rm -rf /tmp/* /var/tmp/* /root/.cache
 #RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
 #RUN pip install --upgrade jupyterlab-git jupyterlab_tensorboard_pro && jupyter lab build && jupyter labextension install jupyterlab_tensorboard_pro && jupyter serverextension enable jupyterlab_tensorboard_pro --sys-prefix
 

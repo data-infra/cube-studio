@@ -11,7 +11,7 @@ import re
 import requests
 import copy
 import os
-KFJ_CREATOR = os.getenv('KFJ_CREATOR', 'admin')
+SECRET = os.getenv('SECRET',os.getenv('KFJ_CREATOR', 'admin'))
 host = os.getenv('HOST',os.getenv('KFJ_MODEL_REPO_API_URL','http://kubeflow-dashboard.infra')).strip('/')
 
 @pysnooper.snoop()
@@ -19,7 +19,7 @@ def download(**kwargs):
     # print(kwargs)
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': KFJ_CREATOR
+        'Authorization': SECRET
     }
     model_path=""
     exist_model = {}
@@ -178,7 +178,10 @@ if __name__ == "__main__":
     if kwargs['from'] == '模型管理' or 'model' in kwargs['from'] or kwargs['from']=='推理服务' or 'inference' in kwargs['from']:
         download(**kwargs)
     elif kwargs['from']=='huggingface':
-        command = f'huggingface-cli download --repo-type model --resume-download {kwargs["model_name"]} --revision {kwargs["model_version"]} --local-dir {kwargs["save_path"]} --local-dir-use-symlinks False'
+        if kwargs["model_version"].strip():
+            command = f'huggingface-cli download --repo-type model --resume-download {kwargs["model_name"]} --revision {kwargs["model_version"]} --local-dir {kwargs["save_path"]} --local-dir-use-symlinks False'
+        else:
+            command = f'huggingface-cli download --repo-type model --resume-download {kwargs["model_name"]} --local-dir {kwargs["save_path"]} --local-dir-use-symlinks False'
         exitcode = exe_command(command)
         exit(exitcode)
 

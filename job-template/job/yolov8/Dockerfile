@@ -1,12 +1,13 @@
+# docker build --network=host -t ccr.ccs.tencentyun.com/cube-studio/yolov8:20250901-amd64 -f Dockerfile .
+# docker push ccr.ccs.tencentyun.com/cube-studio/yolov8:20250901-amd64
 FROM ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9
 #COPY sources.list /etc/apt/sources.list
 RUN apt update -y
 WORKDIR /yolov8
 
 RUN apt-get install -y python3.9-dev python3-opencv
-RUN pip install torch==2.5.1  torchvision==0.20.1  ultralytics==8.2.55
-
-RUN pip install gradio==4.43.0 uvicorn==0.34.0 aiohttp==3.8.4 pyyaml==6.0.2 --index-url https://mirrors.aliyun.com/pypi/simple
+RUN pip install torch==2.5.1 torchvision==0.20.1 ultralytics==8.2.55 && \
+    pip install gradio==4.43.0 uvicorn==0.34.0 aiohttp==3.8.4 pyyaml==6.0.2 --index-url https://mirrors.aliyun.com/pypi/simple
 # 下载预训练模型
 RUN wget https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8n.pt && wget https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8s.pt && wget https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8m.pt && wget https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8l.pt && wget https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8x.pt
 # 下载其他
@@ -20,6 +21,7 @@ ENV PYTHONPATH=/src/:/github/
 ENV NODE_PATH=$NODE_HOME/lib/node_modules:${PATH:-}
 ENV PATH=$NODE_HOME/bin:${PATH:-}
 
+RUN bash /yolov8/install-cube-studio.sh
 # 解决gradio bool值错误
 RUN pip uninstall -y pydantic-core && pip install -U "pydantic==2.10.6"
 RUN rm -rf /usr/bin/python3 && ln -s /usr/bin/python /usr/bin/python3

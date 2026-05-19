@@ -489,20 +489,20 @@ def launcher_cluster(deal=None):
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser(description="build component")
-    arg_parser.add_argument('--num_workers', type=int, required=False, help="workers的数量", default=3)
+    arg_parser.add_argument('--num_worker', type=int, required=False, help="workers的数量", default=3)
     arg_parser.add_argument('--workdir', type=str, required=False, help="启动目录", default='/')
     arg_parser.add_argument('--init', type=str, required=False, help="每个worker的初始化脚本，用来安装环境", default='')
     arg_parser.add_argument('--command', type=str, help="运行job的命令", default='python3 mnist.py')
 
     args = arg_parser.parse_args()
-    print('NUM_WORKER',args.num_workers)
+    print('NUM_WORKER',args.num_worker)
     print('INIT_FILE',args.init)
 
     if args.init.strip() and not os.path.exists(args.init):
         print('init file not exist')
         exit(1)
     WORKDIR = args.workdir
-    NUM_WORKER = int(args.num_workers)
+    NUM_WORKER = int(args.num_worker)
     if args.init.strip():
         INIT_FILE = "bash "+args.init.strip()+" && "
 

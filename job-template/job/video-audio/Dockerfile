@@ -12,7 +12,7 @@ RUN apt update -y ; apt install -y --force-yes --no-install-recommends vim apt-t
 RUN apt install -y python3-dev gcc automake autoconf libtool make ffmpeg build-essential
 
 # 安装pip库
-RUN pip install kubernetes==25.3.0 pysnooper psutil requests numpy  pyinstaller argparse cython
+RUN pip install kubernetes==25.3.0 pysnooper==1.2.1 psutil==5.9.6 requests==2.31.0 numpy==1.26.4 pyinstaller==6.12.0 argparse==1.4.0 Cython==0.29.37
 
 ENV RAY_CLIENT_SERVER_MAX_THREADS=1000
 

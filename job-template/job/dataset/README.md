@@ -1,5 +1,8 @@
-# dataset 模板
-镜像：ccr.ccs.tencentyun.com/cube-studio/dataset:20230801
+# Dataset 数据集下载任务模板
+
+本任务用于将数据集下载到指定目录，支持从 **当前平台（Cube Studio）**、**Hugging Face**、**魔塔（ModelScope）** 三种来源拉取数据。
+
+**推荐镜像**：`ccr.ccs.tencentyun.com/cube-studio/dataset:20240501`
 
 参数
 ```bash

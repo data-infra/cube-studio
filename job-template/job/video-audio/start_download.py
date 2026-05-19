@@ -72,24 +72,24 @@ def main(src_file_path):
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser(description="build component")
-    arg_parser.add_argument('--num_workers', type=int, required=False, help="workers的数量", default=3)
+    arg_parser.add_argument('--num_worker', type=int, required=False, help="workers的数量", default=3)
     arg_parser.add_argument('--download_type', type=str, required=False, help="数据下载类型", default="url")
     arg_parser.add_argument('--input_file', type=str, required=False, help="下载内容文件地址", default="/mnt/ray/url.txt")
 
     args = arg_parser.parse_args()
-    print('NUM_WORKER',args.num_workers)
+    print('NUM_WORKER',args.num_worker)
 
-    NUM_WORKER = int(args.num_workers)
+    NUM_WORKER = int(args.num_worker)
 
     if args.download_type=='url':
         from job.pkgs.k8s.py_ray import ray_launcher
-        head_service_ip = ray_launcher(int(args.num_workers), '', 'create')
+        head_service_ip = ray_launcher(int(args.num_worker), '', 'create')
         print('head_service_ip: ' + head_service_ip)
         if not head_service_ip:
             raise RuntimeError("ray cluster not found")
 
         main(src_file_path=args.input_file)
-        ray_launcher(int(args.num_workers), '', 'delete')
+        ray_launcher(int(args.num_worker), '', 'delete')
 
 
 

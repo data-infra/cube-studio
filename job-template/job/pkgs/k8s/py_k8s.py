@@ -2,6 +2,7 @@ import time, datetime, os
 import re
 from kubernetes import client
 from kubernetes.client.models import v1_pod, v1_object_meta, v1_pod_spec, v1_deployment, v1_deployment_spec
+from kubernetes.client.models.v1_pod import V1Pod
 import yaml
 import json
 import multiprocessing
@@ -33,7 +34,7 @@ class K8s():
         self.vgpu_resource = {
             "vgpu": "nvidia.com/vgpu",  # 第四范式解决方案虚拟化方法，cuda层拦截
         }
-        self.vgpu_drive_type = 'TENCENT'
+        self.vgpu_drive_type = 'vgpu'
 
     # @pysnooper.snoop()
     def get_gpu(self,resource_gpu, resource_name=None):
@@ -93,7 +94,7 @@ class K8s():
         addresses = subsets[0].addresses  # 只取第一个子网
         for address in addresses:
             pod_name_temp = address.target_ref.name
-            pod = self.v1.read_namespaced_pod(name=pod_name_temp, namespace=namespace)
+            pod = self.v1.read_namespaced_pod(name=pod_name_temp, namespace=namespace,_request_timeout=5)
             all_pods.append(pod)
 
     # @pysnooper.snoop()

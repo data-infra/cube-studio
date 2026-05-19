@@ -1,48 +1,48 @@
 import numpy
-import pandas,csv,json,os,sys,datetime,time
+import pandas, csv, json, os, sys, datetime, time
 import pysnooper
+
 
 # @pysnooper.snoop()
 def draw_line(df):
-    xs = df.iloc[:, 0].to_list() # 读取第一例为x
+    xs = df.iloc[:, 0].to_list()  # 读取第一列为x
     legends = df.columns.tolist()[1:]  # 首行为header
-    data = df.iloc[:, 1:]   # 后续的列为多条折线数据
+    data = df.iloc[:, 1:]  # 后续的列为多条折线数据
 
-    series=[]
-    for index,legend in enumerate(legends):
+    series = []
+    for index, legend in enumerate(legends):
         serie = data.iloc[:, index].to_list()
         serie_str = {
             "name": legend,
             "type": 'line',
             "smooth": True,
-            "stack": 'Total',
             "data": serie
         }
         series.append(serie_str)
 
     options = {
-      "tooltip": {
-        "trigger": 'axis'
-      },
-      "legend": {
-        "data": legends
-      },
-      "toolbox": {
-        "feature": {
-          "saveAsImage": {}
-        }
-      },
-      "xAxis": {
-        "type": 'category',
-        "boundaryGap": False,
-        "data": xs
-      },
-      "yAxis": {
-        "type": 'value'
-      },
-      "series": series
+        "tooltip": {
+            "trigger": 'axis'
+        },
+        "legend": {
+            "data": legends
+        },
+        "toolbox": {
+            "feature": {
+                "saveAsImage": {}
+            }
+        },
+        "xAxis": {
+            "type": 'category',
+            "boundaryGap": False,
+            "data": xs
+        },
+        "yAxis": {
+            "type": 'value'
+        },
+        "series": series
     }
-    options = json.dumps(options,indent=4,ensure_ascii=False)
+    options = json.dumps(options, indent=4, ensure_ascii=False)
     print(options)
     return options
 
@@ -51,43 +51,66 @@ def draw_bar(df):
     columns = df.columns.tolist()
     # 将列名和数据合并为一个二维数组
     data = numpy.vstack([columns, df.values]).tolist()
+    # 首行
+    a = '''
+option = {
+  legend: {},
+  tooltip: {},
+  dataset: {
+    source: [
+      ['model', 'score1', 'score2', 'score3'],
+      ['model', 43.3, 85.8, 93.7],
+      ['mode2', 83.1, 73.4, 55.1],
+      ['mode3', 86.4, 65.2, 82.5],
+      ['mode4', 72.4, 53.9, 39.1]
+    ]
+  },
+  xAxis: { type: 'category' },
+  yAxis: {},
+  // Declare several bar series, each will be mapped
+  // to a column of dataset.source by default.
+  series: [{ type: 'bar' }, { type: 'bar' }, { type: 'bar' }]
+};
+'''
+
     print(data)
     options = {
-      "legend": {},
-      "tooltip": {},
-      "dataset": {
-        "source": data
-      },
-      "xAxis": { "type": 'category' },
-      "yAxis": {},
-      "series": [{ "type": 'bar' }, { "type": 'bar' }, { "type": 'bar' }]
+        "legend": {},
+        "tooltip": {},
+        "dataset": {
+            "source": data
+        },
+        "xAxis": {"type": 'category'},
+        "yAxis": {},
+        "series": [{"type": 'bar'} for x in range(len(columns) - 1)]
     }
     options = json.dumps(options, indent=4, ensure_ascii=False)
     print(options)
     return options
+
 
 def draw_pie(df):
     data = df.iloc[:, 1:]
     # print(data)
     legends = df.columns.tolist()[1:]  # 首行为header
     xs = df.iloc[:, 0].to_list()  # 读取第一例为x
-    series=[]
-    titles=[]
-    for index,legend in enumerate(legends):
+    series = []
+    titles = []
+    for index, legend in enumerate(legends):
         serie = data.iloc[:, index].to_list()
-        serie_data=[]
-        for x_index,x in enumerate(xs):
+        serie_data = []
+        for x_index, x in enumerate(xs):
             serie_data.append({
-                "name":x,
-                "value":serie[x_index]
+                "name": x,
+                "value": serie[x_index]
             })
-        left = int((index+1)*100/(len(legends)+1))
-        radius = 100//(len(legends)+1)
+        left = int((index + 1) * 100 / (len(legends) + 1))
+        radius = 100 // (len(legends) + 1)
         series.append({
             "type": 'pie',
             "radius": f"{radius}%",
-            "center": [f'{left}%','50%'],
-            "datasetIndex": index+1,
+            "center": [f'{left}%', '50%'],
+            "datasetIndex": index + 1,
             "label": {
                 "position": 'outer'
             },
@@ -107,10 +130,10 @@ def draw_pie(df):
         "legend": {
             "orient": 'horizontal'
         },
-        "title":titles,
+        "title": titles,
         "series": series
     }
-    
+
     options = json.dumps(options, indent=4, ensure_ascii=False)
     print(options)
     return options
@@ -159,6 +182,7 @@ def draw_scatter(df):
     print(options)
     return options
 
+
 def draw_radar(df):
     xs = df.iloc[:, 0].to_list()  # 读取第一例为x
     legends = df.columns.tolist()[1:]  # 首行为header
@@ -179,10 +203,9 @@ def draw_radar(df):
     for index, x in enumerate(xs):
         max_value = max(data.iloc[index].to_list())
         indicator.append({
-            "name":x,
-            "max":max_value
+            "name": x,
+            "max": max_value
         })
-
 
     options = {
         "tooltip": {
@@ -204,13 +227,14 @@ def draw_radar(df):
         "series": [
             {
                 "type": 'radar',
-                "data":series
+                "data": series
             }
         ]
     }
     options = json.dumps(options, indent=4, ensure_ascii=False)
     print(options)
     return options
+
 
 # 绘制k线图，第一列是x，后面4列是k线，后面的列是折线
 # @pysnooper.snoop()
@@ -219,14 +243,14 @@ def draw_candlestick(df):
     ys = df.iloc[:, 1:]
     legends = df.columns.tolist()[1:]  # 首行为header
 
-    if len(legends)<4:  # 至少要4列
+    if len(legends) < 4:  # 至少要4列
         return ''
 
-    k_series=df.iloc[:, 1:5].values.tolist()
-    line_series =[]
-    if len(legends)>4:
-        for index,legend in enumerate(legends):
-            if index<4:
+    k_series = df.iloc[:, 1:5].values.tolist()
+    line_series = []
+    if len(legends) > 4:
+        for index, legend in enumerate(legends):
+            if index < 4:
                 continue
             line_series.append(
                 {
@@ -239,7 +263,6 @@ def draw_candlestick(df):
                     }
                 }
             )
-
 
     options = {
         "tooltip": {
@@ -258,11 +281,11 @@ def draw_candlestick(df):
         },
         "yAxis": {},
         "series": [
-            {
-                "type": 'candlestick',
-                "data": k_series
-            }
-        ]+line_series
+                      {
+                          "type": 'candlestick',
+                          "data": k_series
+                      }
+                  ] + line_series
     }
     options = json.dumps(options, indent=4, ensure_ascii=False)
     print(options)
@@ -297,22 +320,22 @@ def draw_heatmap(df):
             "type": 'category',
             "data": xs,
             "splitArea": {
-              "show": True
+                "show": True
             }
-          },
+        },
         "yAxis": {
             "type": 'category',
             "data": legends,
             "splitArea": {
-              "show": True
+                "show": True
             }
-          },
+        },
         "visualMap": {
             "calculable": True,
             "orient": 'horizontal',
             "left": 'center',
-            "min":min_value,
-            "max":max_value
+            "min": min_value,
+            "max": max_value
         },
         "series": [
             {
@@ -328,10 +351,10 @@ def draw_heatmap(df):
     print(options)
     return options
 
-def draw_tree(data):
 
+def draw_tree(data):
     # 如果不是一个根，就聚合成一个根
-    if type(data)==list:
+    if type(data) == list:
         data = {
             "name": 'root',
             "children": data
@@ -375,6 +398,7 @@ def draw_tree(data):
     }
     options = json.dumps(options, indent=4, ensure_ascii=False)
     print(options)
+    return options
 
 
 def draw_sunburst(data):
@@ -392,14 +416,15 @@ def draw_sunburst(data):
     print(options)
     return options
 
+
 def draw_funnel(df):
     xs = df.iloc[:, 0].to_list()  # 读取第一例为x
     legends = df.columns.tolist()[1:]  # 首行为header
     data = df.iloc[:, 1:]  # 后续的列为多条折线数据
-    series=[]
-    for index,legend in enumerate(legends):
+    series = []
+    for index, legend in enumerate(legends):
         serie = data.iloc[:, index].to_list()
-        opacity = 1-index/len(legends)
+        opacity = 1 - index / len(legends)
         serie_data = []
         for x_index, x in enumerate(xs):
             serie_data.append({
@@ -420,7 +445,6 @@ def draw_funnel(df):
         }
         series.append(serie_str)
 
-
     options = {
         "tooltip": {
             "trigger": 'item',
@@ -440,28 +464,29 @@ def draw_funnel(df):
     print(options)
     return options
 
+
 # 绘制平行坐标系
 # @pysnooper.snoop()
 def draw_parallel(df):
-    columns_type=df.dtypes.tolist()
-    columns=df.columns.tolist()
-    parallelAxis=[]
-    visualMap_min=None
-    visualMap_max=None
-    for index,column in enumerate(columns):
-        schema={
-            "dim":index,
-            "name":column
+    columns_type = df.dtypes.tolist()
+    columns = df.columns.tolist()
+    parallelAxis = []
+    visualMap_min = None
+    visualMap_max = None
+    for index, column in enumerate(columns):
+        schema = {
+            "dim": index,
+            "name": column
         }
         column_type = columns_type[index]
         # 对于字符串枚举类型，设置类目
         from numpy import dtype
-        if column_type==dtype('O'):
-            schema['type']='category'
+        if column_type == dtype('O'):
+            schema['type'] = 'category'
         else:
             # 设置最大最小值
             one_column_data = df[column].to_list()
-            min_value,max_value = min(one_column_data),max(one_column_data)
+            min_value, max_value = min(one_column_data), max(one_column_data)
             schema['min'] = min_value
             schema['max'] = max_value
             visualMap_min = min_value
@@ -478,8 +503,8 @@ def draw_parallel(df):
         },
         "visualMap": {
             "show": True,
-            "min":visualMap_min,
-            "max":visualMap_max,
+            "min": visualMap_min,
+            "max": visualMap_max,
             "color": ['#d94e5d', '#eac736', '#50a3ba']
         },
         "series": {
@@ -490,12 +515,13 @@ def draw_parallel(df):
             "data": df.values.tolist()  # 完成的把数据集取出来
         }
     }
-    options = json.dumps(options,indent=4,ensure_ascii=False)
+    options = json.dumps(options, indent=4, ensure_ascii=False)
     print(options)
     return options
 
+
 # @pysnooper.snoop()
-def draw(chart_type,file_path):
+def draw(chart_type, file_path):
     try:
         if file_path.endswith('.csv'):
             example = pandas.read_csv(file_path, header=0)
@@ -503,29 +529,31 @@ def draw(chart_type,file_path):
             example = json.load(open(file_path))
         else:
             return ''
-        if chart_type=='line':
+        if chart_type == 'line':
             return draw_line(df=example)
-        if chart_type=='bar':
+        if chart_type == 'bar':
             return draw_bar(df=example)
-        if chart_type=='pie':
+        if chart_type == 'pie':
             return draw_pie(df=example)
-        if chart_type=='scatter':
+        if chart_type == 'scatter':
             return draw_scatter(df=example)
-        if chart_type=='radar':
+        if chart_type == 'radar':
             return draw_radar(df=example)
-        if chart_type=='candlestick':
+        if chart_type == 'candlestick':
             return draw_candlestick(df=example)
-        if chart_type=='heatmap':
+        if chart_type == 'heatmap':
             return draw_heatmap(df=example)
-        if chart_type=='tree':
+        if chart_type == 'tree':
             return draw_tree(data=example)
-        if chart_type=='sunburst':
+        if chart_type == 'sunburst':
             return draw_sunburst(data=example)
-        if chart_type=='parallel':
+        if chart_type == 'parallel':
             return draw_parallel(df=example)
     except Exception as e:
         print(e)
-if __name__=="__main__":
+
+
+if __name__ == "__main__":
     example = pandas.read_csv('data.csv', header=0)
     # draw_line(df=example)
     # draw_bar(df=example)
