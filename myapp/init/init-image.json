@@ -2,6 +2,7 @@
   {
     "group_name": "基础命令",
     "name": "ccr.ccs.tencentyun.com/cube-studio/python:strong",
+    "image_type": "dev",
     "repository": "hubsecret",
     "gitpath": "",
     "describe": "丰富版本python镜像",
