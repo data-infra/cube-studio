@@ -19,20 +19,29 @@ def init_db(SQLALCHEMY_DATABASE_URI):
             # 创建连接
             conn = pymysql.connect(host=uri.host, port=uri.port, user=uri.username, password=uri.password, charset='utf8mb4')
             sql = "CREATE DATABASE IF NOT EXISTS example DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
+            # 创建游标
+            cursor = conn.cursor()
+            conn.autocommit = True
+            # 创建数据库的sql(如果数据库存在就不创建，防止异常)
+            print(sql)
+            # 执行创建数据库的sql
+            cursor.execute(sql)
+            conn.commit()
         elif 'postgre' in SQLALCHEMY_DATABASE_URI:
             import psycopg2
             # 创建连接
             conn = psycopg2.connect(host=uri.host, port=uri.port, user=uri.username, password=uri.password)
+            conn.autocommit = True
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1 FROM pg_database WHERE datname='example'")
+            if cursor.fetchone():
+                print("database example already exists")
+                return
             sql = "CREATE DATABASE example WITH ENCODING 'UTF8'"
-        # 创建游标
-        cursor = conn.cursor()
-        conn.autocommit = True
-        # 创建数据库的sql(如果数据库存在就不创建，防止异常)
+            print(sql)
+            cursor.execute(sql)
+            conn.commit()
 
-        print(sql)
-        # 执行创建数据库的sql
-        cursor.execute(sql)
-        conn.commit()
 
 
 # 将文件导入到mysql数据库

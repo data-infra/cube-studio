@@ -97,7 +97,7 @@ for task_id in all_annotations:
             all_train_image.append(image_path)
         elif '/labelstudio/data/upload' in image:
             image = 'http://labelstudio.kubeflow:8080'+image
-            headers = {'Authorization': f'Token {os.getenv("SECRET","")[:40]}'}
+            headers = {'Authorization': f'Token {os.getenv("SECRET","")}'}   # SECRET 这里的默认值修改为 平台右上角个人头像，里面查看到的个人秘钥
             response = requests.get(image,headers=headers)
             name = image[image.rindex("/") + 1:]
             image_path = os.path.join(train_dir, 'images/train', name)
