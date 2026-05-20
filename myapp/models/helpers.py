@@ -324,11 +324,6 @@ class AuditMixinNullable(AuditMixin):
             nullable=True,
         )
 
-    def _user_link(self, user):
-        if not user:
-            return ""
-        url = "/myapp/profile/{}/".format(user.username)
-        return Markup('<a href="{}">{}</a>'.format(url, escape(user) or ""))
 
     def changed_by_name(self):
         if self.created_by:
@@ -354,7 +349,7 @@ class AuditMixinNullable(AuditMixin):
     @property
     def changed_on_humanized(self):
         if self.changed_on:
-            return humanize.naturaltime(datetime.datetime.now() - self.changed_on)
+            return humanize.naturaltime(datetime.datetime.now() - self.changed_on).replace('a day','1 day').replace('an hour','1 hour')
         else:
             return "unknown"
 

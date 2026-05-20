@@ -7,7 +7,7 @@ from sqlalchemy import BigInteger
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 from myapp import app
-from myapp.models.helpers import ImportMixin
+from myapp.models.helpers import AuditMixinNullable
 
 from sqlalchemy import Column, Integer, String, Date
 from myapp.models.base import MyappModelBase
@@ -17,7 +17,7 @@ conf = app.config
 
 
 
-class Metadata_table(Model,ImportMixin,MyappModelBase):
+class Metadata_table(Model,AuditMixinNullable,MyappModelBase):
     __tablename__ = 'metadata_table'
     id = Column(Integer, primary_key=True,comment='id主键')
     node_id = Column(String(200),comment='唯一性id')
@@ -53,7 +53,7 @@ class Metadata_table(Model,ImportMixin,MyappModelBase):
     warehouse_level = Column(String(200), nullable=True,default= 'unknown',comment='数仓级别')   #
     ttl = Column(String(200), nullable=True,comment='保留时长')   #
 
-    expand = Column(Text(65536), nullable=True,default='{}',comment='扩展参数')
+    expand = Column(Text, nullable=True,default='{}',comment='扩展参数')
 
     def __repr__(self):
         return self.table

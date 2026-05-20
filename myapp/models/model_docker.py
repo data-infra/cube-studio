@@ -31,7 +31,7 @@ class Docker(Model,AuditMixinNullable,MyappModelBase):
     last_image = Column(String(200), nullable=True, default='',comment='最后生成镜像')
     need_gpu = Column(Boolean, nullable=True, default=False,comment='是否需要gpu')
     consecutive_build = Column(Boolean, default=True,comment='连续构建')
-    expand = Column(Text(65536), default='{}',comment='扩展参数')
+    expand = Column(Text, default='{}',comment='扩展参数')
 
     def __repr__(self):
         return self.describe
@@ -42,7 +42,7 @@ class Docker(Model,AuditMixinNullable,MyappModelBase):
 
     @property
     def debug(self):
-        return Markup(f'<a target=_blank href="/docker_modelview/api/debug/{self.id}">{__("调试")}</a> | <a  href="/docker_modelview/api/delete_pod/{self.id}">{__("清理")}</a> | <a target=_blank href="/docker_modelview/api/save/{self.id}">{__("保存")}</a>')
+        return Markup(f'<a href="/docker_modelview/api/debug/{self.id}">{__("调试")}</a> | <a href="/docker_modelview/api/delete_pod/{self.id}">{__("清理")}</a> | <a href="/docker_modelview/api/save/{self.id}">{__("保存")}</a>')
 
     @property
     def image_history(self):

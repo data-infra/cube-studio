@@ -96,6 +96,12 @@ export interface IADUGTemplateActionItem {
     text: string
 }
 
+// 底部智能助手按钮项（对应 /myapp/navbar_bottom 返回的数组元素）
+export interface INavbarBottomItem {
+    icon: string
+    url: string
+}
+
 export interface ICustomDialog {
     content: string
     delay: number

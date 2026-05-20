@@ -37,5 +37,6 @@ class Sqllab_Query(Model,AuditMixinNullable,MyappModelBase):
     err_msg = Column(Text,comment='报错消息')
 
     username = Column(String(400), nullable=False, default='',comment='用户名')
+    expand = Column(Text, default='{}',comment='扩展参数')
 
 

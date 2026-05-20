@@ -123,7 +123,8 @@ def init():
     def create_template(repository_id, project_name, image_name, image_describe, job_template_name,
                         job_template_old_names=[], job_template_describe='',job_template_workdir='', job_template_command='',
                         job_template_args=None, job_template_volume='', job_template_account='',
-                        job_template_expand=None, job_template_env='', gitpath='',**kwargs):
+                        job_template_expand=None, job_template_env='', gitpath='',
+                        image_expand=None, **kwargs):
         if not repository_id:
             return
         images = db.session.query(Images).filter_by(name=image_name).first()
@@ -135,7 +136,7 @@ def init():
                 images.describe = image_describe
                 images.created_by_fk = 1
                 images.changed_by_fk = 1
-                images.project_id = project.id
+                images.image_type = 'job-template'
                 images.repository_id = repository_id
                 images.gitpath = gitpath if bool(re.match(r'^http', gitpath)) else (conf.get('GIT_URL', '').strip('/') + gitpath),
                 db.session.add(images)

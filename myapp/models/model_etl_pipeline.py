@@ -1,6 +1,7 @@
+import datetime
 from flask_appbuilder import Model
 from sqlalchemy.orm import relationship
-from sqlalchemy import Text
+from sqlalchemy import Text, DateTime
 
 from myapp.models.helpers import AuditMixinNullable
 from flask_babel import gettext as __
@@ -16,7 +17,7 @@ conf = app.config
 
 
 
-class ETL_Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
+class ETL_Pipeline(Model,AuditMixinNullable,MyappModelBase):
     __tablename__ = 'etl_pipeline'
     id = Column(Integer, primary_key=True,comment='id主键')
     name = Column(String(100),nullable=False,unique=True,comment='英文名')
@@ -26,9 +27,9 @@ class ETL_Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
         "Project", foreign_keys=[project_id], lazy='selectin'
     )
     workflow = Column(String(200),nullable=True,comment='调度引擎')   #
-    dag_json = Column(Text(65536),nullable=True,default='{}',comment='pipeline的上下游关系')  #
-    config = Column(Text(65536),default='{}',comment='pipeline的全局配置')   #
-    expand = Column(Text(65536),default='[]',comment='扩展参数')
+    dag_json = Column(Text,nullable=True,default='{}',comment='pipeline的上下游关系')  #
+    config = Column(Text,default='{}',comment='pipeline的全局配置')   #
+    expand = Column(Text,default='[]',comment='扩展参数')
 
     # export_children = "etl_task"
 
@@ -38,7 +39,7 @@ class ETL_Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     @property
     def etl_pipeline_url(self):
         pipeline_url="/etl_pipeline_modelview/api/web/" +str(self.id)
-        return Markup(f'<a target=_blank href="{pipeline_url}">{self.describe}</a>')
+        return Markup(f'<a href="{pipeline_url}">{self.describe}</a>')
 
 
     def clone(self):
@@ -64,9 +65,9 @@ class ETL_Task(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     # )
     etl_pipeline_id = Column(Integer,comment='任务流id')
     template = Column(String(100),nullable=False,comment='任务模板')
-    task_args = Column(Text(65536),default='{}',comment='任务参数')
+    task_args = Column(Text,default='{}',comment='任务参数')
     etl_task_id = Column(String(100),nullable=False,comment='远程调度系统任务id')
-    expand = Column(Text(65536),default='[]',comment='扩展参数')
+    expand = Column(Text,default='[]',comment='扩展参数')
 
 
     # export_parent = "etl_pipeline"

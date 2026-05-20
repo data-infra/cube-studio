@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios'
 import axios, { AxiosResFormat } from '.'
-import { IADUGTemplateInfo, IAppHeaderItem, IAppMenuItem, ICustomDialog } from './interface/kubeflowInterface'
+import { IADUGTemplateInfo, IAppHeaderItem, IAppMenuItem, ICustomDialog, INavbarBottomItem } from './interface/kubeflowInterface'
 import { ITabsModalData } from './interface/tabsModalInterface'
 
 export const getAppMenu = (): Promise<AxiosResponse<IAppMenuItem[]>> => {
@@ -9,6 +9,11 @@ export const getAppMenu = (): Promise<AxiosResponse<IAppMenuItem[]>> => {
 
 export const getAppHeaderConfig = (): Promise<AxiosResponse<IAppHeaderItem[]>> => {
     return axios.get('/myapp/navbar_right')
+}
+
+// 获取底部智能助手按钮列表（空数组表示不启用）
+export const getNavbarBottom = (): Promise<AxiosResponse<INavbarBottomItem[]>> => {
+    return axios.get('/myapp/navbar_bottom')
 }
 
 export const userLogout = (): Promise<AxiosResponse<IAppMenuItem[]>> => {

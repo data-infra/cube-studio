@@ -44,7 +44,7 @@ class Notebook(Model,AuditMixinNullable,MyappModelBase):
     resource_memory = Column(String(100), default='10G',comment='申请内存')
     resource_cpu = Column(String(100), default='10',comment='申请cpu')
     resource_gpu = Column(String(100), default='0',comment='申请gpu')
-    expand = Column(Text(65536), default='{}',comment='扩展参数')
+    expand = Column(Text, default='{}',comment='扩展参数')
 
     def __repr__(self):
         return self.name
@@ -139,7 +139,7 @@ class Notebook(Model,AuditMixinNullable,MyappModelBase):
                     self.expand = json.dumps(expand,ensure_ascii=False)
                     db.session.commit()
                     k8s_dash_url = f'/k8s/web/search/{self.cluster["NAME"]}/{self.namespace}/{self.name}'
-                    url = Markup(f'<a target=_blank style="color:#008000;" href="{k8s_dash_url}">{status}</a>')
+                    url = Markup(f'<a style="color:#008000;" href="{k8s_dash_url}">{status}</a>')
                     return url
 
         except Exception as e:

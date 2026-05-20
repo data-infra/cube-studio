@@ -56,13 +56,13 @@ class Service(Model,AuditMixinNullable,MyappModelBase,service_common):
     resource_gpu= Column(String(100), default='0',comment='申请gpu')
     deploy_time = Column(String(100), nullable=False,default=datetime.datetime.now,comment='部署时间')
     host = Column(String(200), default='',comment='域名')
-    expand = Column(Text(65536), default='{}',comment='扩展参数')
+    expand = Column(Text, default='{}',comment='扩展参数')
 
     @property
     def deploy(self):
         monitoring_url = "//"+self.project.cluster.get('HOST', request.host).split('|')[-1] + conf.get('GRAFANA_SERVICE_PATH','').replace('var-namespace=service',f'var-namespace={self.namespace}') + self.name
 
-        return Markup(f'<a href="/service_modelview/api/deploy/{self.id}">{__("部署")}</a> | <a href="{monitoring_url}">{__("监控")}</a> | <a href="/service_modelview/api/clear/{self.id}">{__("清理")}</a>')
+        return Markup(f'<a href="/service_modelview/api/deploy/{self.id}">{__("部署")}</a> | <a target=_blank href="{monitoring_url}">{__("监控")}</a> | <a href="/service_modelview/api/clear/{self.id}">{__("清理")}</a>')
 
 
     @property
@@ -76,7 +76,7 @@ class Service(Model,AuditMixinNullable,MyappModelBase,service_common):
         # if "admin" in user_roles:
         url = f'/k8s/web/search/{self.project.cluster["NAME"]}/{self.namespace}/{self.name.replace("_", "-")}'
 
-        return Markup(f'<a target=_blank href="{url}">{self.label}</a>')
+        return Markup(f'<a href="{url}">{self.label}</a>')
 
     def __repr__(self):
         return self.name
@@ -215,9 +215,9 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
     model_version = Column(String(200),default='',comment='模型版本')
     model_path = Column(String(200),default='',comment='模型地址')
     model_type = Column(String(200),default='',comment='模型类型')
-    model_input = Column(Text(65536), default='',comment='模型输入')
-    model_output = Column(Text(65536), default='',comment='模型输出')
-    inference_config = Column(Text(65536), default='',comment='配置文件')   # make configmap
+    model_input = Column(Text, default='',comment='模型输入')
+    model_output = Column(Text, default='',comment='模型输出')
+    inference_config = Column(Text, default='',comment='配置文件')   # make configmap
     model_status = Column(String(200),default='offline',comment='服务状态')
     # model_status = Column(Enum('offline','test','online','delete',name='model_status'),nullable=True,default='offline')
 
@@ -234,7 +234,7 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
     max_replicas = Column(Integer, default=1,comment='最大副本数')
     hpa = Column(String(400), default='',comment='弹性伸缩')
     cronhpa = Column(String(400), default='', comment='定时伸缩')
-    metrics = Column(Text(65536), default='',comment='监控接口')
+    metrics = Column(Text, default='',comment='监控接口')
     health = Column(String(400), default='',comment='健康检查')
     sidecar = Column(String(400), default='',comment='伴随容器')
     ports = Column(String(100),default='80',comment='端口')
@@ -243,13 +243,14 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
     resource_gpu= Column(String(100), default='0',comment='申请gpu')
     deploy_time = Column(String(100), nullable=True,default=datetime.datetime.now,comment='部署时间')
     host = Column(String(200), default='',comment='域名')
-    expand = Column(Text(65536), default='{}',comment='扩展参数')
+    expand = Column(Text, default='{}',comment='扩展参数')
     canary = Column(String(400), default='',comment='灰度发布')
     shadow = Column(String(400), default='',comment='灰度发布')
+    rate_limit = Column(String(100), default='', comment='按IP限流 格式 N/second|N/minute|N/hour')
 
     run_id = Column(String(100),nullable=True,comment='run id')
     run_time = Column(String(100),comment='运行时间')
-    deploy_history = Column(Text(65536), default='',comment='部署历史')
+    deploy_history = Column(Text, default='',comment='部署历史')
 
     priority = Column(Integer,default=1,comment='优先级')   # giving priority to meeting high-priority resource needs
 
@@ -258,7 +259,7 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
     def model_name_url(self):
         url = f'/k8s/web/search/{self.project.cluster["NAME"]}/{self.namespace}/{self.name.replace("_", "-")}'
 
-        return Markup(f'<a target=_blank href="{url}">{self.model_name}</a>')
+        return Markup(f'<a href="{url}">{self.model_name}</a>')
 
     @property
     def replicas_html(self):
@@ -276,7 +277,7 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
         # if self.created_by.username==g.user.username or g.user.is_admin():
         if self.created_by.id == g.user.id or self.project.user_role(g.user.id)=='creator' or g.user.is_admin():
             dom = f'''
-                <a target=_blank href="/inferenceservice_modelview/api/deploy/debug/{self.id}">{__("调试")}</a> | 
+                <a href="/inferenceservice_modelview/api/deploy/debug/{self.id}">{__("调试")}</a> | 
                 <a href="/inferenceservice_modelview/api/deploy/prod/{self.id}">{__("部署")}</a> | 
                 <a target=_blank href="{monitoring_url}">{__("监控")}</a> |
                 <a href="/inferenceservice_modelview/api/clear/{self.id}">{__("清理")}</a>
@@ -292,7 +293,7 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
 
     @property
     def debug(self):
-        return Markup(f'<a target=_blank href="/inferenceservice_modelview/api/debug/{self.id}">{__("调试")}</a>')
+        return Markup(f'<a href="/inferenceservice_modelview/api/debug/{self.id}">{__("调试")}</a>')
 
     @property
     def test_deploy(self):
@@ -314,14 +315,14 @@ class InferenceService(Model,AuditMixinNullable,MyappModelBase,service_common):
                 # 查看k8s的pod是否read了
                 if not self.ready:
                     url = f'/k8s/web/search/{self.project.cluster["NAME"]}/{self.namespace}/{self.name.replace("_", "-")}'
-                    return Markup(f'<a target=_blank href="{url}">deploying</a>')
+                    return Markup(f'<a href="{url}">deploying</a>')
                     # return "deploying"
                     # return self.model_status + "(not ready)"
             except Exception as e:
                 print(e)
 
         url = f'/k8s/web/search/{self.project.cluster["NAME"]}/{self.namespace}/{self.name.replace("_", "-")}'
-        return Markup(f'<a target=_blank href="{url}">{self.model_status}</a>')
+        return Markup(f'<a href="{url}">{self.model_status}</a>')
 
         # return self.model_status
 
