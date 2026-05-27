@@ -5,7 +5,7 @@ from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 from flask import g
 from myapp import app
-from myapp.models.helpers import ImportMixin
+from myapp.models.helpers import ImportMixin, AuditMixinNullable
 from sqlalchemy import Column, Integer, String
 from flask import Markup
 from myapp.models.base import MyappModelBase
