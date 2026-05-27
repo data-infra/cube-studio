@@ -18,6 +18,7 @@ import { AppstoreOutlined, DownOutlined, LeftOutlined, RightOutlined, Translatio
 import Cookies from 'js-cookie'
 import { handleTips } from './api';
 import globalConfig from './global.config'
+import AiChatBot from './components/AiChatBot/AiChatBot'
 import i18nEn from './images/i18nEn.svg';
 
 import { useTranslation, Trans, } from 'react-i18next';
@@ -433,6 +434,8 @@ const AppWrapper = (props: IProps) => {
         }
 
       </div >
+      {/* AI 机器人悬浮按钮与聊天面板，固定在页面右下角，全局可用 */}
+      <AiChatBot />
     </div>
   );
 };

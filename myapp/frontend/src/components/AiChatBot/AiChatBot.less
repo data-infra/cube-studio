@@ -1,0 +1,349 @@
+// ==== AiChatBot 组件完整样式 ====
+// 悬浮按钮 + iframe 聊天面板
+// 面板打开后从底部铺满到页面顶部附近，按钮同时隐藏
+
+// ==== Section: 悬浮触发按钮 ====
+
+.aichatbot-float-btn {
+  position: fixed;
+  right: 16px;
+  bottom: 82px;
+  z-index: 1001;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1677ff 0%, #6d4fe3 100%);
+  box-shadow: 0 4px 18px rgba(22, 119, 255, 0.42),
+    0 1px 4px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease;
+  color: #fff;
+
+  &:hover {
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 8px 28px rgba(22, 119, 255, 0.52),
+      0 2px 8px rgba(0, 0, 0, 0.14);
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+
+  // 第一层脉冲环
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 2px solid rgba(22, 119, 255, 0.38);
+    animation: aichatbot-pulse 2.6s ease-out infinite;
+  }
+
+  // 第二层脉冲环（延迟）
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    border: 2px solid rgba(22, 119, 255, 0.18);
+    animation: aichatbot-pulse 2.6s ease-out infinite 0.9s;
+  }
+}
+
+@keyframes aichatbot-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.65);
+    opacity: 0;
+  }
+}
+
+// 按钮内图标容器：限制后端返回的 SVG 尺寸并居中
+.aichatbot-float-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  svg {
+    width: 24px;
+    height: 24px;
+    fill: #fff;
+  }
+}
+
+// 按钮内图标 hover 时微旋
+.aichatbot-float-btn:hover .aichatbot-float-icon {
+  animation: aichatbot-icon-wobble 0.6s ease;
+}
+
+@keyframes aichatbot-icon-wobble {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+  100% { transform: rotate(0deg); }
+}
+
+// ==== Section: 聊天面板主体 ====
+
+.aichatbot-panel {
+  position: fixed;
+  right: 24px;
+  // 底部紧贴视口，顶部距顶部导航 60px，使面板尽量高
+  bottom: 12px;
+  top: 60px;
+  z-index: 1000;
+  // 宽度调大，给 iframe 内容更多横向空间
+  width: 520px;
+  // 底部紧贴视口边缘，底部圆角去掉
+  border-radius: 18px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.1),
+    0 32px 80px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform-origin: bottom right;
+  animation: aichatbot-panel-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+
+  // 最小化时折叠为仅头部，收在底部
+  &.is-minimized {
+    top: auto;
+    height: 62px;
+    border-radius: 18px 18px 0 0;
+  }
+}
+
+@keyframes aichatbot-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+// ==== Section: 面板头部 ====
+
+.aichatbot-header {
+  flex-shrink: 0;
+  height: 62px;
+  background: linear-gradient(135deg, #0f172a 0%, #1a3360 100%);
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 14px;
+  user-select: none;
+  border-radius: 18px 18px 0 0;
+  gap: 10px;
+}
+
+// 头部 AI 头像（渐变圆角方块），内部 SVG 自适应
+.aichatbot-header-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #1677ff 0%, #6d4fe3 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(22, 119, 255, 0.35);
+  svg {
+    width: 22px;
+    height: 22px;
+    fill: #fff;
+  }
+}
+
+// 标题与状态信息区
+.aichatbot-header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.aichatbot-header-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
+
+.aichatbot-header-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+// 在线状态绿点（呼吸动画）
+.aichatbot-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4ade80;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px rgba(74, 222, 128, 0.6);
+  animation: aichatbot-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes aichatbot-breathe {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px rgba(74, 222, 128, 0.6); }
+  50% { opacity: 0.6; box-shadow: 0 0 2px rgba(74, 222, 128, 0.3); }
+}
+
+// 头部操作按钮组（最小化、关闭）
+.aichatbot-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.aichatbot-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  &:active {
+    background: rgba(255, 255, 255, 0.18);
+  }
+}
+
+// ==== Section: 内容区容器 ====
+
+// 内容区：相对定位，方便蒙层叠加
+.aichatbot-body {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+// AI 对话 iframe，填满内容区
+.aichatbot-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #fff;
+}
+
+// ==== Section: 加载状态蒙层 ====
+
+// 加载中：覆盖 iframe 上方，显示转圈 + 文案
+.aichatbot-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #fff;
+}
+
+// CSS 转圈动画
+.aichatbot-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(22, 119, 255, 0.15);
+  border-top-color: #1677ff;
+  border-radius: 50%;
+  animation: aichatbot-spin 0.8s linear infinite;
+}
+
+@keyframes aichatbot-spin {
+  to { transform: rotate(360deg); }
+}
+
+.aichatbot-loading-text {
+  font-size: 13px;
+  color: #8c8c8c;
+}
+
+// ==== Section: 占位 / 错误状态 ====
+
+// 占位区：本地调试模式 或 连接失败
+.aichatbot-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  background: #fafafa;
+  text-align: center;
+}
+
+.aichatbot-placeholder-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.aichatbot-placeholder-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.aichatbot-placeholder-hint {
+  font-size: 12px;
+  color: #8c8c8c;
+  max-width: 260px;
+  line-height: 1.6;
+}
+
+// 重试按钮
+.aichatbot-retry-btn {
+  margin-top: 8px;
+  padding: 6px 20px;
+  border-radius: 6px;
+  border: 1px solid #1677ff;
+  background: transparent;
+  color: #1677ff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: #1677ff;
+    color: #fff;
+  }
+}
