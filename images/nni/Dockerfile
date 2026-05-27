@@ -1,6 +1,6 @@
 
 # docker build --network=host -t ccr.ccs.tencentyun.com/cube-studio/nni:20240501  --build-arg TARGETARCH=amd64 .
-# docker buildx build --platform linux/amd64,linux/arm64 -t ccr.ccs.tencentyun.com/cube-studio/nni:20230601 . --push
+
 # docker run --name nni -it -v $PWD:/app -p 8888:8888 ccr.ccs.tencentyun.com/cube-studio/nni:20230601 bash
 # docker run --name nni -it -p 8888:8888 ccr.ccs.tencentyun.com/cube-studio/nni:20230601 bash
 

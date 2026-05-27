@@ -92,7 +92,7 @@ class MyUser(User,MyappModelBase):
             # timestamp = int(func.date_format(self.changed_on))
             timestamp = int(self.changed_on.timestamp())
             payload = {
-                "iss": "cube-studio",
+                # "iss": "cube-studio",
                 "sub":self.username
                 # "iat": timestamp,  # Issue period
                 # "nbf": timestamp,  # Effective Date
@@ -102,7 +102,8 @@ class MyUser(User,MyappModelBase):
             from myapp import conf
             global_password = conf.get('JWT_PASSWORD','cube-studio')
             encoded_jwt = jwt.encode(payload, global_password, algorithm='HS256')
-            return encoded_jwt
+            # 去掉固定的 HS256 header，只保留 payload.signature，缩短 token 长度
+            return encoded_jwt.split('.', 1)[1]
         return ''
 
     @property
@@ -293,14 +294,19 @@ class MyappSecurityManager(SecurityManager):
         #     token = request.headers['token']
         if authorization_value:
             from myapp import conf
-            # username 免认证，设计到多平台调用时打开
-            if len(authorization_value) < 40: # 任务模板请求后端api调用  and conf.get('AUTH_PLATFORM_ACCESS',False):
+            # username 免认证：AUTH_PLATFORM_ACCESS 全局开启，或通过 K8s 内部域名(kubeflow-dashboard)访问时放行
+            is_k8s_internal = 'kubeflow-dashboard.infra' in (request.host or '')
+            if len(authorization_value) < 40 and (conf.get('AUTH_PLATFORM_ACCESS',False) or is_k8s_internal):
                 username = authorization_value
                 if username:
                     user = self.find_user(username)
                     g.user = user
                     return user
             else:  # token 认证
+                # 兼容无 header 的短 token：只有 payload.signature 两段时，补回固定的 HS256 header
+                HS256_HEADER = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
+                if authorization_value.count('.') == 1:
+                    authorization_value = HS256_HEADER + '.' + authorization_value
                 encoded_jwt = authorization_value.encode('utf-8')
                 payload = jwt.decode(encoded_jwt, conf.get('JWT_PASSWORD','cube-studio'), algorithms=['HS256'])
                 # if payload['iat'] > time.time():

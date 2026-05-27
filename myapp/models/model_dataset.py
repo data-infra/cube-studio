@@ -55,7 +55,7 @@ class Dataset(Model,AuditMixinNullable,MyappModelBase):
 
     owner = Column(String(200),nullable=True,default='*',comment='责任人，*表示全部可见')  #
 
-    expand = Column(Text(65536), nullable=True,default='{}',comment='扩展参数')
+    expand = Column(Text, nullable=True,default='{}',comment='扩展参数')
 
     def __repr__(self):
         return self.name

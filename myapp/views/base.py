@@ -21,7 +21,6 @@ from flask_appbuilder import ModelView
 from flask_appbuilder.baseviews import BaseCRUDView, BaseView, expose
 from myapp import conf, db, get_feature_flags, security_manager, event_logger
 from myapp.exceptions import MyappException, MyappSecurityException
-from myapp.translations.utils import get_language_pack
 from myapp.utils import core
 from flask_appbuilder.urltools import (
     get_filter_args,
@@ -287,7 +286,6 @@ class BaseMyappView(BaseView):
             "flash_messages": messages,
             "conf": {k: conf.get(k) for k in FRONTEND_CONF_KEYS},
             "locale": locale,
-            "language_pack": get_language_pack(locale),
             "feature_flags": get_feature_flags(),
         }
 

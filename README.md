@@ -1,3 +1,5 @@
+# 不再同步更新旧仓库 tencent/cube-studio
+
 # Cube Studio
 
 [English](README_EN.md) | 简体中文

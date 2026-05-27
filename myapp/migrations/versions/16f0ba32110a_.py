@@ -21,25 +21,25 @@ def upgrade():
     op.create_table('docker',
     sa.Column('created_on', sa.DateTime(), nullable=True),
     sa.Column('changed_on', sa.DateTime(), nullable=True),
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('describe', sa.String(length=200), nullable=True),
-    sa.Column('base_image', sa.String(length=200), nullable=True),
-    sa.Column('target_image', sa.String(length=200), nullable=True),
-    sa.Column('consecutive_build', sa.Boolean(), nullable=True),
+    sa.Column('id', sa.Integer(), nullable=False, comment='id主键'),
+    sa.Column('describe', sa.String(length=200), nullable=True, comment='描述'),
+    sa.Column('base_image', sa.String(length=200), nullable=True, comment='基础镜像'),
+    sa.Column('target_image', sa.String(length=200), nullable=True, comment='目标镜像'),
+    sa.Column('consecutive_build', sa.Boolean(), nullable=True, comment='连续构建'),
     sa.Column('created_by_fk', sa.Integer(), nullable=True),
     sa.Column('changed_by_fk', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['changed_by_fk'], ['ab_user.id'], ),
     sa.ForeignKeyConstraint(['created_by_fk'], ['ab_user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.add_column('pipeline', sa.Column('depends_on_past', sa.Boolean(), nullable=True))
-    op.add_column('pipeline', sa.Column('max_active_runs', sa.Integer(), nullable=False))
-    op.add_column('pipeline', sa.Column('parameter', sa.Text(length=65536), nullable=True))
+    op.add_column('pipeline', sa.Column('depends_on_past', sa.Boolean(), nullable=True, comment='是否依赖过往实例'))
+    op.add_column('pipeline', sa.Column('max_active_runs', sa.Integer(), nullable=False, comment='最大同时运行的pipeline实例'))
+    op.add_column('pipeline', sa.Column('parameter', sa.Text(length=65536), nullable=True, comment='后端扩展参数'))
     op.add_column('pytorchjob', sa.Column('change_time', sa.String(length=100), nullable=True))
-    op.add_column('run', sa.Column('execution_date', sa.String(length=100), nullable=False))
-    op.add_column('run', sa.Column('status', sa.String(length=100), nullable=True))
+    op.add_column('run', sa.Column('execution_date', sa.String(length=100), nullable=False, comment='执行时间'))
+    op.add_column('run', sa.Column('status', sa.String(length=100), nullable=True, comment='状态'))
     op.add_column('tfjob', sa.Column('change_time', sa.String(length=100), nullable=True))
-    op.add_column('workflow', sa.Column('change_time', sa.String(length=100), nullable=True))
+    op.add_column('workflow', sa.Column('change_time', sa.String(length=100), nullable=True, comment='修改时间'))
     op.add_column('xgbjob', sa.Column('change_time', sa.String(length=100), nullable=True))
     # ### end Alembic commands ###
 

@@ -8,7 +8,6 @@ from myapp.views.baseSQLA import MyappSQLAInterface as SQLAInterface
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 from myapp.models.model_job import Repository,Images
-from myapp.views.view_team import Creator_Filter, Project_Join_Filter, Project_Filter
 from myapp import app, appbuilder, db, event_logger
 from wtforms.validators import DataRequired, Length, Regexp
 from wtforms import StringField, SelectField
@@ -154,25 +153,29 @@ class Images_ModelView_Base():
     route_base = '/images_modelview/api'
     datamodel = SQLAInterface(Images)
 
-    list_columns = ['project','images_url', 'creator', 'modified']
+    list_columns = ['image_type','images_url', 'creator', 'modified']
     cols_width = {
         "images_url": {"type": "ellip2", "width": 500},
     }
-    search_columns = ['created_by', 'project', 'repository', 'name', 'describe']
+    search_columns = ['created_by', 'image_type', 'repository', 'name', 'describe']
     base_order = ('id', 'desc')
     order_columns = ['id']
-    add_columns = ['project','repository', 'name', 'describe', 'dockerfile', 'gitpath']
+    add_columns = ['image_type','repository', 'name', 'describe', 'dockerfile', 'gitpath']
     edit_columns = add_columns
     spec_label_columns={
-        "project": _("功能分类")
+        "image_type": _("镜像分类")
     }
-    add_form_query_rel_fields = {
-        "project": [["name", Project_Filter, 'job-template']]
-    }
-    edit_form_query_rel_fields = add_form_query_rel_fields
+
 
 
     add_form_extra_fields = {
+        "image_type":SelectField(
+            _('镜像分类'),
+            description=_('不同的镜像类型，可在不同的模块选择使用'),
+            widget=MySelect2Widget(),
+            choices=[['dev', _('开发镜像')], ['jupyter', _('jupyter镜像')], ['job-template', _('任务模板镜像')], ['pipeline', _('任务流镜像')], ['automl', _('超参搜索镜像')], ['service', _('内部服务镜像')], ['inference', _('推理服务镜像')]],
+            validators=[DataRequired()]
+        ),
         "dockerfile": StringField(
             'dockerfile',
             description= _('镜像的构建Dockerfile全部内容，/mnt/$username/是个人存储目录，可以从此目录下复制文件到镜像中'),

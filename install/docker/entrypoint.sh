@@ -27,11 +27,12 @@ myapp init
 
 if [ "$STAGE" = "build" ]; then
   # 构建前端主体
-  cd /home/myapp/myapp/frontend && npm install && npm run build
+  cd /home/myapp/myapp/frontend && npm install --force && npm run build
   # 构建机器学习pipeline
   cd /home/myapp/myapp/vision && npm install && npm run build
   # 构建数据ETL pipeline
   cd /home/myapp/myapp/visionPlus && yarn && npm run build
+
 elif [ "$STAGE" = "dev" ]; then
   export FLASK_APP=myapp:app
 #  FLASK_ENV=development  flask run -p 80 --with-threads  --host=0.0.0.0
@@ -41,9 +42,7 @@ elif [ "$STAGE" = "dev" ]; then
 elif [ "$STAGE" = "prod" ]; then
   export FLASK_APP=myapp:app
   python myapp/check_tables.py
-  gunicorn --bind  0.0.0.0:80 --workers 20 --worker-class=gevent --timeout 300 --limit-request-line 0 --limit-request-field_size 0 --log-level=info --access-logfile - --error-logfile - --capture-output myapp:app
+  gunicorn --bind  0.0.0.0:80 --workers 20 --worker-class=gevent --timeout 300 --forwarded-allow-ips="*" --limit-request-line 0 --limit-request-field_size 0 --log-level=info --access-logfile - --error-logfile - --capture-output myapp:app
 else
     myapp --help
 fi
-
-

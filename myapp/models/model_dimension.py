@@ -5,7 +5,7 @@ from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 from flask import g
 from myapp import app
-from myapp.models.helpers import ImportMixin
+from myapp.models.helpers import ImportMixin, AuditMixinNullable
 from sqlalchemy import Column, Integer, String
 from flask import Markup
 from myapp.models.base import MyappModelBase
@@ -14,7 +14,7 @@ conf = app.config
 
 
 
-class Dimension_table(Model,ImportMixin,MyappModelBase):
+class Dimension_table(Model,AuditMixinNullable,MyappModelBase):
     __tablename__ = 'dimension'
     __table_args__ = (UniqueConstraint('sqllchemy_uri', 'table_name'),)
     id = Column(Integer, primary_key=True,comment='id主键')
@@ -26,30 +26,28 @@ class Dimension_table(Model,ImportMixin,MyappModelBase):
     owner = Column(String(2000), nullable=True,default='',comment='责任人')
     columns=Column(Text, nullable=True,default='{}',comment='列信息')
     status = Column(Integer, default=1,comment='状态')
-    expand = Column(Text(65536), default='{}',comment='扩展参数')
+    expand = Column(Text, default='{}',comment='扩展参数')
 
     @property
     def table_html(self):
-        users=''
-        users = users+self.owner if self.owner else users
-        users = users.split(',')
-        users = [user.strip() for user in users if user.strip()]
+        users = [x.strip() for x in (self.owner or '').replace('，', ',').split(',') if x.strip()]
         url_path = conf.get('MODEL_URLS',{}).get("dimension")
-        if g.user.is_admin() or g.user.username in users or '*' in self.owner:
+        if g.user.is_admin() or g.user.username in users or '*' in users:
             if self.sqllchemy_uri:
-                return Markup(f'<a target=_blank href="{url_path}?targetId={self.id}">{self.table_name}</a>')
+                return Markup(f'<a href="{url_path}?targetId={self.id}">{self.table_name}</a>')
 
         return self.table_name
 
     @property
     def operate_html(self):
-        if self.sqllchemy_uri:
+        users = [x.strip() for x in (self.owner or '').replace('，', ',').split(',') if x.strip()]
+        explicit = [t for t in users if t != '*']
+        if self.sqllchemy_uri and (g.user.is_admin() or g.user.username in explicit):
             url=f'''
-            <a target=_blank href="/dimension_table_modelview/api/create_external_table/%s">{__("更新远程表")}</a>  | <a target=_blank href="/dimension_table_modelview/api/external/%s">{__("建外表示例")}</a>
-            '''%(self.id,self.id)
+            <a href="/dimension_table_modelview/api/create_remote_table/%s">{__("更新远程表")}</a> 
+            '''%(self.id)
             return Markup(url)
-        else:
-            return __("更新远程表")+" | "+__("建外表示例")
+        return __("更新远程表")
 
 
 

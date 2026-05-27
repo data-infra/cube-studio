@@ -11,9 +11,9 @@ export interface IUserInfo {
   secret?: string;
   balance?: string;
   created_on?: string;
-  created_by?: string;
+
   changed_on?: string;
-  changed_by?: string;
+
   wechat?: string;
   phone?: string;
   verified?: boolean;

@@ -117,6 +117,9 @@ def save_workflow(crd, dbsession):
         workflow.spec = json.dumps(crd['spec'], indent=4, ensure_ascii=False)
         workflow.status_more = json.dumps(crd['status_more'], indent=4, ensure_ascii=False)
         workflow.cluster = cluster
+        workflow.foreign_key = str(pipeline_id)
+        # 同步 project_id，方便按资源组聚合统计
+        workflow.project_id = pipeline.project_id
         dbsession.commit()
 
     else:
@@ -135,7 +138,10 @@ def save_workflow(crd, dbsession):
                             spec=json.dumps(crd['spec'], indent=4, ensure_ascii=False),
                             status_more=json.dumps(crd['status_more'], indent=4, ensure_ascii=False),
                             username=username,
-                            info_json=json.dumps(info_json, indent=4, ensure_ascii=False))
+                            info_json=json.dumps(info_json, indent=4, ensure_ascii=False),
+                            foreign_key=str(pipeline_id),
+                            project_id=pipeline.project_id,
+                            )
         dbsession.add(workflow)
         dbsession.commit()
 

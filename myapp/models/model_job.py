@@ -40,6 +40,7 @@ class Repository(Model,AuditMixinNullable,MyappModelBase):
     user = Column(String(100), nullable=False,comment='账户')
     password = Column(String(100), nullable=False,comment='密码')
     hubsecret = Column(String(100),comment='k8s secret名')
+    expand = Column(Text, default='{}',comment='扩展参数')
 
     @property
     def hubsecret_url(self):
@@ -55,10 +56,7 @@ class Repository(Model,AuditMixinNullable,MyappModelBase):
 class Images(Model,AuditMixinNullable,MyappModelBase):
     __tablename__='images'
     id = Column(Integer, primary_key=True,comment='id主键')
-    project_id = Column(Integer, ForeignKey('project.id'),comment='项目组id')
-    project = relationship(
-        "Project", foreign_keys=[project_id], lazy='selectin'
-    )
+    image_type = Column(String(100), nullable=False, comment='镜像分类')
 
     name = Column(String(500), nullable=False,comment='英文名')
     describe = Column(String(1000), nullable=False,comment='描述')
@@ -69,6 +67,7 @@ class Images(Model,AuditMixinNullable,MyappModelBase):
     entrypoint=Column(String(2000),comment='入口点')
     dockerfile=Column(Text,comment='dockerfile')
     gitpath=Column(String(200),comment='git地址')
+    expand = Column(Text, default='{}',comment='扩展参数')
 
 
     @property
@@ -105,7 +104,7 @@ class Job_Template(Model,AuditMixinNullable,MyappModelBase):
     privileged = Column(Boolean, default=False,comment=' 是否启用特权模式')   #
     accounts = Column(String(100),comment='使用k8s账户')   #
     demo=Column(Text,comment='配置示例')
-    expand = Column(Text(65536), default='{}',comment='扩展参数')
+    expand = Column(Text, default='{}',comment='扩展参数')
 
 
     def __repr__(self):
@@ -184,11 +183,11 @@ class Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     alert_status = Column(String(100), default='Pending,Running,Succeeded,Failed,Terminated',comment=' 哪些状态会报警Pending,Running,Succeeded,Failed,Unknown,Waiting,Terminated')   #
     alert_user = Column(String(300), default='',comment='报警接收人')
 
-    expand = Column(Text(65536),default='[]',comment='前端保留参数，用于记录编排样式')
+    expand = Column(Text,default='[]',comment='前端保留参数，用于记录编排样式')
     depends_on_past = Column(Boolean, default=False,comment='是否依赖过往实例')
     max_active_runs = Column(Integer, nullable=False,default=3,comment='最大同时运行的pipeline实例')   #
     expired_limit = Column(Integer, nullable=False, default=0,comment='过期保留个数，此数值有效时，会优先使用，覆盖max_active_runs的功能')  #
-    parameter = Column(Text(65536), default='{}',comment='后端扩展参数')
+    parameter = Column(Text, default='{}',comment='后端扩展参数')
 
     priority = Column(String(100), default='high', comment='优先级')  # giving priority to meeting high-priority resource needs
     type = Column(String(100),nullable=True,unique=False,default='',comment='任务流类型')
@@ -199,12 +198,12 @@ class Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     @property
     def pipeline_url(self):
         pipeline_url="/pipeline_modelview/api/web/" +str(self.id)
-        return Markup(f'<a target=_blank href="{pipeline_url}">{self.describe}</a>')
+        return Markup(f'<a href="{pipeline_url}">{self.describe}</a>')
 
     @property
     def run_pipeline(self):
         pipeline_run_url = "/pipeline_modelview/api/run_pipeline/" +str(self.id)
-        return Markup(f'<a target=_blank href="{pipeline_run_url}">run</a>')
+        return Markup(f'<a href="{pipeline_run_url}">run</a>')
 
     @property
     def status(self):
@@ -218,7 +217,7 @@ class Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     def log(self):
         if self.run_id:
             pipeline_url = "/pipeline_modelview/api/web/log/%s"%self.id
-            return Markup(f'<a target=_blank href="{pipeline_url}">{__("日志")}</a>')
+            return Markup(f'<a href="{pipeline_url}">{__("日志")}</a>')
         else:
             return Markup(__('日志'))
 
@@ -226,7 +225,7 @@ class Pipeline(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     @property
     def pod(self):
         url = "/pipeline_modelview/api/web/pod/%s" % self.id
-        return Markup(f'<a target=_blank href="{url}">pod</a>')
+        return Markup(f'<a href="{url}">pod</a>')
 
 
 
@@ -536,7 +535,7 @@ class Task(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
     retry = Column(Integer, nullable=False,default=0,comment='重试次数')
     outputs = Column(Text,default='{}',comment='task的输出，会将输出复制到minio上 ')   #   {'prediction': '/output.txt'}
     monitoring = Column(Text,default='{}',comment='该任务的监控信息')  #
-    expand = Column(Text(65536), default='',comment='扩展参数')
+    expand = Column(Text, default='',comment='扩展参数')
     skip = Column(Boolean,name='skip',default=False,comment='是否跳过',quote=True)  #
     export_parent = "pipeline"
 
@@ -546,11 +545,11 @@ class Task(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
 
     @property
     def debug(self):
-        return Markup(f'<a target=_blank href="/task_modelview/api/debug/{self.id}">debug</a>')
+        return Markup(f'<a href="/task_modelview/api/debug/{self.id}">debug</a>')
 
     @property
     def run(self):
-        return Markup(f'<a target=_blank href="/task_modelview/api/run/{self.id}">run</a>')
+        return Markup(f'<a href="/task_modelview/api/run/{self.id}">run</a>')
 
     @property
     def clear(self):
@@ -558,7 +557,7 @@ class Task(Model,ImportMixin,AuditMixinNullable,MyappModelBase):
 
     @property
     def log(self):
-        return Markup(f'<a target=_blank href="/task_modelview/api/log/{self.id}">log</a>')
+        return Markup(f'<a href="/task_modelview/api/log/{self.id}">log</a>')
 
     def get_node_selector(self):
         project_node_selector = self.get_default_node_selector(self.pipeline.project.node_selector,self.resource_gpu,'train')
@@ -629,6 +628,7 @@ class RunHistory(Model,MyappModelBase):
     created_on = Column(DateTime, default=datetime.datetime.now, nullable=False,comment='创建时间')
     execution_date=Column(String(200), nullable=False,comment='执行时间')
     status = Column(String(100),default='comed',comment='状态')   # commed表示已经到了该调度的时间，created表示已经发起了调度。注意操作前校验去重
+    expand = Column(Text, default='{}',comment='扩展参数')
 
     @property
     def create_time(self):
@@ -641,7 +641,7 @@ class RunHistory(Model,MyappModelBase):
             return self.status
 
         path = conf.get('MODEL_URLS', {}).get('workflow', '') + '?filter=' + urllib.parse.quote(json.dumps([{"key": "labels", "value": self.run_id}], ensure_ascii=False))
-        return Markup(f'<a target=_blank href="{path}">{self.status}</a>')
+        return Markup(f'<a href="{path}">{self.status}</a>')
 
     @property
     def creator(self):
@@ -649,7 +649,7 @@ class RunHistory(Model,MyappModelBase):
 
     @property
     def pipeline_url(self):
-        return Markup(f'<a target=_blank href="/pipeline_modelview/api/web/{self.pipeline.id}">{self.pipeline.describe}</a>')
+        return Markup(f'<a href="/pipeline_modelview/api/web/{self.pipeline.id}">{self.pipeline.describe}</a>')
 
 
 class Crd:
@@ -660,7 +660,7 @@ class Crd:
     namespace = Column(String(100), default='',comment='命名空间')
     create_time=Column(String(100), default='',comment='创建时间')
     change_time = Column(String(100), default='',comment='修改时间')
-
+    project_id = Column(Integer, comment='项目组id')
     status = Column(String(100), default='',comment='状态')
     annotations = Column(Text, default='',comment='注释')
     labels = Column(Text, default='',comment='标签')
@@ -671,6 +671,7 @@ class Crd:
     add_row_time = Column(DateTime, default=datetime.datetime.now,comment='记录时间')
     # delete = Column(Boolean,default=False)
     foreign_key = Column(String(100), default='',comment='外键')
+    expand = Column(Text, default='{}',comment='扩展参数')
 
     @property
     def annotations_html(self):
@@ -849,7 +850,7 @@ class Workflow(Model,Crd,MyappModelBase):
     @property
     def log(self):
         url = f'/frontend/commonRelation?backurl=/workflow_modelview/api/web/dag/{self.cluster}/{self.namespace}/{self.name}'
-        return Markup(f'<a target=_blank href="{url}">{__("日志")}</a>')
+        return Markup(f'<a href="{url}">{__("日志")}</a>')
 
 
     @property
