@@ -21,51 +21,51 @@ def upgrade():
     op.create_table('sqlab_query',
     sa.Column('created_on', sa.DateTime(), nullable=True),
     sa.Column('changed_on', sa.DateTime(), nullable=True),
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('submit_time', sa.String(length=40), nullable=False),
-    sa.Column('start_time', sa.String(length=40), nullable=False),
-    sa.Column('end_time', sa.String(length=40), nullable=False),
-    sa.Column('engine_arg1', sa.String(length=200), nullable=False),
-    sa.Column('engine_arg2', sa.String(length=200), nullable=False),
-    sa.Column('qsql', sa.String(length=5000), nullable=False),
-    sa.Column('engine', sa.String(length=100), nullable=False),
-    sa.Column('deli', sa.String(length=11), nullable=False),
-    sa.Column('stage', sa.String(length=11), nullable=False),
-    sa.Column('status', sa.String(length=11), nullable=False),
-    sa.Column('task_id', sa.String(length=100), nullable=False),
-    sa.Column('log_url', sa.String(length=400), nullable=False),
-    sa.Column('ui_url', sa.String(length=400), nullable=False),
-    sa.Column('result_url', sa.String(length=400), nullable=False),
-    sa.Column('result_line_num', sa.String(length=400), nullable=False),
-    sa.Column('err_msg', sa.String(length=5000), nullable=False),
-    sa.Column('username', sa.String(length=400), nullable=False),
+    sa.Column('id', sa.Integer(), nullable=False, comment='id主键'),
+    sa.Column('submit_time', sa.String(length=40), nullable=False, comment='提交时间'),
+    sa.Column('start_time', sa.String(length=40), nullable=False, comment='启动时间'),
+    sa.Column('end_time', sa.String(length=40), nullable=False, comment='结束时间'),
+    sa.Column('engine_arg1', sa.String(length=200), nullable=False, comment='引擎参数1'),
+    sa.Column('engine_arg2', sa.String(length=200), nullable=False, comment='引擎参数2'),
+    sa.Column('qsql', sa.String(length=5000), nullable=False, comment='sql语句'),
+    sa.Column('engine', sa.String(length=100), nullable=False, comment='引擎'),
+    sa.Column('deli', sa.String(length=11), nullable=False, comment='分隔符'),
+    sa.Column('stage', sa.String(length=11), nullable=False, comment='阶段'),
+    sa.Column('status', sa.String(length=11), nullable=False, comment='状态'),
+    sa.Column('task_id', sa.String(length=100), nullable=False, comment='任务id'),
+    sa.Column('log_url', sa.String(length=400), nullable=False, comment='日志url'),
+    sa.Column('ui_url', sa.String(length=400), nullable=False, comment='任务url'),
+    sa.Column('result_url', sa.String(length=400), nullable=False, comment='结果url'),
+    sa.Column('result_line_num', sa.String(length=400), nullable=False, comment='结果行数'),
+    sa.Column('err_msg', sa.String(length=5000), nullable=False, comment='报错消息'),
+    sa.Column('username', sa.String(length=400), nullable=False, comment='用户名'),
     sa.Column('created_by_fk', sa.Integer(), nullable=True),
     sa.Column('changed_by_fk', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['changed_by_fk'], ['ab_user.id'], ),
     sa.ForeignKeyConstraint(['created_by_fk'], ['ab_user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.add_column('aihub', sa.Column('expand', sa.Text(), nullable=True))
-    op.add_column('aihub', sa.Column('images', sa.String(length=200), nullable=True))
-    op.add_column('dataset', sa.Column('doc', sa.String(length=200), nullable=True))
-    op.add_column('dataset', sa.Column('features', sa.Text(), nullable=True))
-    op.add_column('dataset', sa.Column('info', sa.Text(), nullable=True))
-    op.add_column('dataset', sa.Column('metric_info', sa.Text(), nullable=True))
-    op.add_column('dataset', sa.Column('secret', sa.String(length=200), nullable=True))
-    op.add_column('dataset', sa.Column('segment', sa.Text(), nullable=True))
-    op.add_column('dataset', sa.Column('split', sa.String(length=200), nullable=True))
-    op.add_column('dataset', sa.Column('subdataset', sa.String(length=200), nullable=True))
-    op.add_column('dataset', sa.Column('version', sa.String(length=200), nullable=True))
+    op.add_column('aihub', sa.Column('expand', sa.Text(), nullable=True, comment='扩展参数'))
+    op.add_column('aihub', sa.Column('images', sa.String(length=200), nullable=True, comment='docker镜像'))
+    op.add_column('dataset', sa.Column('doc', sa.String(length=200), nullable=True, comment='数据集的文档页面'))
+    op.add_column('dataset', sa.Column('features', sa.Text(), nullable=True, comment='特征信息'))
+    op.add_column('dataset', sa.Column('info', sa.Text(), nullable=True, comment='数据集，内容信息'))
+    op.add_column('dataset', sa.Column('metric_info', sa.Text(), nullable=True, comment='数据集，指标信息'))
+    op.add_column('dataset', sa.Column('secret', sa.String(length=200), nullable=True, comment='秘钥，数据集的秘钥'))
+    op.add_column('dataset', sa.Column('segment', sa.Text(), nullable=True, comment='可以追加数据块，避免整块更新，记录分区信息。分区名，文件文件信息'))
+    op.add_column('dataset', sa.Column('split', sa.String(length=200), nullable=True, comment=' train test val等'))
+    op.add_column('dataset', sa.Column('subdataset', sa.String(length=200), nullable=True, comment=' 数据子集名称，例如英文数据子集，中文数据子集'))
+    op.add_column('dataset', sa.Column('version', sa.String(length=200), nullable=True, comment='版本'))
     op.drop_constraint('metadata_metric_ibfk_1', 'metadata_metric', type_='foreignkey')
     op.drop_constraint('metadata_metric_ibfk_2', 'metadata_metric', type_='foreignkey')
     op.drop_column('metadata_metric', 'created_on')
     op.drop_column('metadata_metric', 'changed_by_fk')
     op.drop_column('metadata_metric', 'created_by_fk')
     op.drop_column('metadata_metric', 'changed_on')
-    op.add_column('notebook', sa.Column('env', sa.String(length=400), nullable=True))
+    op.add_column('notebook', sa.Column('env', sa.String(length=400), nullable=True, comment='环境变量'))
     op.add_column('pytorchjob', sa.Column('cluster', sa.String(length=100), nullable=True))
     op.add_column('tfjob', sa.Column('cluster', sa.String(length=100), nullable=True))
-    op.add_column('workflow', sa.Column('cluster', sa.String(length=100), nullable=True))
+    op.add_column('workflow', sa.Column('cluster', sa.String(length=100), nullable=True, comment='k8s集群'))
     op.add_column('xgbjob', sa.Column('cluster', sa.String(length=100), nullable=True))
     # ### end Alembic commands ###
 
