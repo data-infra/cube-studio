@@ -43,3 +43,4 @@ compile.py
 /.superpowers/
 myapp/config.py
 **/LC_MESSAGES/*.mo
+/myapp/chatgpt-web/

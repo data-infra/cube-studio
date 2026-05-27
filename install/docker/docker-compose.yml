@@ -45,7 +45,7 @@ services:
   myapp:   # 后端容器
     image: ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2026.06.01
     restart: unless-stopped
-    command: [ 'bash','-c','/entrypoint.sh' ]     # 在容器内使用sleep 命令启动，然后exec进入myapp容器，手动执行/entrypoint.sh 或 python myapp/run.py
+    command: [ 'bash','-c','sleep 1000000000 && /entrypoint.sh' ]     # 在容器内使用sleep 命令启动，然后exec进入myapp容器，手动执行/entrypoint.sh 或 python myapp/run.py
     environment:
       STAGE: 'dev'
       REDIS_HOST: 'redis'

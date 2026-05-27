@@ -11,11 +11,6 @@ export const getAppHeaderConfig = (): Promise<AxiosResponse<IAppHeaderItem[]>> =
     return axios.get('/myapp/navbar_right')
 }
 
-// 获取底部智能助手按钮列表（空数组表示不启用）
-export const getNavbarBottom = (): Promise<AxiosResponse<INavbarBottomItem[]>> => {
-    return axios.get('/myapp/navbar_bottom')
-}
-
 export const userLogout = (): Promise<AxiosResponse<IAppMenuItem[]>> => {
     return axios.get('/logout')
 }
@@ -34,6 +29,11 @@ export const getCustomDialog = (url: string, signal: AbortSignal): Promise<Axios
 
 export const getADUGTemplateList = (url?: string, params?: any): AxiosResFormat<any> => {
     return axios.get(url || '', { params })
+}
+
+// 获取底部智能助手按钮列表（空数组表示不启用）
+export const getNavbarBottom = (): Promise<AxiosResponse<INavbarBottomItem[]>> => {
+    return axios.get('/myapp/navbar_bottom')
 }
 
 export const getData = (url?: string, params?: any): AxiosResFormat<any> => {
