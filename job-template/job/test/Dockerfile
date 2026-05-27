@@ -1,4 +1,4 @@
-# docker buildx build --platform linux/amd64,linux/arm64  -t ccr.ccs.tencentyun.com/cube-studio/python:ml . --push
+
 
 # 使用官方Python镜像
 FROM python:3.9

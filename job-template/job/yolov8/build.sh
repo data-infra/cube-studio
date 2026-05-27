@@ -5,7 +5,7 @@ set -ex
 docker build --network=host -t ccr.ccs.tencentyun.com/cube-studio/yolov8:20250901 -f Dockerfile  .
 docker push ccr.ccs.tencentyun.com/cube-studio/yolov8:20250901
 
-# docker buildx build --platform linux/amd64,linux/arm64 -t ccr.ccs.tencentyun.com/cube-studio/yolov8:20250901 -f Dockerfile . --push
+
 
 
 #docker manifest rm ccr.ccs.tencentyun.com/cube-studio/yolov8:20250901
