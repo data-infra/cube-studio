@@ -1720,82 +1720,6 @@
     "job_template_args": {
     }
   },
-  "opencompass": {
-    "project_name": "模型处理",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/opencompass",
-    "image_describe": "大模型评测",
-    "job_template_name": "opencompass",
-    "job_template_describe": "大模型评测(企业版)",
-    "job_template_command": "python3 launcher.py",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "",
-    "job_template_expand": {
-      "index": 3,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/opencompass"
-    },
-    "job_template_args": {
-    }
-  },
-  "model-quantization": {
-    "project_name": "模型处理",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/model-quantization",
-    "image_describe": "大模型量化",
-    "job_template_name": "model-quantization",
-    "job_template_describe": "大模型量化(企业版)",
-    "job_template_command": "python3 launcher.py",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "",
-    "job_template_expand": {
-      "index": 4,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/model-quantization"
-    },
-    "job_template_args": {
-    }
-  },
-  "model-distillation": {
-    "project_name": "模型处理",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/model-distillation",
-    "image_describe": "大模型蒸馏",
-    "job_template_name": "model-distillation",
-    "job_template_describe": "大模型蒸馏(企业版)",
-    "job_template_command": "python3 launcher.py",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "",
-    "job_template_expand": {
-      "index": 5,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/model-distillation"
-    },
-    "job_template_args": {
-    }
-  },
-  "model-prune": {
-    "project_name": "模型处理",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/model-prune",
-    "image_describe": "大模型剪枝",
-    "job_template_name": "model-prune",
-    "job_template_describe": "大模型剪枝(企业版)",
-    "job_template_command": "python3 launcher.py",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "",
-    "job_template_expand": {
-      "index": 6,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/model-distillation"
-    },
-    "job_template_args": {
-    }
-  },
   "model-register": {
     "project_name": "模型服务化",
     "image_name": "ccr.ccs.tencentyun.com/cube-studio/model_register:20230501",
@@ -2533,176 +2457,6 @@
       }
     }
   },
-  "chatglm4": {
-    "project_name": "大模型",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/llama_factory",
-    "image_describe": "chatglm4",
-    "job_template_name": "chatglm4",
-    "job_template_describe": "chatglm4 lora微调(企业版)",
-    "job_template_version": "Release",
-    "job_template_workdir": "/root/llama_factory",
-    "job_template_command": "python start.py",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
-    "job_template_expand": {
-      "index": 3,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/llama_factory"
-    },
-    "job_template_args": {
-    }
-  },
-  "deepseek": {
-    "project_name": "大模型",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/llama_factory",
-    "image_describe": "deepseek",
-    "job_template_name": "deepseek",
-    "job_template_describe": "deepseek 微调(企业版)",
-    "job_template_version": "Release",
-    "job_template_workdir": "/root/llama_factory",
-    "job_template_command": "python start.py",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
-    "job_template_expand": {
-      "index": 4,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/llama_factory"
-    },
-    "job_template_args": {
-    }
-  },
-  "llama3": {
-    "project_name": "大模型",
-    "image_name": "python:3.9",
-    "gitpath": "https://github.com/data-infra/cube-studio/tree/main/job-template/job/llama3",
-    "image_describe": "llama3",
-    "job_template_name": "llama3",
-    "job_template_describe": "llama3 lora微调(企业版)",
-    "job_template_version": "Release",
-    "job_template_workdir": "",
-    "job_template_command": "xxxx ",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "",
-    "job_template_expand": {
-      "index": 5
-    },
-    "job_template_args": {
-    }
-  },
-  "baichuan2": {
-    "project_name": "大模型",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/baichuan2",
-    "image_describe": "baichuan2",
-    "job_template_name": "baichuan2",
-    "job_template_describe": "baichuan2 微调(企业版)",
-    "job_template_version": "Release",
-    "job_template_workdir": "/root/baichuan2/fine-tune/",
-    "job_template_command": "deepspeed --hostfile='' fine-tune.py --report_to 'none'  --save_strategy epoch --lr_scheduler_type constant ",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "",
-    "job_template_expand": {
-      "index": 5,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/baichuan2"
-    },
-    "job_template_args": {
-    }
-  },
-  "qwen3": {
-    "project_name": "大模型",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/llama_factory",
-    "image_describe": "qwen3",
-    "job_template_name": "qwen3",
-    "job_template_describe": "qwen3 lora微调(企业版)",
-    "job_template_version": "Release",
-    "job_template_workdir": "/root/llama_factory",
-    "job_template_command": "python start.py",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
-    "job_template_expand": {
-      "index": 6,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/llama_factory"
-    },
-    "job_template_args": {
-    }
-  },
-  "llama-factory-sft": {
-    "project_name": "大模型",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/llama-factory",
-    "image_describe": "llama-factory",
-    "job_template_name": "llama-factory-sft",
-    "job_template_old_names": ["llama-factory"],
-    "job_template_describe": "llama-factory大模型sft微调(企业版)",
-    "job_template_version": "Release",
-    "job_template_workdir": "/app",
-    "job_template_command": "python start.py",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
-    "job_template_expand": {
-      "index": 7,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/llama-factory",
-      "enterprise": true
-    },
-    "job_template_args": {
-    }
-  },
-  "llama-factory-rm": {
-    "project_name": "大模型",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/llama-factory",
-    "image_describe": "llama-factory",
-    "job_template_name": "llama-factory-rm",
-    "job_template_describe": "llama-factory大模型奖励模型训练(企业版)",
-    "job_template_version": "Release",
-    "job_template_workdir": "/app",
-    "job_template_command": "python start-rm.py",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
-    "job_template_expand": {
-      "index": 8,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/llama-factory",
-      "enterprise": true
-    },
-    "job_template_args": {
-    }
-  },
-  "llama-factory-ppo": {
-    "project_name": "大模型",
-    "image_name": "python:3.9",
-    "gitpath": "/job-template/job/llama-factory",
-    "image_describe": "llama-factory",
-    "job_template_name": "llama-factory-ppo",
-    "job_template_describe": "llama-factory大模型强化学习(企业版)",
-    "job_template_version": "Release",
-    "job_template_workdir": "/app",
-    "job_template_command": "python start-ppo.py",
-    "job_template_volume": "",
-    "job_template_account": "",
-    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
-    "job_template_expand": {
-      "index": 9,
-      "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/llama-factory",
-      "enterprise": true
-    },
-    "job_template_args": {
-    }
-  },
   "paddleocr-vl": {
     "project_name": "文本处理",
     "image_name": "python3.9",
@@ -3094,6 +2848,259 @@
       "index": 3,
       "rec_job_template": "自定义镜像",
       "help_url": "/job-template/job/voice-process"
+    },
+    "job_template_args": {
+    }
+  },
+  "deepseek": {
+    "project_name": "大模型",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/llama-factory",
+    "image_describe": "deepseek",
+    "image_expand": {
+      "icon": "/static/assets/images/job_templates/llama-factory.png"
+    },
+    "job_template_name": "deepseek",
+    "job_template_describe": "deepseek大模型微调(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
+    "job_template_expand": {
+      "index": 4,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/llama-factory",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "llama-factory-sft": {
+    "project_name": "大模型",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/llama-factory",
+    "image_describe": "llama-factory",
+    "image_expand": {
+      "icon": "/static/assets/images/job_templates/llama-factory.png"
+    },
+    "job_template_name": "llama-factory-sft",
+    "job_template_old_names": [
+      "llama-factory"
+    ],
+    "job_template_describe": "大模型sft微调(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
+    "job_template_expand": {
+      "index": 5,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/llama-factory",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "llama-factory-reward": {
+    "project_name": "大模型",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/llama-factory",
+    "image_describe": "llama-factory",
+    "image_expand": {
+      "icon": "/static/assets/images/job_templates/llama-factory.png"
+    },
+    "job_template_name": "llama-factory-reward",
+    "job_template_describe": "大模型奖励模型训练(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start-reward.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
+    "job_template_expand": {
+      "index": 6,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/llama-factory",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "llama-factory-ppo": {
+    "project_name": "大模型",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/llama-factory",
+    "image_describe": "llama-factory",
+    "image_expand": {
+      "icon": "/static/assets/images/job_templates/llama-factory.png"
+    },
+    "job_template_name": "llama-factory-ppo",
+    "job_template_describe": "大模型强化学习(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start-ppo.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
+    "job_template_expand": {
+      "index": 7,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/llama-factory",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "llama-factory-eval": {
+    "project_name": "大模型",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/llama-factory",
+    "image_describe": "llama-factory",
+    "image_expand": {
+      "icon": "/static/assets/images/job_templates/llama-factory.png"
+    },
+    "job_template_name": "llama-factory-eval",
+    "job_template_describe": "llama-factory大模型评估(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start-eval.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
+    "job_template_expand": {
+      "index": 8,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/llama-factory",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "opencompass": {
+    "project_name": "大模型",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/opencompass",
+    "image_describe": "opencompass大模型评估",
+    "image_expand": {
+      "icon": "/static/assets/images/job_templates/opencompass.png"
+    },
+    "job_template_name": "opencompass",
+    "job_template_describe": "opencompass大模型评估(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
+    "job_template_expand": {
+      "index": 8,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/opencompass",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "llm-safety-eval": {
+    "project_name": "大模型",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/llm-safety-eval",
+    "image_describe": "大模型安全评估",
+    "image_expand": {
+      "icon": "/static/assets/images/job_templates/llm.png"
+    },
+    "job_template_name": "llm-safety-eval",
+    "job_template_describe": "大模型安全评估(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 9,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/opencompass",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "llm-benchmark": {
+    "project_name": "大模型",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/llm-benchmark",
+    "image_describe": "大模型性能评估",
+    "image_expand": {
+      "icon": "/static/assets/images/job_templates/llm.png"
+    },
+    "job_template_name": "llm-benchmark",
+    "job_template_describe": "大模型性能评估(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 10,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/llm-benchmark",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "llm-quantization": {
+    "project_name": "大模型",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/llm-quantization",
+    "image_describe": "大模型量化",
+    "image_expand": {
+      "icon": "/static/assets/images/job_templates/huggingface.svg"
+    },
+    "job_template_name": "llm-quantization",
+    "job_template_describe": "大模型量化(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
+    "job_template_expand": {
+      "index": 11,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/llm-quantization",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "llm-prune": {
+    "project_name": "大模型",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/llm-prune",
+    "image_describe": "大模型剪枝",
+    "image_expand": {
+      "icon": "/static/assets/images/job_templates/llm.png"
+    },
+    "job_template_name": "llm-prune",
+    "job_template_describe": "大模型剪枝(企业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
+    "job_template_expand": {
+      "index": 12,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/llm-prune",
+      "enterprise": true
     },
     "job_template_args": {
     }

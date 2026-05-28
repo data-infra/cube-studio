@@ -883,8 +883,8 @@ MODEL_URLS = {
  # 可以跨域分享cookie的子域名，例如.svc.local.com
 COOKIE_DOMAIN = ''
 SERVICE_DOMAIN='service.svc.cluster.local'
-CHATGPT_TOKEN = ["sk-9eedvFX6abEFxwXI86E526093b464dB7A51d946e3aCc270f"]
-CHATGPT_CHAT_URL = ['https://lonlie.plus7.plus/v1']
+CHATGPT_TOKEN = []
+CHATGPT_CHAT_URL = []
 CHATGPT_ARGS = {
     "model": 'gpt-5-chat'
 }
@@ -897,7 +897,7 @@ CLUSTERS={
         "NAME":"dev",
         "KUBECONFIG":'/home/myapp/kubeconfig/dev-kubeconfig',
         "SERVICE_DOMAIN": 'service.local.com',
-        # "HOST": "192.168.0.100"   # 本地调试的时候这里更换为k8s的istio ingressgateway的ip并解开注释
+        "HOST": "192.168.0.100"   # 本地调试的时候这里更换为k8s的istio ingressgateway的ip并解开注释
     }
 }
 
