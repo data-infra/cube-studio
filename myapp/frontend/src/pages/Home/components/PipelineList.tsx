@@ -90,7 +90,7 @@ const PipelineList: React.FC = () => {
         dataIndex: "describe",
         key: "describe",
         ellipsis: true,
-        render: (text: string) => (text ? t(text) : "-"),
+        render: (text: string) => (text || "-"),
       },
       {
         title: '修改时间',

@@ -995,7 +995,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                         });
                                   }}
                                 >
-                                  {t(`${action.text}`)}
+                                  {action.text}
                                 </div>
                               </Menu.Item>
                             );

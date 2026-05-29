@@ -21,7 +21,7 @@ import "./UserCenter.less";
 
 const { Title, Text } = Typography;
 
-function getEmptyPlaceholder(t: (key: string) => string): string {
+function getEmptyPlaceholder(): string {
   return "空描述" || "—";
 }
 
@@ -292,7 +292,7 @@ const UserCenter: React.FC = () => {
     );
   }
 
-  const emptyStr = getEmptyPlaceholder(t);
+  const emptyStr = getEmptyPlaceholder();
   // label_columns: 列的中文名
   const labelCol = infoConfig.label_columns || {};
   // description_columns: 列的描述

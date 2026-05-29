@@ -136,7 +136,7 @@ const FeatureCard: React.FC = () => {
             <Card.Meta
               title={
                 <div className="feature-card-title">
-                  {feature.name ? t(feature.name) : "-"}
+                  {feature.name || "-"}
                 </div>
               }
             />

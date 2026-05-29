@@ -3,7 +3,6 @@
 // 启动时请求 /myapp/navbar_bottom 接口，返回空数组则不显示任何内容
 
 import React, { useState, useRef, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import { getNavbarBottom } from '../../api/kubeflowApi'
 import { INavbarBottomItem } from '../../api/interface/kubeflowInterface'
@@ -130,7 +129,6 @@ const getDefaultPanelPosition = () => {
 }
 
 const AiChatBot: React.FC = () => {
-  const { t } = useTranslation()
   const location = useLocation()
   // 后端返回的智能助手配置（null 表示尚未加载）
   const [botConfig, setBotConfig] = useState<INavbarBottomItem | null>(null)
@@ -306,8 +304,8 @@ const AiChatBot: React.FC = () => {
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
           onClick={handleToggleOpen}
-          title={t('AI 助手')}
-          aria-label={t('打开 AI 助手')}
+          title="AI 助手"
+          aria-label="打开 AI 助手"
         >
           {/* 使用后端返回的 SVG 图标 */}
           <span
@@ -341,10 +339,10 @@ const AiChatBot: React.FC = () => {
               dangerouslySetInnerHTML={{ __html: botConfig.icon }}
             />
             <div className="aichatbot-header-info">
-              <div className="aichatbot-header-title">{t('AI 运维助手')}</div>
+              <div className="aichatbot-header-title">AI 运维助手</div>
               <div className="aichatbot-header-status">
                 <span className="aichatbot-status-dot" />
-                {t('已连接')}
+                已连接
               </div>
             </div>
             <div className="aichatbot-header-actions">
@@ -353,7 +351,7 @@ const AiChatBot: React.FC = () => {
                 className="aichatbot-action-btn"
                 onPointerDown={(event) => event.stopPropagation()}
                 onClick={() => setIsMinimized(v => !v)}
-                title={isMinimized ? t('展开') : t('最小化')}
+                title={isMinimized ? '展开' : '最小化'}
               >
                 {isMinimized ? (
                   <svg width="14" height="14" viewBox="0 0 48 48" fill="none">
@@ -371,7 +369,7 @@ const AiChatBot: React.FC = () => {
                 className="aichatbot-action-btn"
                 onPointerDown={(event) => event.stopPropagation()}
                 onClick={handleToggleOpen}
-                title={t('关闭')}
+                title="关闭"
               >
                 <svg width="14" height="14" viewBox="0 0 48 48" fill="none">
                   <path d="M12 12L36 36" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
@@ -388,9 +386,9 @@ const AiChatBot: React.FC = () => {
               {!iframeUrl ? (
                 <div className="aichatbot-placeholder">
                   <span className="aichatbot-placeholder-icon">🤖</span>
-                  <div className="aichatbot-placeholder-text">{t('未配置对话地址')}</div>
+                  <div className="aichatbot-placeholder-text">未配置对话地址</div>
                   <div className="aichatbot-placeholder-hint">
-                    {t('请在后端配置 AI_ASSISTANT_URL')}
+                    请在后端配置 AI_ASSISTANT_URL
                   </div>
                 </div>
               ) : (
@@ -399,16 +397,16 @@ const AiChatBot: React.FC = () => {
                   {iframeStatus === 'loading' && (
                     <div className="aichatbot-loading">
                       <div className="aichatbot-loading-spinner" />
-                      <div className="aichatbot-loading-text">{t('连接中…')}</div>
+                      <div className="aichatbot-loading-text">连接中…</div>
                     </div>
                   )}
                   {/* 连接失败时展示错误提示，支持手动重试 */}
                   {iframeStatus === 'error' && (
                     <div className="aichatbot-placeholder">
                       <span className="aichatbot-placeholder-icon">⚠️</span>
-                      <div className="aichatbot-placeholder-text">{t('服务连接失败')}</div>
+                      <div className="aichatbot-placeholder-text">服务连接失败</div>
                       <div className="aichatbot-placeholder-hint">
-                        {t('无法访问 AI 服务，请检查网络或联系管理员')}
+                        无法访问 AI 服务，请检查网络或联系管理员
                       </div>
                       <button
                         className="aichatbot-retry-btn"
@@ -417,7 +415,7 @@ const AiChatBot: React.FC = () => {
                           setIframeStatus('loading')
                         }}
                       >
-                        {t('重试')}
+                        重试
                       </button>
                     </div>
                   )}
@@ -425,7 +423,7 @@ const AiChatBot: React.FC = () => {
                     key={iframeKey.current}
                     className="aichatbot-iframe"
                     src={iframeUrl}
-                    title={t('AI 助手')}
+                    title="AI 助手"
                     frameBorder={0}
                     allow="microphone"
                     onLoad={() => {
