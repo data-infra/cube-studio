@@ -286,19 +286,6 @@ def check_login():
 
     if g.user is None or not g.user.get_id():
 
-        # 支持跨域名cookie登录，有平台域名共享时打开
-        myapp_username = request.cookies.get('myapp_username', '')
-        if conf.get('AUTH_PLATFORM_ACCESS',False) and myapp_username:
-            try:
-                user = security_manager.find_user(myapp_username)
-                if not user:
-                    abort(401)
-                else:
-                    g.user = user
-                    return
-            except Exception as e:
-                print(e)
-
         # 支持header认证
         authorization_value = request.headers.get('Authorization','')
         if authorization_value:
@@ -368,5 +355,4 @@ def page_not_found(e):
 
 # 引入视图
 from myapp import views
-
 

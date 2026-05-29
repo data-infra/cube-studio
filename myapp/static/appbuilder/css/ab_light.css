@@ -185,7 +185,7 @@ textarea.form-control {
 		display: flex;
 		align-items: center;
 	}
-	#MyUserRemoteUserModelView .list-add-action .btn.btn-sm,
+	#MyUserDBModelView .list-add-action .btn.btn-sm,
 	.list-container .list-add-action .btn.btn-sm {
 		color: #1e1653;
 		background-color: transparent;
@@ -199,7 +199,7 @@ textarea.form-control {
 		color: #4b84ee;
 	}
 	/* Paging */
-	#MyUserRemoteUserModelView .pagination-container,
+	#MyUserDBModelView .pagination-container,
 	.list-container .pagination-container {
 		padding-bottom: 0;
 		font-size: 14px;
@@ -321,7 +321,7 @@ textarea.form-control {
 	}
 
 	/* Form */
-	#model_form, #MyUserRemoteUserModelView {
+	#model_form, #MyUserDBModelView {
 		padding: 20px;
 	}
 	#model_form .table tr {

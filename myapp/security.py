@@ -35,10 +35,6 @@ from flask_appbuilder.security.sqla.models import assoc_permissionview_role
 from sqlalchemy import select
 from flask_appbuilder.const import (
     AUTH_DB,
-    AUTH_LDAP,
-    AUTH_OAUTH,
-    AUTH_OID,
-    AUTH_REMOTE_USER,
     LOGMSG_WAR_SEC_LOGIN_FAILED
 )
 from flask_appbuilder.security.views import SimpleFormView
@@ -257,7 +253,6 @@ class MyUserRemoteUserModelView(MyUserRemoteUserModelView_Base,UserModelView):
     datamodel = SQLAInterface(MyUser)
 
 
-from myapp.project import MyCustomRemoteUserView
 from myapp.project import Myauthdbview
 # myapp自带的角色和角色权限，自定义了各种权限
 # 基础类fab-Security-Manager中 def load_user(self, pk):  是用来认证用户的
@@ -267,10 +262,6 @@ class MyappSecurityManager(SecurityManager):
 
     user_model = MyUser
     rolemodelview = MyRoleModelView  #
-
-    # Remote Authentication
-    userremoteusermodelview = MyUserRemoteUserModelView
-    authremoteuserview = MyCustomRemoteUserView
 
     # Account password authentication
     userdbmodelview = MyUserRemoteUserModelView
@@ -294,29 +285,15 @@ class MyappSecurityManager(SecurityManager):
         #     token = request.headers['token']
         if authorization_value:
             from myapp import conf
-            # username 免认证：AUTH_PLATFORM_ACCESS 全局开启，或通过 K8s 内部域名(kubeflow-dashboard)访问时放行
-            is_k8s_internal = 'kubeflow-dashboard.infra' in (request.host or '')
-            if len(authorization_value) < 40 and (conf.get('AUTH_PLATFORM_ACCESS',False) or is_k8s_internal):
-                username = authorization_value
-                if username:
-                    user = self.find_user(username)
-                    g.user = user
-                    return user
-            else:  # token 认证
-                # 兼容无 header 的短 token：只有 payload.signature 两段时，补回固定的 HS256 header
-                HS256_HEADER = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
-                if authorization_value.count('.') == 1:
-                    authorization_value = HS256_HEADER + '.' + authorization_value
-                encoded_jwt = authorization_value.encode('utf-8')
-                payload = jwt.decode(encoded_jwt, conf.get('JWT_PASSWORD','cube-studio'), algorithms=['HS256'])
-                # if payload['iat'] > time.time():
-                #     return
-                # elif payload['exp'] < time.time():
-                #     return
-                # else:
-                user = self.find_user(payload['sub'])
-                g.user = user
-                return user
+            # 兼容无 header 的短 token：只有 payload.signature 两段时，补回固定的 HS256 header
+            HS256_HEADER = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
+            if authorization_value.count('.') == 1:
+                authorization_value = HS256_HEADER + '.' + authorization_value
+            encoded_jwt = authorization_value.encode('utf-8')
+            payload = jwt.decode(encoded_jwt, conf.get('JWT_PASSWORD','cube-studio'), algorithms=['HS256'])
+            user = self.find_user(payload['sub'])
+            g.user = user
+            return user
 
     # 自定义登录用户
     def load_user(self, pk):
@@ -332,26 +309,11 @@ class MyappSecurityManager(SecurityManager):
         # Security APIs
         self.appbuilder.add_api(self.security_api)
 
-        if self.auth_type == AUTH_DB:
-            self.user_view = self.userdbmodelview
-            self.auth_view = self.authdbview()
+        if self.auth_type != AUTH_DB:
+            raise RuntimeError("Only AUTH_DB authentication is supported.")
 
-        elif self.auth_type == AUTH_LDAP:
-            self.user_view = self.userdbmodelview
-            self.auth_view = self.authdbview()
-        elif self.auth_type == AUTH_OAUTH:
-            self.user_view = self.userremoteusermodelview
-            self.auth_view = self.authremoteuserview()
-        elif self.auth_type == AUTH_REMOTE_USER:
-            self.user_view = self.userremoteusermodelview
-            self.auth_view = self.authremoteuserview()
-        else:
-            self.user_view = self.useroidmodelview
-            self.auth_view = self.authoidview()
-            if self.auth_user_registration:
-                pass
-                self.registeruser_view = self.registeruseroidview()
-                self.appbuilder.add_view_no_menu(self.registeruser_view)
+        self.user_view = self.userdbmodelview
+        self.auth_view = self.authdbview()
 
         self.appbuilder.add_view_no_menu(self.auth_view)
 
@@ -395,7 +357,7 @@ class MyappSecurityManager(SecurityManager):
             return False
 
 
-    # 添加注册远程用户
+    # 添加数据库用户
     # @pysnooper.snoop()
     def auth_user_remote_org_user(self, username,org_name='',password='',hashed_password='',email='',first_name='',last_name=''):
         if not username:

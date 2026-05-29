@@ -116,35 +116,3 @@ class UserInfo_ModelView_Api(User_ModelView_Base, MyappModelRestApi):
 
 appbuilder.add_api(UserInfo_ModelView_Api)
 
-
-class Role_ModelView_Base():
-    label_title = _('角色')
-    datamodel = SQLAInterface(MyRole)
-
-    base_permissions = ['can_list', 'can_show', 'can_add', 'can_edit']
-    edit_columns = ["name", 'permissions']
-    add_columns = edit_columns
-    show_columns = ["name", "permissions"]
-    list_columns = ["name", "permissions_html"]
-    spec_label_columns = {
-        "name":_("名称"),
-        "permissions":_("权限"),
-        "permissions_html": _("权限"),
-        "user":_("用户"),
-        "user_html": _("用户"),
-    }
-    cols_width = {
-        "name": {"type": "ellip2", "width": 100},
-        "permissions_html": {"type": "ellip2", "width": 700}
-    }
-
-    order_columns=['id']
-    search_columns = ["name"]
-    base_order = ('id', 'desc')
-
-# 添加api
-class Role_ModelView_Api(Role_ModelView_Base, MyappModelRestApi):
-    datamodel = SQLAInterface(MyRole)
-    route_base = '/roles/api'
-
-appbuilder.add_api(Role_ModelView_Api)

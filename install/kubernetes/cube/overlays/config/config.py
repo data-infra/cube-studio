@@ -8,7 +8,7 @@ import sys
 
 from dateutil import tz
 
-from flask_appbuilder.security.manager import AUTH_REMOTE_USER, AUTH_DB, AUTH_LDAP
+from flask_appbuilder.security.manager import AUTH_DB
 from myapp.stats_logger import DummyStatsLogger
 
 
@@ -80,11 +80,8 @@ LOGO_TARGET_PATH = None
 # ----------------------------------------------------
 # 认证类型
 # AUTH_DB : 数据库账号密码配置
-# AUTH_LDAP : LDAP认证
-# AUTH_REMOTE_USER : 远程用户认证，或者OpenID认证，或者公司内部自定义的接口获取用户信息方法
 AUTH_TYPE = AUTH_DB
 
-# AUTH_TYPE = AUTH_REMOTE_USER
 # Uncomment to setup Full admin role name
 # AUTH_ROLE_ADMIN = 'Admin'
 
@@ -93,27 +90,11 @@ AUTH_TYPE = AUTH_DB
 
 # 是否允许用户注册
 AUTH_USER_REGISTRATION = False
-# 是否允许其他平台的接入，允许后，其他平台可设置cookie在本平台登录，并可跳过登录api调用
-AUTH_PLATFORM_ACCESS = False
 # 注册用户的默认角色
 AUTH_USER_REGISTRATION_ROLE = "Gamma"
 
 # RECAPTCHA_PUBLIC_KEY = 'GOOGLE PUBLIC KEY FOR RECAPTCHA'
 # RECAPTCHA_PRIVATE_KEY = 'GOOGLE PRIVATE KEY FOR RECAPTCHA'
-
-OAUTH_PROVIDERS=[]
-
-#LDAP认证时, ldap server
-AUTH_LDAP_SERVER = "ldap://xx.xx.xx.xx"
-AUTH_LDAP_PORT = "xx"
-AUTH_LDAP_USE_TLS = False
-AUTH_LDAP_BASE_DN = 'cpcnet.local'   # 基准dn
-
-# OpenID认证的提供方
-# OPENID_PROVIDERS = [
-#    { 'name': 'Yahoo', 'url': 'https://open.login.yahoo.com/' },
-#    { 'name': 'Flickr', 'url': 'https://www.flickr.com/<username>' },
-
 
 # ---------------------------------------------------
 # 语言翻译上的配置

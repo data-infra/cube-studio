@@ -1,5 +1,5 @@
 from werkzeug.security import check_password_hash
-from flask_appbuilder.security.views import AuthDBView, AuthRemoteUserView
+from flask_appbuilder.security.views import AuthDBView
 from flask_appbuilder.security.views import expose
 from flask_appbuilder.const import LOGMSG_WAR_SEC_LOGIN_FAILED
 from flask import send_file, jsonify
@@ -35,83 +35,6 @@ import logging
 from flask import flash, g, redirect, request, session
 from flask_login import login_user, logout_user
 from flask_appbuilder.security.forms import LoginForm_db
-import pysnooper
-
-portal_url = 'http://127.0.0.1/xxxx/login?staffCode=admin'
-
-# 自定义远程用户视图
-# @pysnooper.snoop()
-class MyCustomRemoteUserView(AuthRemoteUserView):
-
-    @expose('/xx/xx/explorer/login')
-    @pysnooper.snoop(watch_explode=('request_data',))
-    def login(self):
-
-        request_data = request.args.to_dict()
-
-        username = request_data.get('staffCode','').lower().replace('_','-').replace('.','')
-        if not username:
-            print('no find user')
-            return redirect(portal_url)
-        # 处理特殊符号
-        email = ''
-        if '@' in username:
-            email = username
-            username = username[:username.index('@')]
-
-        # 先查询用户是否存在
-        if email:
-            user = self.appbuilder.sm.find_user(email=email)
-        else:
-            user = self.appbuilder.sm.find_user(username=username)
-
-        if user and (not user.is_active):
-            logging.info(LOGMSG_WAR_SEC_LOGIN_FAILED.format(username))
-            print('用户未激活，联系管理员激活')
-            flash('user not active',category='warning')
-            return redirect(portal_url)
-
-        if not user:
-            # 没有用户的时候自动注册用户
-            user = self.appbuilder.sm.auth_user_remote_org_user(
-                username=username,
-                org_name='',
-                password='123456',
-                email=email,
-                first_name=username.split('.')[0] if '.' in username else username,
-                last_name=username.split('.')[1] if '.' in username else username
-            )
-            flash('发现用户%s不存在，已自动注册' % username, "success")
-        if not user:
-            return redirect(portal_url)
-        login_user(user, remember=True)
-        # 添加到public项目组
-        from myapp.security import MyUserRemoteUserModelView_Base
-        user_view = MyUserRemoteUserModelView_Base()
-        user_view.post_add(user)
-        res = redirect('/frontend/')
-        res.set_cookie('myapp_username', username)  # 让前端认为也成功了
-        return res
-        # return redirect(self.appbuilder.get_url_for_index)
-
-    @expose('/login/')
-    def _login(self):
-        if 'username' in request.args:
-            if request.args.get('username'):
-                username = request.args.get('username')
-                user = self.appbuilder.sm.find_user(username)
-                if user:
-                    login_user(user, remember=True)
-                    return redirect(self.appbuilder.get_url_for_index)
-
-        return redirect(portal_url)
-
-    @expose('/logout')
-    # @pysnooper.snoop()
-    def logout(self):
-        session.pop('user', None)
-        logout_user()
-        return redirect(portal_url)
 
 
 # 账号密码登录方式的登录界面
@@ -215,7 +138,7 @@ class Myauthdbview(AuthDBView):
                     # flash('未发现%s用户，联系管理员创建' % form.username.data, "warning")
                     # return redirect(self.appbuilder.get_url_for_login)
                     # 没有用户的时候自动注册用户
-                    user = self.appbuilder.sm.auth_user_remote_org_user(username=username, org_name='', password=password)   # hashed_password=password可以密文存储
+                    user = self.appbuilder.sm.add_db_org_user(username=username, org_name='', password=password)   # hashed_password=password可以密文存储
                     flash('发现用户%s不存在，已自动注册' % username, "warning")
                     # # 如果不想让用户自动登录可以使用这里
                     # user.active = False
@@ -229,8 +152,8 @@ class Myauthdbview(AuthDBView):
             from myapp import event_logger
             event_logger.log(user_id=user.id,action='login',duration_ms=10)
             # 添加到public项目组
-            from myapp.security import MyUserRemoteUserModelView_Base
-            user_view = MyUserRemoteUserModelView_Base()
+            from myapp.security import MyUserDBModelView_Base
+            user_view = MyUserDBModelView_Base()
             user_view.post_add(user)
 
             # 拷贝示例数据
@@ -256,6 +179,5 @@ class Myauthdbview(AuthDBView):
         g.user = None
         logout_user()
         return redirect(login_url)
-
 
 

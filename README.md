@@ -392,4 +392,3 @@ export MLP_WORKER_0_PORT=$MASTER_PORT
  - 3、避免边缘节点的运维成本
 
 ![图片 1](https://user-images.githubusercontent.com/20157705/170262037-12ad086a-c427-4746-a0fa-ce3bc1586729.png)
-
