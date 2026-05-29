@@ -421,11 +421,7 @@ class Workflow_ModelView_Base():
                             node_selector += key + "=" + nodeSelector[key] + ","
                         node_selector = node_selector.strip(',')
                         requests_resource = nodes_spec[task_name].get('container', {}).get("resources", {}).get("requests", {})
-                        resource_gpu = "0"
-                        for resource_name in list(conf.get('GPU_RESOURCE',{}).values()):
-                            if resource_name in requests_resource:
-                                resource_gpu = str(requests_resource.get(resource_name,"0"))
-                                break
+                        resource_gpu = str(requests_resource.get('nvidia.com/gpu', "0"))
 
                         ui_node = {
                             "node_type": node_type,
@@ -869,4 +865,3 @@ class Workflow_ModelView_Api(Workflow_ModelView_Base, MyappModelRestApi):
 
 
 appbuilder.add_api(Workflow_ModelView_Api)
-

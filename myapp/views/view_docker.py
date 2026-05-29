@@ -101,9 +101,9 @@ class Docker_ModelView_Base():
             'resource_gpu': StringField(
                 label= _('gpu'),
                 default='0',
-                description= _('申请的gpu卡数目，示例:2，每个容器独占整卡。-1为共享占用方式，小数(0.1)为vgpu方式，申请具体的卡型号，可以类似 1(V100)'),
+                description= _('申请的gpu卡数目，示例:2，每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)'),
                 widget=BS3TextFieldWidget(),
-                validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')]
+                validators=[DataRequired(),Regexp('^[0-9a-zA-Z\\-\\(\\)（）]*$')]
             )
         }
     }

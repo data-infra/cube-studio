@@ -92,8 +92,6 @@ def node_traffic():
             device = 'cpu'
             if nodes[ip]['labels'].get('gpu','')=='true':
                 device = 'gpu/' + nodes[ip]['labels'].get('gpu-type', '')
-            if nodes[ip]['labels'].get('vgpu', '') == 'true':
-                device = 'vgpu/' + nodes[ip]['labels'].get('gpu-type', '')
             if org not in stored_nodes:
                 stored_nodes[org] = {}
             if device not in stored_nodes[org]:
@@ -121,41 +119,16 @@ def node_traffic():
                 device = 'cpu/'
             if nodes[ip]['labels'].get('gpu','')=='true':
                 device = device+'gpu/'
-            if nodes[ip]['labels'].get('vgpu','')=='true':
-                device = device+'vgpu/'
             device = device + nodes[ip]['labels'].get('gpu-type', '')
             device = device.strip('/')
 
-            gpu_used=0
-            gpu_total=0
-            # 如果有vgpu就显示vgpu的值。
-            gpu_mfrs = ''
-            for vgpu_mfrs_temp in conf.get('VGPU_RESOURCE'):
-                vgpu_total_temp = nodes[ip][vgpu_mfrs_temp]
-                if vgpu_total_temp > 0.01:  # 存在指定卡型资源，就显示指定卡提供应简写
-                    gpu_mfrs = vgpu_mfrs_temp
-                    if vgpu_mfrs_temp == 'vgpu':
-                        gpu_total += round(float(vgpu_total_temp))/10
-
-            if not gpu_total:
-                for gpu_mfrs_temp in conf.get('GPU_RESOURCE'):
-                    gpu_total_temp = nodes[ip][gpu_mfrs_temp]
-                    if gpu_total_temp > 0.01:  # 存在指定卡型资源，就显示指定卡提供应简写
-                        if not gpu_mfrs:
-                            gpu_mfrs = gpu_mfrs_temp
-                        gpu_total += gpu_total_temp
-
-            gpu_resource = conf.get('GPU_RESOURCE')   # used_gpu 中添加了所有vgpu的资源，所以这里不需要再增加vgpu的使用量
-            for gpu_mfrs_temp in gpu_resource:
-                gpu_used_temp = round(float(nodes[ip].get(f'used_{gpu_mfrs_temp}',0)), 2)
-                gpu_used += gpu_used_temp
+            gpu_total = nodes[ip].get('gpu', 0)
+            gpu_used = round(float(nodes[ip].get('used_gpu', 0)), 2)
 
             # 限制如果不是自己加入的资源组，则不显示
             if joined_cluster_org:
                 if (cluster_name+"-"+org) not in joined_cluster_org:
                     continue
-
-            gpu_mfrs = (gpu_mfrs +":") if gpu_mfrs else 'gpu:'
 
             message += '<tr bgcolor="%s">%s %s %s %s %s %s %s<tr>' % (
                 color,
@@ -165,8 +138,7 @@ def node_traffic():
                 td_html % ('<a target="blank" href="%s">%s</a>' % (grafana_url, device)),
                 td_html % ("cpu:%s/%s" % (nodes[ip]['used_cpu'], nodes[ip]['cpu'])),
                 td_html % ("mem:%s/%s" % (nodes[ip]['used_memory'], nodes[ip]['memory'])),
-                # td_html % ("gpu:%s/%s" % (round(nodes[ip]['used_gpu'],2) if 'vgpu' in device else int(float(nodes[ip]['used_gpu'])), nodes[ip]['gpu'])),
-                td_html % (f"{gpu_mfrs}{gpu_used}/{round(float(gpu_total))}"),
+                td_html % (f"gpu:{gpu_used}/{round(float(gpu_total))}"),
 
                 # td_html % (','.join(list(set(nodes[ip]['user']))[0:1]))
             )
@@ -225,10 +197,7 @@ def pod_resource():
                         if k8s_client.exist_hold_resource(pod):
                             user = pod['labels'].get('user', pod['labels'].get('username', pod['labels'].get('run-rtx', pod['labels'].get('rtx-user','admin'))))
                             if user:
-                                request_gpu = 0
-                                # 所有ai卡都算入xpu卡中
-                                for gpu_mfrs in list(conf.get('GPU_RESOURCE', {}).keys()):
-                                    request_gpu += float(pod.get(gpu_mfrs, 0))
+                                request_gpu = int(pod.get('gpu', 0))
 
                                 result[org][pod['name']] = {}
                                 result[org][pod['name']]['username'] = user
@@ -573,6 +542,4 @@ class Total_Resource_ModelView_Api(MyappFormRestApi):
 
 
 appbuilder.add_api(Total_Resource_ModelView_Api)
-
-
 

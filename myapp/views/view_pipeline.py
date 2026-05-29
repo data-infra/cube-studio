@@ -237,7 +237,6 @@ def dag_to_pipeline(pipeline, dbsession, workflow_label=None, **kwargs):
             container_envs.append((global_env_key, global_envs[global_env_key]))
 
         # 设置task的默认环境变量
-        _, _, gpu_resource_name = core.get_gpu(task.resource_gpu)
         container_envs.append(("KFJ_TASK_ID", str(task.id)))
         container_envs.append(("KFJ_TASK_NAME", str(task.name)))
         container_envs.append(("KFJ_TASK_NODE_SELECTOR", str(task.get_node_selector())))
@@ -245,9 +244,9 @@ def dag_to_pipeline(pipeline, dbsession, workflow_label=None, **kwargs):
         container_envs.append(("KFJ_TASK_IMAGES", str(task.job_template.images)))
         container_envs.append(("KFJ_TASK_RESOURCE_CPU", str(task.resource_cpu)))
         container_envs.append(("KFJ_TASK_RESOURCE_MEMORY", str(task.resource_memory)))
-        container_envs.append(("KFJ_TASK_RESOURCE_GPU", str(task.resource_gpu)))
+        task_gpu_num, _, _ = core.get_gpu(task.resource_gpu)
+        container_envs.append(("KFJ_TASK_RESOURCE_GPU", str(task_gpu_num)))
         container_envs.append(("KFJ_TASK_PROJECT_NAME", str(pipeline.project.name)))
-        container_envs.append(("GPU_RESOURCE_NAME", gpu_resource_name))
         container_envs.append(("USERNAME", pipeline.created_by.username))
         container_envs.append(("IMAGE_PULL_POLICY", conf.get('IMAGE_PULL_POLICY','Always')))
         if hubsecret_list:
@@ -331,7 +330,7 @@ def dag_to_pipeline(pipeline, dbsession, workflow_label=None, **kwargs):
 
         # 设置资源限制
         resource_cpu = task.job_template.get_env('TASK_RESOURCE_CPU') if task.job_template.get_env('TASK_RESOURCE_CPU') else task.resource_cpu
-        resource_gpu = task.job_template.get_env('TASK_RESOURCE_GPU') if task.job_template.get_env('TASK_RESOURCE_GPU') else task.resource_gpu
+        resource_gpu = task.resource_gpu
 
         resource_memory = task.job_template.get_env('TASK_RESOURCE_MEMORY') if task.job_template.get_env('TASK_RESOURCE_MEMORY') else task.resource_memory
 
@@ -366,8 +365,7 @@ def dag_to_pipeline(pipeline, dbsession, workflow_label=None, **kwargs):
 
             if 0 == gpu_num:
                 # 没要gpu的容器，就要加上可视gpu为空，不然gpu镜像能看到和使用所有gpu
-                for gpu_alias in conf.get('GPU_NONE', {}):
-                    container_envs.append((conf.get('GPU_NONE',{})[gpu_alias][0], conf.get('GPU_NONE',{})[gpu_alias][1]))
+                container_envs.append(('NVIDIA_VISIBLE_DEVICES', 'none'))
         # 配置host
         host_aliases = {}
 

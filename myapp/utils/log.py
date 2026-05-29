@@ -73,4 +73,3 @@ class DBEventLogger(AbstractEventLogger):
             sesh.commit()
         except Exception as e:
             sesh.rollback()  # 发生异常时显式回滚
-

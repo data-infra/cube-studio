@@ -44,7 +44,7 @@ class Task_ModelView_Base():
     datamodel = SQLAInterface(Task)
     help_url = conf.get('HELP_URL', {}).get(datamodel.obj.__tablename__, '') if datamodel else ''
     list_columns = ['name', 'label', 'pipeline', 'job_template', 'volume_mount', 'resource_memory', 'resource_cpu',
-                    'resource_gpu', 'resource_rdma', 'timeout', 'retry', 'created_on', 'changed_on', 'monitoring', 'expand']
+                    'resource_gpu', 'timeout', 'retry', 'created_on', 'changed_on', 'monitoring', 'expand']
     cols_width = {
         "name": {"type": "ellip2", "width": 250},
         "label": {"type": "ellip2", "width": 200},
@@ -56,7 +56,6 @@ class Task_ModelView_Base():
         "resource_memory": {"type": "ellip2", "width": 100},
         "resource_cpu": {"type": "ellip2", "width": 100},
         "resource_gpu": {"type": "ellip2", "width": 100},
-        "resource_rdma": {"type": "ellip2", "width": 100},
         "timeout": {"type": "ellip2", "width": 100},
         "retry": {"type": "ellip2", "width": 100},
         "created_on": {"type": "ellip2", "width": 300},
@@ -66,12 +65,12 @@ class Task_ModelView_Base():
         "expand": {"type": "ellip2", "width": 300},
     }
     show_columns = ['name', 'label', 'pipeline', 'job_template', 'volume_mount', 'command', 'overwrite_entrypoint',
-                    'working_dir', 'args_html', 'resource_memory', 'resource_cpu', 'resource_gpu', 'resource_rdma', 'timeout', 'retry',
+                    'working_dir', 'args_html', 'resource_memory', 'resource_cpu', 'resource_gpu', 'timeout', 'retry',
                     'skip', 'created_by', 'changed_by', 'created_on', 'changed_on', 'monitoring_html']
-    add_columns = ['name', 'label', 'job_template', 'pipeline', 'working_dir', 'command', 'args', 'volume_mount', 'resource_memory', 'resource_cpu', 'resource_gpu', 'resource_rdma', 'timeout', 'retry', 'skip',
+    add_columns = ['name', 'label', 'job_template', 'pipeline', 'working_dir', 'command', 'args', 'volume_mount', 'resource_memory', 'resource_cpu', 'resource_gpu', 'timeout', 'retry', 'skip',
                    'expand']
     edit_columns = ['name', 'label', 'working_dir', 'command', 'args', 'volume_mount', 'resource_memory',
-                    'resource_cpu', 'resource_gpu', 'resource_rdma', 'timeout', 'retry', 'skip', 'expand']
+                    'resource_cpu', 'resource_gpu', 'timeout', 'retry', 'skip', 'expand']
     base_order = ('id', 'desc')
     order_columns = ['id']
     search_columns = ['pipeline', 'name', 'label']
@@ -170,8 +169,7 @@ class Task_ModelView_Base():
         ),
     }
 
-    add_form_extra_fields['resource_gpu'] = StringField('gpu', default='0', description= _('gpu的资源使用配置(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)'),widget=BS3TextFieldWidget(),validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')])
-    add_form_extra_fields['resource_rdma'] = StringField('rdma', default='0', description= _('RDMA的资源使用配置，示例 0，1，10，填写方式咨询管理员'), widget=BS3TextFieldWidget())
+    add_form_extra_fields['resource_gpu'] = StringField('gpu', default='0', description= _('gpu的资源使用配置(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)'),widget=BS3TextFieldWidget(),validators=[DataRequired(),Regexp('^[0-9a-zA-Z\\-\\(\\)（）]*$')])
 
     edit_form_extra_fields = add_form_extra_fields
 
@@ -283,7 +281,6 @@ class Task_ModelView_Base():
         item.create_datetime = datetime.datetime.now()
         item.change_datetime = datetime.datetime.now()
         gpu_num, _, _ = core.get_gpu(item.resource_gpu)
-        gpu_num = math.ceil(float(str(gpu_num).split(',')[-1]))
         if gpu_num==0:
             item.node_selector = item.node_selector.replace('gpu=true', 'cpu=true')
         else:
@@ -360,7 +357,6 @@ class Task_ModelView_Base():
         self.task_args_check(item)
         item.change_datetime = datetime.datetime.now()
         gpu_num, _, _ = core.get_gpu(item.resource_gpu)
-        gpu_num = math.ceil(float(str(gpu_num).replace('，',',').split(',')[-1]))
         if gpu_num==0:
             item.node_selector = item.node_selector.replace('gpu=true', 'cpu=true')
         else:
@@ -429,8 +425,6 @@ class Task_ModelView_Base():
             task_env += 'PORT1=' + str(meet_ports[1])+ "\n"
             task_env += 'PORT2=' + str(meet_ports[2])+ "\n"
 
-        _, _, resource_name = core.get_gpu(task.resource_gpu)
-
         # 系统环境变量
         task_env += 'KFJ_TASK_ID=' + str(task.id) + "\n"
         task_env += 'KFJ_TASK_NAME=' + str(task.name) + "\n"
@@ -439,7 +433,8 @@ class Task_ModelView_Base():
         task_env += 'KFJ_TASK_IMAGES=' + str(task.job_template.images) + "\n"
         task_env += 'KFJ_TASK_RESOURCE_CPU=' + str(task.resource_cpu) + "\n"
         task_env += 'KFJ_TASK_RESOURCE_MEMORY=' + str(task.resource_memory) + "\n"
-        task_env += 'KFJ_TASK_RESOURCE_GPU=' + str(task.resource_gpu.replace('+', '')) + "\n"
+        gpu_num, _, _ = core.get_gpu(task.resource_gpu)
+        task_env += 'KFJ_TASK_RESOURCE_GPU=' + str(gpu_num) + "\n"
         task_env += 'KFJ_TASK_PROJECT_NAME=' + str(task.pipeline.project.name) + "\n"
         task_env += 'KFJ_PIPELINE_ID=' + str(task.pipeline_id) + "\n"
         task_env += 'KFJ_RUN_ID=' + run_id + "\n"
@@ -447,7 +442,6 @@ class Task_ModelView_Base():
         task_env += 'KFJ_RUNNER=' + str(g.user.username) + "\n"
         task_env += 'KFJ_PIPELINE_NAME=' + str(task.pipeline.name) + "\n"
         task_env += 'KFJ_NAMESPACE=pipeline' + "\n"
-        task_env += f'GPU_RESOURCE_NAME={resource_name}' + "\n"
 
         template_kwargs={}
         def template_str(src_str):
@@ -494,7 +488,7 @@ class Task_ModelView_Base():
         volume_mount = task.volume_mount
 
         resource_cpu = task.job_template.get_env('TASK_RESOURCE_CPU') if task.job_template.get_env('TASK_RESOURCE_CPU') and 'run-' in run_id else task.resource_cpu
-        resource_gpu = task.job_template.get_env('TASK_RESOURCE_GPU') if task.job_template.get_env('TASK_RESOURCE_GPU') and 'run-' in run_id else task.resource_gpu
+        resource_gpu = task.resource_gpu
         resource_memory = task.job_template.get_env('TASK_RESOURCE_MEMORY') if task.job_template.get_env('TASK_RESOURCE_MEMORY') and 'run-' in run_id else task.resource_memory
         host_aliases=conf.get('HOSTALIASES')
         if task.job_template.host_aliases:
@@ -521,7 +515,6 @@ class Task_ModelView_Base():
                                     resource_memory=resource_memory,
                                     resource_cpu=resource_cpu,
                                     resource_gpu=resource_gpu,
-                                    resource_rdma = '0',
                                     image_pull_policy=conf.get('IMAGE_PULL_POLICY', 'Always'),
                                     image_pull_secrets=image_pull_secrets,
                                     image=image,
@@ -863,15 +856,15 @@ class Task_ModelView_Api(Task_ModelView_Base, MyappModelRestApi):
     datamodel = SQLAInterface(Task)
     route_base = '/task_modelview/api'
     list_columns = ['name', 'label', 'pipeline', 'job_template', 'volume_mount', 'node_selector', 'command',
-                    'overwrite_entrypoint', 'working_dir', 'args', 'resource_memory', 'resource_cpu', 'resource_gpu', 'resource_rdma',
+                    'overwrite_entrypoint', 'working_dir', 'args', 'resource_memory', 'resource_cpu', 'resource_gpu',
                     'timeout', 'retry', 'created_by', 'changed_by', 'created_on', 'changed_on', 'monitoring', 'expand']
     add_columns = ['name', 'label', 'job_template', 'pipeline', 'working_dir', 'command', 'args', 'volume_mount',
-                   'node_selector', 'resource_memory', 'resource_cpu', 'resource_gpu', 'resource_rdma', 'timeout', 'retry', 'skip',
+                   'node_selector', 'resource_memory', 'resource_cpu', 'resource_gpu', 'timeout', 'retry', 'skip',
                    'expand']
     edit_columns = ['name', 'label', 'working_dir', 'command', 'args', 'volume_mount', 'resource_memory',
-                    'resource_cpu', 'resource_gpu', 'resource_rdma', 'timeout', 'retry', 'skip', 'expand']
+                    'resource_cpu', 'resource_gpu', 'timeout', 'retry', 'skip', 'expand']
     show_columns = ['name', 'label', 'pipeline', 'job_template', 'volume_mount', 'node_selector', 'command',
-                    'overwrite_entrypoint', 'working_dir', 'args', 'resource_memory', 'resource_cpu', 'resource_gpu', 'resource_rdma',
+                    'overwrite_entrypoint', 'working_dir', 'args', 'resource_memory', 'resource_cpu', 'resource_gpu',
                     'timeout', 'retry', 'skip', 'created_by', 'changed_by', 'created_on', 'changed_on', 'monitoring',
                     'expand']
 

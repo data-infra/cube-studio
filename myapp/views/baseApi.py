@@ -68,8 +68,7 @@ from flask import (
     abort,
 )
 from flask_appbuilder.exceptions import FABException, InvalidOrderByColumnFABException
-from flask_appbuilder.security.decorators import permission_name, protect, has_access
-from myapp.views.base import has_access_api
+from flask_appbuilder.security.decorators import permission_name, protect
 from flask_appbuilder.api import BaseModelApi, BaseApi, ModelRestApi
 from sqlalchemy.sql import sqltypes
 from myapp import app, appbuilder, db, event_logger, cache
@@ -2318,4 +2317,3 @@ class MyappModelRestApi(ModelRestApi):
             if _col not in data.keys():
                 data[_col] = data_item[_col]
         return data
-

@@ -44,110 +44,6 @@ FRONTEND_CONF_KEYS = (
     "MYAPP_WEBSERVER_DOMAINS",
 )
 
-from flask_appbuilder.const import (
-    FLAMSG_ERR_SEC_ACCESS_DENIED,
-    LOGMSG_ERR_SEC_ACCESS_DENIED,
-    PERMISSION_PREFIX
-)
-from flask_appbuilder._compat import as_unicode
-
-
-def has_access(f):
-    """
-        Use this decorator to enable granular security permissions to your methods.
-        Permissions will be associated to a role, and roles are associated to users.
-
-        By default the permission's name is the methods name.
-    """
-    if hasattr(f, '_permission_name'):
-        permission_str = f._permission_name
-    else:
-        permission_str = f.__name__
-
-    def wraps(self, *args, **kwargs):
-
-        permission_str = "{}{}".format(PERMISSION_PREFIX, f._permission_name)
-        if self.method_permission_name:
-            _permission_name = self.method_permission_name.get(f.__name__)
-            if _permission_name:
-                permission_str = "{}{}".format(PERMISSION_PREFIX, _permission_name)
-        if (permission_str in self.base_permissions and
-                self.appbuilder.sm.has_access(
-                    permission_str,
-                    self.class_permission_name
-                )):
-            return f(self, *args, **kwargs)
-        else:
-            logging.warning(
-                LOGMSG_ERR_SEC_ACCESS_DENIED.format(
-                    permission_str,
-                    self.__class__.__name__
-                )
-            )
-            flash(as_unicode(FLAMSG_ERR_SEC_ACCESS_DENIED), "error")
-        return redirect(
-            url_for(
-                self.appbuilder.sm.auth_view.__class__.__name__ + ".login",
-                next=request.url
-            )
-        )
-
-    f._permission_name = permission_str
-    return functools.update_wrapper(wraps, f)
-
-# @pysnooper.snoop()
-def has_access_api(f):
-    """
-        Use this decorator to enable granular security permissions to your API methods.
-        Permissions will be associated to a role, and roles are associated to users.
-
-        By default the permission's name is the methods name.
-
-        this will return a message and HTTP 401 is case of unauthorized access.
-    """
-    if hasattr(f, '_permission_name'):
-        permission_str = f._permission_name
-    else:
-        permission_str = f.__name__
-
-    # @pysnooper.snoop()
-    def wraps(self, *args, **kwargs):
-        try:
-            permission_str = "{}{}".format(PERMISSION_PREFIX, f._permission_name)
-            if self.method_permission_name:
-                _permission_name = self.method_permission_name.get(f.__name__)
-                if _permission_name:
-                    permission_str = "{}{}".format(PERMISSION_PREFIX, _permission_name)
-            if (permission_str in self.base_permissions and
-                    self.appbuilder.sm.has_access(
-                        permission_str,
-                        self.class_permission_name
-                    )):
-                return f(self, *args, **kwargs)
-            else:
-                logging.warning(
-                    LOGMSG_ERR_SEC_ACCESS_DENIED.format(
-                        permission_str,
-                        self.__class__.__name__
-                    )
-                )
-                response = make_response(
-                    jsonify(
-                        {
-                            'message': str(FLAMSG_ERR_SEC_ACCESS_DENIED),
-                            'severity': 'danger'
-                        }
-                    ),
-                    403
-                )
-                response.headers['Content-Type'] = "application/json"
-                return response
-        except Exception as e:
-            pass
-        return f(self, *args, **kwargs)
-
-    f._permission_name = permission_str
-    return functools.update_wrapper(wraps, f)
 
 
 def get_error_msg():
@@ -263,8 +159,7 @@ def handle_api_exception(f):
 # 获取用户的角色
 def get_user_roles():
     if g.user.is_anonymous:
-        public_role = conf.get("AUTH_ROLE_PUBLIC")
-        return [security_manager.find_role(public_role)] if public_role else []
+        return []
     return g.user.roles
 
 
@@ -409,13 +304,7 @@ class MyappFilter(BaseFilter):
         return get_user_roles()
 
     def get_all_permissions(self):
-        """Returns a set of tuples with the perm name and view menu name"""
-        perms = set()
-        for role in self.get_user_roles():
-            for perm_view in role.permissions:
-                t = (perm_view.permission.name, perm_view.view_menu.name)
-                perms.add(t)
-        return perms
+        return set()
 
     def has_role(self, role_name_or_list):
         """Whether the user has this role name"""
@@ -424,17 +313,11 @@ class MyappFilter(BaseFilter):
         return any([r.name in role_name_or_list for r in self.get_user_roles()])
 
     def has_perm(self, permission_name, view_menu_name):
-        """Whether the user has this perm"""
-        return (permission_name, view_menu_name) in self.get_all_permissions()
+        return True
 
     # 获取所有绑定了指定权限的所有vm
     def get_view_menus(self, permission_name):
-        """Returns the details of view_menus for a perm name"""
-        vm = set()
-        for perm_name, vm_name in self.get_all_permissions():
-            if perm_name == permission_name:
-                vm.add(vm_name)
-        return vm
+        return set()
 
 
 # 检查是否有权限

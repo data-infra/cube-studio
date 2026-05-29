@@ -6,23 +6,17 @@ import jwt
 from flask_jwt_extended import current_user as current_user_jwt
 import pysnooper
 from flask import current_app
-from flask_appbuilder.security.sqla import models as ab_models
 from flask_appbuilder.security.sqla.manager import SecurityManager
 from flask_babel import lazy_gettext as _
 from flask_appbuilder.security.views import (
-    PermissionModelView,
-    PermissionViewModelView,
     RoleModelView,
     UserModelView
 )
 from markupsafe import Markup
 from werkzeug.security import generate_password_hash,check_password_hash
-from flask_appbuilder.security.sqla.models import assoc_user_role
 
-from flask_appbuilder.security.decorators import has_access
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from flask_appbuilder.widgets import ListWidget
-from sqlalchemy import or_
 
 from flask_appbuilder.security.views import expose
 
@@ -31,14 +25,11 @@ from sqlalchemy import (
     Boolean,
     Text
 )
-from flask_appbuilder.security.sqla.models import assoc_permissionview_role
-from sqlalchemy import select
 from flask_appbuilder.const import (
     AUTH_DB,
     LOGMSG_WAR_SEC_LOGIN_FAILED
 )
 from flask_appbuilder.security.views import SimpleFormView
-from flask_appbuilder._compat import as_unicode
 from wtforms import StringField
 from wtforms.validators import DataRequired,Regexp,Length
 
@@ -159,7 +150,6 @@ class MyUserRemoteUserModelView_Base():
         "changed_on": _("修改时间"),
         "changed_by": _("修改者"),
         "secret": _("秘钥"),
-        "quota": _('额度'),
         "org": _("组织架构")
     }
     spec_label_columns = label_columns
@@ -217,20 +207,6 @@ class MyUserRemoteUserModelView_Base():
             user.roles.append(gamma_role)
             user.active=True
             db.session.commit()
-
-        # 添加到public项目组
-        try:
-            from myapp.models.model_team import Project_User, Project
-            public_project = db.session.query(Project).filter(Project.name == "public").filter(Project.type == "org").first()
-            if public_project:
-                project_user = Project_User()
-                project_user.project = public_project
-                project_user.role = 'dev'
-                project_user.user_id = user.id
-                db.session.add(project_user)
-                db.session.commit()
-        except Exception:
-            db.session.rollback()
 
     def post_update(self,user):
         # 如果修改了账户，要更改labelstudio中的账户
@@ -337,19 +313,6 @@ class MyappSecurityManager(SecurityManager):
                 user.password = generate_password_hash(hashed_password)
             self.get_session.add(user)
             self.get_session.commit()
-            # 在项目组中添加用户
-            try:
-                from myapp.models.model_team import Project_User, Project
-                public_project = self.get_session.query(Project).filter(Project.name == "public").filter(Project.type == "org").first()
-                if public_project:
-                    project_user = Project_User()
-                    project_user.project = public_project
-                    project_user.role = 'dev'
-                    project_user.user_id = user.id
-                    self.get_session.add(project_user)
-                    self.get_session.commit()
-            except Exception:
-                self.get_session.rollback()
 
             return user
         except Exception:
@@ -403,239 +366,30 @@ class MyappSecurityManager(SecurityManager):
 
         return user
 
-    # 只有admin才能看到的视图
-    ADMIN_ONLY_VIEW_MENUS = {
-        "Node_ModelView_Api",
-        "Storage_ModelView_Api",
-        "User_ModelView_Api",
-        "Role_ModelView_Api",
-        "LOG_ModelView_Api"
-    }
-    # 只有admin才有的权限
-    ADMIN_ONLY_PERMISSIONS = {
-        "can_override_role_permissions",
-        "can_override_role_permissions",
-        "can_approve",   # db owner需要授权approve 权限后才能授权
-        "can_update_role",
-    }
-    # 只读者的权限，也就是所有人都有的权限
-    PUBLIC_ONLY_PERMISSION = {"can_show", "can_list"}
-
-    #
-    # @pysnooper.snoop()
     def has_access(self, permission_name: str, view_name: str) -> bool:
         if current_user.is_authenticated:
-            if current_user.is_admin():
-                return True
-            return self._has_view_access(g.user, permission_name, view_name)
+            return True
         elif current_user_jwt:
-            return self._has_view_access(current_user_jwt, permission_name, view_name)
+            return True
         else:
-            return self.is_item_public(permission_name, view_name)
+            return False
 
-
-    # 获取用户是否有在指定视图上的指定权限名
-    # @pysnooper.snoop()
     def can_access(self, permission_name, view_name):
-        """Protecting from has_access failing from missing perms/view"""
         user = g.user
         if user.is_anonymous:
-            return self.is_item_public(permission_name, view_name)
-        return self._has_view_access(user, permission_name, view_name)
-
-    # 获取用户具有指定权限的视图
-    def user_view_menu_names(self, permission_name: str):
-        from myapp import db
-        base_query = (
-            db.session.query(self.viewmenu_model.name)
-                .join(self.permissionview_model)
-                .join(self.permission_model)
-                .join(assoc_permissionview_role)
-                .join(self.role_model)
-        )
-
-        # 非匿名用户
-        if not g.user.is_anonymous:
-            # filter by user id
-            view_menu_names = (
-                base_query.join(assoc_user_role)
-                    .join(self.user_model)
-                    .filter(self.user_model.id == g.user.id)
-                    .filter(self.permission_model.name == permission_name)
-            ).all()
-            return list(set([s.name for s in view_menu_names]))
-
-        # Properly treat anonymous user 匿名用户
-        public_role = self.get_public_role()
-        if public_role:
-            # filter by public role
-            view_menu_names = (
-                base_query.filter(self.role_model.id == public_role.id).filter(
-                    self.permission_model.name == permission_name
-                )
-            ).all()
-            return list(set([s.name for s in view_menu_names]))
-        return []
-
-
-    # 在视图上添加权限
-    def merge_perm(self, permission_name, view_menu_name):
-        logging.warning(
-            "This method 'merge_perm' is deprecated use add_permission_view_menu"
-        )
-        self.add_permission_view_menu(permission_name, view_menu_name)
-
-    # 初始化自定义角色，将对应的权限加到对应的角色上
-    # @pysnooper.snoop()
-    def sync_role_definitions(self):
-        """Inits the Myapp application with security roles and such"""
-
-        logging.info("Syncing role definition")
-
-        # Creating default roles
-        self.set_role("Admin", self.is_admin_pvm)
-        self.set_role("Gamma", self.is_gamma_pvm)
-        self.set_role("Public", self.is_public_pvm)
-        # commit role and view menu updates
-        self.get_session.commit()
-        self.clean_perms()
-
-
-    # 清理权限
-    def clean_perms(self):
-        """FAB leaves faulty permissions that need to be cleaned up"""
-        logging.info("Cleaning faulty perms")
-        sesh = self.get_session
-        pvms = sesh.query(ab_models.PermissionView).filter(
-            or_(
-                ab_models.PermissionView.permission == None,  # NOQA
-                ab_models.PermissionView.view_menu == None,  # NOQA
-            )
-        )
-        deleted_count = pvms.delete()
-        sesh.commit()
-        if deleted_count:
-            logging.info("Deleted {} faulty permissions".format(deleted_count))
-
-    # 为角色添加权限，pvm_check为自定义权限校验函数。这样变量权限，就能通过pvm_check函数知道时候应该把权限加到角色上
-    def set_role(self, role_name, pvm_check):
-        logging.info("Syncing {} perms".format(role_name))
-        sesh = self.get_session
-        # 获取所有的pv记录
-        pvms = sesh.query(ab_models.PermissionView).all()
-        # 获取权限和视图都有值的pv
-        pvms = [p for p in pvms if p.permission and p.view_menu]
-        # 添加或者获取role
-        role = self.add_role(role_name)
-        # 检查pv是否归属于该role
-        role_pvms = [p for p in pvms if pvm_check(p)]
-        role.permissions = role_pvms
-        # 添加pv-role记录
-        sesh.merge(role)
-        sesh.commit()
-
-
-    # 看一个权限是否是只有admin角色该有的权限
-    def is_admin_only(self, pvm):
-
-        return (
-            pvm.view_menu.name in self.ADMIN_ONLY_VIEW_MENUS
-            or pvm.permission.name in self.ADMIN_ONLY_PERMISSIONS
-        )
-
-    # 校验权限是否是默认所有人可接受的
-    def is_accessible_to_all(self, pvm):
-        return pvm.permission.name in self.PUBLIC_ONLY_PERMISSION
-
-    # 看一个权限是否是admin角色该有的权限
-    def is_admin_pvm(self, pvm):
+            return False
         return True
 
-    # 看一个权限是否是gamma角色该有的权限，只要不是admin特有的，就都给gamma
-    def is_gamma_pvm(self, pvm):
-        return not self.is_admin_only(pvm)
+    def user_view_menu_names(self, permission_name: str):
+        return []
 
-    # 看一个权限是否是public角色该有的权限，不是admin的视图并且是public的权限，才可以
-    def is_public_pvm(self, pvm):
-        if (
-            pvm.view_menu.name not in self.ADMIN_ONLY_VIEW_MENUS
-            and pvm.permission.name in self.PUBLIC_ONLY_PERMISSION
-        ):
-            return True
+    def merge_perm(self, permission_name, view_menu_name):
+        return None
 
-        return False
-
-
-
-    # 创建视图，创建权限，创建视图-权限绑定记录。
-    # @pysnooper.snoop()
-    def set_perm(self, view_menu_name,permission_name):
-        connection = self.get_session
-        permission = self.find_permission(permission_name)
-        view_menu = self.find_view_menu(view_menu_name)
-        pv = None
-        # 如果权限不存存在就创建
-        if not permission:
-            permission_table = (
-                self.permission_model.__table__  # pylint: disable=no-member
-            )
-            connection.execute(permission_table.insert().values(name=permission_name))
-            connection.commit()
-            permission = self.find_permission(permission_name)
-
-        # 如果视图不存在就创建
-        if not view_menu:
-            view_menu_table = self.viewmenu_model.__table__  # pylint: disable=no-member
-            connection.execute(view_menu_table.insert().values(name=view_menu_name))
-            connection.commit()
-            view_menu = self.find_view_menu(view_menu_name)
-
-        # 获取是否存在 视图-权限绑定  记录
-        if permission and view_menu:
-            pv = (
-                self.get_session.query(self.permissionview_model)
-                .filter_by(permission=permission, view_menu=view_menu)
-                .first()
-            )
-
-        # 如果没有视图-权限绑定 记录，就创建
-        if not pv and permission and view_menu:
-            permission_view_table = (
-                self.permissionview_model.__table__  # pylint: disable=no-member
-            )
-            connection.execute(
-                permission_view_table.insert().values(
-                    permission_id=permission.id, view_menu_id=view_menu.id
-                )
-            )
-            connection.commit()
-            # 重新获取权限视图绑定记录
-            pv = (
-                self.get_session.query(self.permissionview_model)
-                    .filter_by(permission=permission, view_menu=view_menu)
-                    .first()
-            )
-        return pv
-
-
-    # 根据权限，视图，添加到相关pv-role
-    # @pysnooper.snoop()
-    def add_pv_role(self,permission_name,view_menu_name,role_name):
-        pv = self.set_perm(view_menu_name=view_menu_name,permission_name=permission_name)
-        if pv:
-            try:
-                session = self.get_session
-                role = session.query(self.role_model).filter_by(name=role_name).first()
-                if role:
-                    # 为pvm-role表中添加记录
-                    pv_role = session.query(assoc_permissionview_role.c.id).filter(assoc_permissionview_role.c.permission_view_id==pv.id).filter(assoc_permissionview_role.c.role_id==role.id).first()
-                    if not pv_role:
-                        session.execute(assoc_permissionview_role.insert().values(permission_view_id=pv.id, role_id=role.id))
-                        session.commit()
-            except Exception as e:
-                logging.error(e)
-
-
+    def sync_role_definitions(self):
+        self.add_role("Admin")
+        self.add_role("Gamma")
+        self.get_session.commit()
 
     @classmethod
     def get_join_projects_id(self,session):

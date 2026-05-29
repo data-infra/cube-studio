@@ -91,7 +91,7 @@ class Service_ModelView_base():
         "node_selector":StringField(_('机器选择'), description= _('运行当前服务所在的机器'),widget=BS3TextFieldWidget(),default='cpu=true;serving=true'),
         "resource_memory":StringField(_('memory'),default=Service.resource_memory.default.arg,description= _('内存的资源使用配置，示例1G，10G， 最大100G，如需更多联系管路员'),widget=BS3TextFieldWidget(),validators=[DataRequired(), Regexp("^[0-9]*G$")]),
         "resource_cpu":StringField(_('cpu'), default=Service.resource_cpu.default.arg,description= _('cpu的资源使用配置(单位核)，示例 0.4，10，最大50核，如需更多联系管路员'),widget=BS3TextFieldWidget(), validators=[DataRequired(), Regexp("^[0-9]*$")]),
-        "resource_gpu": StringField(_('gpu'), default='0',description= _('gpu的资源使用配置(单位卡)，示例:1，2，训练任务每个容器独占整卡'), widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')]),
+        "resource_gpu": StringField(_('gpu'), default='0',description= _('gpu的资源使用配置(单位卡)，示例:1，2，训练任务每个容器独占整卡'), widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp('^[0-9a-zA-Z\\-\\(\\)（）]*$')]),
         "replicas": StringField(_('副本数'), default=Service.replicas.default.arg,description= _('pod副本数，用来配置高可用'),widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp("^[0-9]+$")]),
         "ports": StringField(_('端口'), default=Service.ports.default.arg,description= _('进程端口号，逗号分隔'),widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp('^[0-9,:]*$')]),
         "env": StringField(_('环境变量'), default=Service.env.default.arg, description= _('使用模板的task自动添加的环境变量，支持模板变量。书写格式:每行一个环境变量env_key=env_value'),widget=MyBS3TextAreaFieldWidget()),

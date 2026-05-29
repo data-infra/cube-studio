@@ -76,6 +76,19 @@ class Images(Model,AuditMixinNullable,MyappModelBase):
             return Markup(f'<a href="{self.gitpath}">{self.name}</a>')
         return self.name
 
+    @property
+    def image_type_label(self):
+        image_type_labels = {
+            'dev': __('开发镜像'),
+            'jupyter': __('jupyter镜像'),
+            'job-template': __('任务模板镜像'),
+            'pipeline': __('任务流镜像'),
+            'automl': __('超参搜索镜像'),
+            'service': __('内部服务镜像'),
+            'inference': __('推理服务镜像'),
+        }
+        return image_type_labels.get(self.image_type, self.image_type)
+
     def __repr__(self):
         return self.name
 
@@ -859,4 +872,3 @@ class Workflow(Model,Crd,MyappModelBase):
             return Markup(f'<a href="/workflow_modelview/api/stop/{self.id}">{__("停止")}</a>')
         else:
             return __("停止")
-

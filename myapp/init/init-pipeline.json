@@ -492,7 +492,6 @@
         "resource_memory": "2G",
         "resource_cpu": "2",
         "resource_gpu": "0",
-        "resource_rdma": "0",
         "args": {
           "--project_name": "public",
           "--label": "deepseek推理部署",
@@ -524,7 +523,6 @@
         "resource_memory": "2G",
         "resource_cpu": "2",
         "resource_gpu": "0",
-        "resource_rdma": "0",
         "args": {
           "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9",
           "workdir": "/mnt/{{creator}}/pipeline/example/deepseek/",
@@ -539,7 +537,6 @@
         "resource_memory": "40G",
         "resource_cpu": "10",
         "resource_gpu": "1",
-        "resource_rdma": "0",
         "args": {
           "--model_name": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
           "--model_path": "/mnt/{{creator}}/pipeline/example/deepseek/DeepSeek-R1-Distill-Qwen-7B/",
@@ -681,7 +678,6 @@
                 "resource_memory": "2G",
                 "resource_cpu": "2",
                 "resource_gpu": "0",
-                "resource_rdma": "0",
                 "args": {
                     "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9",
                     "workdir": "/mnt/{{creator}}/pipeline/example/yolo/electric-bicycle",
@@ -696,7 +692,6 @@
                 "resource_memory": "5G",
                 "resource_cpu": "5",
                 "resource_gpu": "1",
-                "resource_rdma": "0",
                 "args": {
                     "--train": "/mnt/{{creator}}/pipeline/example/yolo/electric-bicycle/dataset/train.txt",
                     "--val": "/mnt/{{creator}}/pipeline/example/yolo/electric-bicycle/val1.txt",
@@ -715,7 +710,6 @@
                 "resource_memory": "2G",
                 "resource_cpu": "2",
                 "resource_gpu": "0",
-                "resource_rdma": "0",
                 "args": {
                     "--project_name": "public",
                     "--label": "目标识别推理服务",
@@ -747,7 +741,6 @@
                 "resource_memory": "2G",
                 "resource_cpu": "2",
                 "resource_gpu": "0",
-                "resource_rdma": "0",
                 "args": {
                     "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9",
                     "workdir": "/mnt/{{creator}}/pipeline/example/yolo/",
@@ -757,4 +750,3 @@
         ]
     }
 }
-

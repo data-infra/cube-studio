@@ -55,16 +55,11 @@ class Project_User_ModelView_Base():
     datamodel = SQLAInterface(Project_User)
     add_columns = ['project', 'user', 'role']
     edit_columns = ['project','user', 'role']
-    list_columns = ['user', 'role', 'org']
+    list_columns = ['user', 'role']
 
     add_form_query_rel_fields = {
         "project": [["name", Project_Join_Filter, 'org']]
     }
-    # base_filters = [["id", Project_users_Filter, __('org')]]
-    spec_label_columns = {
-        "org": _("资源组")
-    }
-
     add_form_extra_fields = {
         "project": QuerySelectField(
             _('项目组'),
@@ -289,7 +284,7 @@ class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
             'volume_mount': StringField(
                 label= _('挂载'),
                 default='kubeflow-user-workspace(pvc):/mnt/',
-                description= _('<span style="word-break: break-all;">使用该项目组新增的所有pod会自动添加该挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2,$storage_name(storage):/$container_path3 <br>注意pvc会自动挂载对应目录下的个人username子目录。示例：<br>kubeflow-user-workspace(pvc):/mnt/,/data/k8s/kubeflow/group1(hostpath):/group1,nfs-test(storage):/nfs</span>'),
+                description= _('<span style="word-break: break-all;">使用该项目组新增的所有pod会自动添加该挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2,$storage_name(storage):/$container_path3 <br>注意pvc会自动挂载对应目录下的个人username子目录。示例：<br>kubeflow-user-workspace(pvc):/mnt/,/data/k8s/kubeflow/group1(hostpath):/group1</span>'),
                 widget=BS3TextFieldWidget(),
                 validators=[Regexp('^[\x00-\x7F]*$')]
             ),
@@ -310,23 +305,19 @@ class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
         }
     }
 
-    # 根据命名空间的字符串配置获取真实命名空间
-    def get_project_namespaces(self,namespace):
-        
-        real_namespace = {
+    # 项目组不再支持指定命名空间，统一使用全局命名空间配置。
+    def get_project_namespaces(self):
+        return {
             "NOTEBOOK_NAMESPACE": conf.get('NOTEBOOK_NAMESPACE', 'jupyter'),
             "PIPELINE_NAMESPACE": conf.get('PIPELINE_NAMESPACE', 'pipeline'),
             "SERVICE_NAMESPACE": conf.get('SERVICE_NAMESPACE', 'service'),
             "AUTOML_NAMESPACE": conf.get('AUTOML_NAMESPACE', 'automl'),
         }
-        
-        return real_namespace
+
     # @pysnooper.snoop(watch_explode=('req_json'))
     def pre_add_req(self, req_json, *args, **kwargs):
 
         volumns = req_json.get('volume_mount', '') or ''
-        quotas = req_json.get('quota', '') or ''
-        quotas = [x.strip().replace(' ', '') for x in quotas.strip().split(';') if x.strip()]
         cluster = req_json.get('cluster', conf.get('ENVIRONMENT', ''))
         config_path = conf.get('CLUSTERS', {}).get(cluster, {}).get('KUBECONFIG', '')
         k8s_client = K8s(config_path)
@@ -336,7 +327,7 @@ class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
         for index, volumn in enumerate(volumns):
             if '(pvc)' in volumn or '(pvc-share)' in volumn:
                 pvc_name = volumn.split(':')[0].strip().replace('(pvc)', '').replace('(pvc-share)','').strip()
-                for namespace in list(set(self.get_project_namespaces(req_json.get('namespace','')).values())):
+                for namespace in list(set(self.get_project_namespaces().values())):
                     pvc = k8s_client.get_pvc(name=pvc_name, namespace=namespace)
                     if not pvc:
                         raise Exception(f'pvc {pvc_name} not exist in {namespace} namespace')
@@ -346,14 +337,9 @@ class Project_ModelView_org_Api(Project_ModelView_Base, MyappModelRestApi):
                 else:
                     raise Exception(f'find invalid volumn config {volumn}, must belong (pvc)(pvc-share)(hostpath)(storage)(configmap)(memory)')
             new_volumns.append(volumn)
-        for quota in quotas:
-            if len(quota.replace('，',',').split(',')) != 4:
-                raise Exception(f'quota {quota} config error')
         # 做一些书写修正
         volumns = ';'.join(new_volumns)
-        quotas = ';'.join(quotas)
         req_json['volume_mount']=volumns
-        req_json['quotas'] = quotas
         return req_json
 
     pre_update_req = pre_add_req

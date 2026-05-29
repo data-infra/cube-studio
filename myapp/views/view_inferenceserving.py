@@ -172,7 +172,7 @@ class InferenceService_ModelView_base():
 
     base_filters = [["id", InferenceService_Filter, lambda: []]]
 
-    service_type_choices = ['serving', 'tfserving', 'torch-server', 'triton-server','ml-server(企业版)',  'vllm(企业版)', 'vllm-distributed(企业版)', 'ollama(企业版)', 'mindie(企业版)', 'mindie-distributed(企业版)']
+    service_type_choices = ['serving', 'tfserving', 'torch-server', 'triton-server','ml-server(企业版)',  'vllm(企业版)', 'vllm-distributed(企业版)', 'ollama(企业版)']
     spec_label_columns = {
         "inference_host_url": _("域名:需要泛域名支持，调试时域名(debug.xx.xx.xx.xx)")
     }
@@ -202,8 +202,8 @@ triton-server：框架:地址。onnx:模型文件地址model.onnx，pytorch:torc
                                     validators=[DataRequired(),Regexp("^[0-9]+$")]),
         "host": StringField(_('域名'), default=InferenceService.host.default.arg,description= _('访问域名，')+host_rule,widget=BS3TextFieldWidget(),validators=[Regexp('^[\x00-\x7F]*$')]),
         "transformer":StringField(_('前后置处理'), default=InferenceService.transformer.default.arg,description= _('前后置处理逻辑，用于原生开源框架的请求预处理和响应预处理，目前仅支持kfserving下框架'),widget=BS3TextFieldWidget()),
-        'resource_gpu':StringField(_('gpu'), default='0', description= _('申请的gpu卡数目，示例:2，每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)，<span style="color:red;">虚拟化占用和共享模式占用仅企业版支持</span>'),
-                                                        widget=BS3TextFieldWidget(),validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')]),
+        'resource_gpu':StringField(_('gpu'), default='0', description= _('申请的gpu卡数目，示例:2，每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)'),
+                                                        widget=BS3TextFieldWidget(),validators=[DataRequired(),Regexp('^[0-9a-zA-Z\\-\\(\\)（）]*$')]),
         "working_dir": StringField(_('工作目录'), description=_('工作目录，容器进程启动目录，不填默认使用Dockerfile内定义的工作目录。')+core.open_jupyter(_('打开目录'),'working_dir'),widget=BS3TextFieldWidget()),
 
         'sidecar': MySelectMultipleField(
@@ -988,7 +988,7 @@ output %s
         pod_env += "\nRESOURCE_MEMORY=" + service.resource_memory
         pod_env += "\nRESOURCE_MIN_REPLICAS=" + str(service.min_replicas)
         pod_env += "\nRESOURCE_MAX_REPLICAS=" + str(service.max_replicas)
-        pod_env += "\nRESOURCE_GPU=" + str(gpu_num).replace('，',',').split(',')[-1]
+        pod_env += "\nRESOURCE_GPU=" + str(gpu_num)
         pod_env += "\nMODEL_PATH=" + model_path.rstrip('/')
         pod_env += "\nMODEL_NAME=" + service.model_name
         pod_env += "\nINFERENCE_NAME=" + name
@@ -1206,8 +1206,8 @@ output %s
 
         if stag == 'prod':
             hpas = re.split(',|;', service.hpa)
-            regex = re.compile(r"\(.*\)")
-            if float(regex.sub('', service.resource_gpu)) < 1:
+            gpu_num, _, _ = core.get_gpu(service.resource_gpu)
+            if gpu_num < 1:
                 for hpa in copy.deepcopy(hpas):
                     if 'gpu' in hpa:
                         hpas.remove(hpa)

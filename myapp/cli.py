@@ -45,13 +45,12 @@ def init():
         # 添加所有接口的权限示例记录
         appbuilder.add_permissions(update_perms=True)  # update_perms为true才会检测新权限
         security_manager.add_role('Gamma')
-        security_manager.add_role('Public')
         security_manager.add_role('Admin')
         security_manager.sync_role_definitions()
     except Exception as e:
         print(e)
 
-    init_dir='myapp/init' if conf.get('BABEL_DEFAULT_LOCALE','zh')=='zh' else "myapp/init-en"
+    init_dir='myapp/init'
     # 初始化创建项目组
     try:
         def add_project(project_type, name, describe, expand={}):
@@ -293,7 +292,6 @@ def init():
                     task_model.resource_memory = task.get('resource_memory', '2G')
                     task_model.resource_cpu = task.get('resource_cpu', '2')
                     task_model.resource_gpu = task.get('resource_gpu', '0')
-                    task_model.resource_rdma = task.get('resource_rdma', '0')
                     task_model.created_by_fk = 1
                     task_model.changed_by_fk = 1
                     task_model.retry = int(task.get('retry', '0'))
@@ -882,7 +880,7 @@ def init():
                     pass
                     gitpath = image.get("gitpath",'')
                     db.session.add(Images(
-                        project_id=project.id, created_by_fk=1,changed_by_fk=1,
+                        image_type=image.get('image_type', 'dev'), created_by_fk=1,changed_by_fk=1,
                         name=image.get('name'),
                         describe=image.get('describe',''),
                         gitpath = gitpath if bool(re.match(r'^http', gitpath)) else (conf.get('GIT_URL', '').strip('/') + gitpath),

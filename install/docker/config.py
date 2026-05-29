@@ -58,8 +58,6 @@ FLASK_USE_RELOAD = True
 # and it's more secure to turn it off in production settings.
 SHOW_STACKTRACE = True
 
-# Extract and use X-Forwarded-For/X-Forwarded-Proto headers?
-ENABLE_PROXY_FIX = False
 
 # ------------------------------
 # GLOBALS FOR APP Builder
@@ -84,9 +82,6 @@ AUTH_TYPE = AUTH_DB
 
 # Uncomment to setup Full admin role name
 # AUTH_ROLE_ADMIN = 'Admin'
-
-# 游客(非注册用户)的默认角色，目前没用
-# AUTH_ROLE_PUBLIC = 'Public'
 
 # 是否允许用户注册
 AUTH_USER_REGISTRATION = False
@@ -307,14 +302,6 @@ BUG_REPORT_URL = None
 # Send user to a link where they can read more about Myapp
 DOCUMENTATION_URL = None
 
-# Do you want Talisman enabled?
-TALISMAN_ENABLED = False
-# If you want Talisman, how do you want it configured??
-TALISMAN_CONFIG = {
-    "content_security_policy": None,
-    "force_https": True,
-    "force_https_permanent": False,
-}
 # 前端静态文件的默认缓存时间
 SEND_FILE_MAX_AGE_DEFAULT=300
 
@@ -557,7 +544,7 @@ class CeleryConfig(object):
 DOCUMENTATION_URL='https://github.com/data-infra/cube-studio/wiki'
 BUG_REPORT_URL = 'https://github.com/data-infra/cube-studio/issues/new'
 GIT_URL = 'https://github.com/data-infra/cube-studio/tree/main'
-
+AI_ASSISTANT_URL=''
 
 ROBOT_PERMISSION_ROLES=[]   # 角色黑名单
 
@@ -658,24 +645,6 @@ GLOBAL_ENV={
     "KFJ_NAMESPACE":"pipeline",
     "KFJ_ENVIRONMENT":"{{cluster_name}}",
 }
-
-GPU_RESOURCE={
-    "gpu":"nvidia.com/gpu"
-}
-DEFAULT_GPU_RESOURCE_NAME='nvidia.com/gpu'
-
-# 配置禁用gpu的方法，不然对复合共用型机器，gpu会被共享使用
-GPU_NONE={
-    "gpu":['NVIDIA_VISIBLE_DEVICES','none']
-}
-
-# vgpu的类型方式
-VGPU_RESOURCE={
-}
-VGPU_DRIVE_TYPE = "vgpu"
-
-
-RDMA_RESOURCE_NAME=''
 
 DEFAULT_POD_RESOURCES={}
 
@@ -864,12 +833,6 @@ MODEL_URLS = {
  # 可以跨域分享cookie的子域名，例如.svc.local.com
 COOKIE_DOMAIN = ''
 SERVICE_DOMAIN='service.svc.cluster.local'
-CHATGPT_TOKEN = []
-CHATGPT_CHAT_URL = []
-CHATGPT_ARGS = {
-    "model": 'gpt-5-chat'
-}
-
 
 # 所有训练集群的信息
 CLUSTERS={

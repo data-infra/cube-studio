@@ -1535,18 +1535,15 @@ def check_resource_gpu(resource_gpu, src_resource_gpu=None):
         return gpu_num
 
     gpu_num, gpu_type, resource_name = get_gpu(resource_gpu)
-    # 处理虚拟化占用方式，只识别比例部分
-    gpu_num = float(str(gpu_num).split(',')[-1])
+    gpu_num = int(gpu_num)
 
     src_gpu_num = 0
     if src_resource_gpu:
         src_gpu_num, _, _ = get_gpu(src_resource_gpu)
-        src_gpu_num = float(str(src_gpu_num).split(',')[-1])
+        src_gpu_num = int(src_gpu_num)
 
     if hasattr(g,'user') and not g.user.is_admin():
         resource_gpu = check_max_gpu(gpu_num, src_gpu_num)
-        if math.ceil(float(resource_gpu))==resource_gpu:
-            resource_gpu = math.ceil(float(resource_gpu))
         if gpu_type:
             resource_gpu = str(resource_gpu)+f'({gpu_type})'
     else:
@@ -1601,93 +1598,37 @@ def get_cpu(resource_cpu):
     return resource_cpu, cpu_type
 
 def get_gpu(resource_gpu,resource_name=None):
-    from myapp import conf,db
-
     gpu_num = 0
     if not resource_name:
-        resource_name=conf.get('DEFAULT_GPU_RESOURCE_NAME','')
+        resource_name = 'nvidia.com/gpu'
     gpu_type = None
 
-    try:
+    if resource_gpu:
+        # 英文括号
+        if '(' in resource_gpu:
+            gpu_type = re.findall(r"\((.+?)\)", resource_gpu)
+            gpu_type = gpu_type[0] if gpu_type else None
+        # 中文括号
+        if '（' in resource_gpu:
+            gpu_type = re.findall(r"（(.+?)）", resource_gpu)
+            gpu_type = gpu_type[0] if gpu_type else None
+
+        if gpu_type and ',' in gpu_type:
+            raise ValueError("GPU type only supports NVIDIA GPU model names")
+
+        # 处理中文括号，和英文括号
+        resource_gpu = resource_gpu[0:resource_gpu.index('(')] if '(' in resource_gpu else resource_gpu
+        resource_gpu = resource_gpu[0:resource_gpu.index('（')] if '（' in resource_gpu else resource_gpu
+        resource_gpu = resource_gpu.strip()
         if resource_gpu:
-            # 英文括号
-            if '(' in resource_gpu:
-                gpu_type = re.findall(r"\((.+?)\)", resource_gpu)
-                gpu_type = gpu_type[0] if gpu_type else None
-            # 中文括号
-            if '（' in resource_gpu:
-                gpu_type = re.findall(r"（(.+?)）", resource_gpu)
-                gpu_type = gpu_type[0] if gpu_type else None
+            if not re.fullmatch(r"\d+", resource_gpu):
+                raise ValueError("GPU resource only supports non-negative integer quantities")
+            gpu_num = int(resource_gpu)
 
-            # 括号里面填的可能是npu，这种词汇，不属于卡的型号，而是卡的类型
-            if gpu_type and gpu_type.lower() in list(conf.get('GPU_RESOURCE',{}).keys()):
-                gpu_mfrs=gpu_type.lower()
-                gpu_type=None
-                resource_name = conf.get("GPU_RESOURCE", {}).get(gpu_mfrs, resource_name)
-            # 填的是(卡的类型,卡的型号)
-            if gpu_type and ',' in gpu_type:
-                gpu_mfrs=gpu_type.split(',')[0].strip().lower()
-                if gpu_mfrs and gpu_mfrs in conf.get("GPU_RESOURCE", {}):
-                    resource_name = conf.get("GPU_RESOURCE", {}).get(gpu_mfrs, resource_name)
-                    gpu_type=gpu_type.split(',')[1].strip().upper()
-
-            # 处理中文括号，和英文括号
-            resource_gpu = resource_gpu[0:resource_gpu.index('(')] if '(' in resource_gpu else resource_gpu
-            resource_gpu = resource_gpu[0:resource_gpu.index('（')] if '（' in resource_gpu else resource_gpu
-
-            # 填的是(显存,核的比例)
-            if resource_gpu and ',' in resource_gpu:
-                gpu_num = resource_gpu
-            else:
-                gpu_num = float(resource_gpu)
-
-    except Exception as e:
-        print(e)
     gpu_type = gpu_type.upper() if gpu_type else None
-    # 如果不是0.1等形式的虚拟化占用，那么返回整数
-    if type(gpu_num)==float and int(gpu_num)==float(gpu_num):
-        gpu_num = int(gpu_num)
 
-    # gpu_num 可以是小数，可以是整数，也可以是1G,0.1这种写了显存的字符串结构
+    # gpu_num 只支持整卡数量。
     return gpu_num, gpu_type, resource_name
-
-# @pysnooper.snoop()
-def get_rdma(resource_rdma,resource_name=None):
-    from myapp import conf
-    rdma_num = 0
-    if not resource_name:
-        resource_name = conf.get('RDMA_RESOURCE_NAME', '')
-    rdma_type = None
-    try:
-        if resource_rdma:
-            # 英文括号
-            if '(' in resource_rdma:
-                rdma_type = re.findall(r"\((.+?)\)", resource_rdma)
-                rdma_type = rdma_type[0] if rdma_type else None
-            # 中文括号
-            if '（' in resource_rdma:
-                rdma_type = re.findall(r"（(.+?)）", resource_rdma)
-                rdma_type = rdma_type[0] if rdma_type else None
-
-            # 括号里面填的可能是roce，这种词汇，不是资源名，而是类型
-            if rdma_type and rdma_type.lower() in list(conf.get('RDMA_RESOURCE', {}).keys()):
-                rdma_mfrs = rdma_type.lower()
-                rdma_type = None
-                resource_name = conf.get("RDMA_RESOURCE", {}).get(rdma_mfrs, resource_name)
-
-            # 处理中文括号，和英文括号
-            resource_rdma = resource_rdma[0:resource_rdma.index('(')] if '(' in resource_rdma else resource_rdma
-            resource_rdma = resource_rdma[0:resource_rdma.index('（')] if '（' in resource_rdma else resource_rdma
-
-            rdma_num = int(resource_rdma)
-
-    except Exception as e:
-        print(e)
-    rdma_type = rdma_type.upper() if rdma_type else None
-
-    return rdma_num, rdma_type, resource_name
-
-
 
 # 按expand字段中index字段进行排序
 def sort_expand_index(items):

@@ -52,7 +52,6 @@ class User_ModelView_Base(MyUserRemoteUserModelView_Base):
         "changed_on": _("修改时间"),
         "changed_by": _("修改者"),
         "secret": _("秘钥"),
-        "quota": _('额度'),
         "org": _("组织架构")
     }
 
@@ -73,7 +72,7 @@ class UserInfo_ModelView_Api(User_ModelView_Base, MyappModelRestApi):
     base_permissions = []
 
     edit_columns = ['nickname','password', "email", 'org']
-    show_columns = ["username",'nickname','email','org','quota', "roles",'secret']
+    show_columns = ["username",'nickname','email','org', "roles",'secret']
 
     # 打开标注平台获取的用户项目组
     @expose_api(description="个人信息",url="/current/userinfo", methods=["GET","POST"])
@@ -86,9 +85,7 @@ class UserInfo_ModelView_Api(User_ModelView_Base, MyappModelRestApi):
                 "roles": ','.join([role.name for role in g.user.roles]),
                 "active": g.user.active,
                 "org": g.user.org,
-                "quota": g.user.quota,
                 "secret": g.user.secret,
-                "balance": g.user.balance,
                 "created_on": g.user.created_on,
                 "changed_on": g.user.changed_on,
                 "wechat": g.user.wechat
@@ -115,4 +112,3 @@ class UserInfo_ModelView_Api(User_ModelView_Base, MyappModelRestApi):
             return self.response(200,**{"status": 0, "message": '修正完成', "result": {}})
 
 appbuilder.add_api(UserInfo_ModelView_Api)
-

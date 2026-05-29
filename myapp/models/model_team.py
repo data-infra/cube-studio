@@ -13,7 +13,7 @@ from sqlalchemy.orm import backref, relationship
 from myapp.models.base import MyappModelBase
 
 from flask_appbuilder.models.decorators import renders
-from flask import Markup,g
+from flask import Markup
 from sqlalchemy import String,Column,Integer,ForeignKey,UniqueConstraint
 
 
@@ -74,23 +74,12 @@ class Project(Model,AuditMixinNullable,MyappModelBase):
 
     @property
     def namespace(self):
-        expand = json.loads(self.expand) if self.expand else {}
-        namespaces = expand.get('namespace','')
-        namespaces = namespaces.strip().split(',')
-        namespaces = [x.strip().split(':') for x in namespaces if len(x.strip().split(':'))==2 and x.strip().split(':')[0] in ['NOTEBOOK_NAMESPACE','PIPELINE_NAMESPACE','SERVICE_NAMESPACE','AUTOML_NAMESPACE']]
-        real_namespace={
+        return {
             "NOTEBOOK_NAMESPACE":conf.get('NOTEBOOK_NAMESPACE','jupyter'),
             "PIPELINE_NAMESPACE": conf.get('PIPELINE_NAMESPACE', 'pipeline'),
             "SERVICE_NAMESPACE": conf.get('SERVICE_NAMESPACE', 'service'),
             "AUTOML_NAMESPACE": conf.get('AUTOML_NAMESPACE', 'automl'),
         }
-        real_namespace.update(
-            {
-                x[0]: x[1] for x in namespaces
-            }
-        )
-
-        return real_namespace
 
     @property
     def notebook_namespace(self):
@@ -181,11 +170,7 @@ class Project(Model,AuditMixinNullable,MyappModelBase):
 
     @property
     def user_org(self):
-        user = db.session.query(Project_User).filter(Project_User.project_id==self.id).filter(Project_User.user_id==g.user.id).first()
-        user_org = self.org
-        if user and user.org:
-            user_org = ','.join([x for x in user.org.split(',') if x in self.org.split(',')])
-        return user_org
+        return self.org
 
     @property
     def job_template(self):
@@ -237,4 +222,3 @@ class Project_User(Model,AuditMixinNullable,MyappModelBase):
     __table_args__ = (
         UniqueConstraint('project_id','user_id'),
     )
-

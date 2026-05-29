@@ -12,7 +12,6 @@ import uuid
 from myapp.models.model_notebook import Notebook
 from myapp.models.model_job import Repository
 from flask_appbuilder.actions import action
-from flask_appbuilder.security.decorators import has_access
 from flask_appbuilder.forms import GeneralModelConverter
 from myapp.utils import core
 from myapp import app, appbuilder, db, event_logger
@@ -142,7 +141,7 @@ class Notebook_ModelView_Base():
         self.add_form_extra_fields['volume_mount'] = StringField(
             _('挂载'),
             default=notebook.project.volume_mount if notebook else '',
-            description= _('外部挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2<br>注意pvc会自动挂载对应目录下的个人username子目录') if g.user.is_admin() else _('外部挂载，格式: $ip/$path(nfs):/nfs，逗号分隔多个挂载'),
+            description= _('外部挂载，格式:<br>$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2<br>注意pvc会自动挂载对应目录下的个人username子目录'),
             widget=BS3TextFieldWidget(),
             validators=[Regexp('^[\x00-\x7F]*$')]
         )
@@ -169,7 +168,7 @@ class Notebook_ModelView_Base():
         self.add_form_extra_fields['resource_gpu'] = StringField(
             _('gpu'),
             default='0',
-            description= _('申请的gpu卡数目，示例:2，每个容器独占整卡。-1为共享占用方式，小数(0.1)为vgpu方式，申请具体的卡型号，可以类似 1(V100)'),
+            description= _('申请的gpu卡数目，示例:2，每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)'),
             widget=BS3TextFieldWidget(),
             validators=[DataRequired(),Regexp('^[\-\.0-9,a-zA-Z\(\)]*$')]
         )
@@ -496,7 +495,7 @@ class Notebook_ModelView_Base():
             working_dir = '/mnt/%s' % username
             command = ["sh", "-c", "%s jupyter lab --notebook-dir=%s --ip=0.0.0.0 "
                                    "--no-browser --allow-root --port=%s "
-                                   "--NotebookApp.token='' --NotebookApp.password='' --ServerApp.disable_check_xsrf=True "
+                                   "--NotebookApp.token='' --ServerApp.disable_check_xsrf=True "
                                    "--NotebookApp.allow_origin='*' "
                                    "--NotebookApp.base_url=%s" % (pre_command, "/mnt/"+username, port, rewrite_url)]
             env = {
@@ -625,7 +624,7 @@ class Notebook_ModelView_Base():
             workingDir = '/mnt/%s' % notebook.created_by.username
             command = ["sh", "-c", "%s jupyter lab --notebook-dir=%s --ip=0.0.0.0 "
                                    "--no-browser --allow-root --port=%s "
-                                   "--NotebookApp.token='' --NotebookApp.password='' --ServerApp.disable_check_xsrf=True "
+                                   "--NotebookApp.token='' --ServerApp.disable_check_xsrf=True "
                                    "--NotebookApp.allow_origin='*' "
                                    "--NotebookApp.base_url=%s" % (pre_command, notebook.mount, port, rewrite_url)]
 
@@ -839,7 +838,6 @@ class Notebook_ModelView_Base():
         self.base_stop([item])
 
     @expose_api(description="在线ide的列表查询",url="/list/")
-    @has_access
     def list(self):
         args = request.args.to_dict()
         if '_flt_0_created_by' in args and args['_flt_0_created_by'] == '':
@@ -855,7 +853,6 @@ class Notebook_ModelView_Base():
 
     # @event_logger.log_this
     # @expose_api(description="",url="/delete/<pk>")
-    # @has_access
     # def delete(self, pk):
     #     pk = self._deserialize_pk_if_composite(pk)
     #     self.base_delete(pk)

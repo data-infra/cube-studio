@@ -39,8 +39,6 @@ compile.py
 /myapp/static/appbuilder/vison/
 /myapp/static/appbuilder/visonPlus/
 /myapp/static/appbuilder/frontend/
-/myapp/chatgpt-web/distChat/.superpowers/
 /.superpowers/
 myapp/config.py
 **/LC_MESSAGES/*.mo
-/myapp/chatgpt-web/

@@ -63,9 +63,7 @@ class K8s():
         self.autoscalev2 = client.AutoscalingV2Api(api_client)
         self.autoscalev1 = client.AutoscalingV1Api(api_client)
         self.v1.api_client.configuration.verify_ssl = False  # 只能设置 /usr/local/lib/python3.9/dist-packages/kubernetes/client/configuration.py:   self.verify_ssl= True ---> False
-        self.gpu_resource=conf.get('GPU_RESOURCE',{})
-        self.vgpu_resource = conf.get('VGPU_RESOURCE', {})
-        self.vgpu_drive_type = conf.get("VGPU_DRIVE_TYPE", "vgpu")
+        self.gpu_resource_name = 'nvidia.com/gpu'
 
         self.get_gpu = core.get_gpu
 
@@ -149,18 +147,8 @@ class K8s():
         limit_cpu = [self.to_cpu(container.resources.limits.get('cpu', '0')) for container in containers if
                container.resources and container.resources.limits]
 
-        # gpu = [int(container.resources.requests.get('nvidia.com/gpu', '0')) for container in containers if container.resources and container.resources.requests]
-        vgpu = [float(container.resources.requests.get('nvidia.com/gpucores', '0')) / 100 for container in containers if
-                container.resources and container.resources.requests]
-
-        # 获取gpu异构资源占用
-        ai_resource = {}
-        for name in self.gpu_resource:
-            resource = self.gpu_resource[name]
-            gpu = [int(container.resources.requests.get(resource, '0')) for container in containers if
-                   container.resources and container.resources.requests]
-            ai_resource[name] = sum(gpu)
-        ai_resource['gpu'] = ai_resource.get('gpu', 0) + sum(vgpu)
+        gpu = [int(container.resources.requests.get(self.gpu_resource_name, '0')) for container in containers if
+               container.resources and container.resources.requests]
 
         node_selector = {}
         try:
@@ -202,7 +190,6 @@ class K8s():
             "cpu": sum(cpu),
             "limit_memory": sum(limit_memory),
             "limit_cpu": sum(limit_cpu),
-            # "gpu": sum(gpu) + sum(vgpu),
             "start_time": (metadata.creation_timestamp + datetime.timedelta(hours=8)).replace(tzinfo=None),  # 时间格式
             "container_start_time": (pod.status.start_time + datetime.timedelta(hours=8)).replace(tzinfo=None) if pod.status.start_time else None,
             "node_selector": node_selector,
@@ -210,7 +197,7 @@ class K8s():
             "message":message if ''.join(message).lower()!='none' else [],
             "containers": [x.name for x in pod.spec.containers]
         }
-        temp.update(ai_resource)
+        temp['gpu'] = sum(gpu)
         return temp
 
     # @pysnooper.snoop()
@@ -380,10 +367,6 @@ class K8s():
                 containers = pod.spec.containers
                 memory = [self.to_memory_GB(container.resources.requests.get('memory', '0G')) for container in containers if container.resources and container.resources.requests]
                 cpu = [self.to_cpu(container.resources.requests.get('cpu', '0')) for container in containers if container.resources and container.resources.requests]
-                # gpu = [int(container.resources.requests.get('nvidia.com/gpu', '0')) for container in containers if container.resources and container.resources.requests]
-                # vgpu += [float(container.resources.requests.get('nvidia.com/vgpu', '0')) / 10 for container in containers if container.resources and container.resources.requests]
-                vgpu = [float(container.resources.requests.get('nvidia.com/gpucores', '0')) / 100 for container in containers if container.resources and container.resources.requests]
-
                 node_name = pod.spec.node_name
                 if node_name not in nodes_resource:
                     nodes_resource[node_name] = {
@@ -394,14 +377,8 @@ class K8s():
                 nodes_resource[node_name]['used_memory'] += sum(memory)
                 nodes_resource[node_name]['used_cpu'] += sum(cpu)
 
-                # 获取gpu异构资源占用
-                for name in self.gpu_resource:
-                    resource = self.gpu_resource[name]
-                    gpu = [int(container.resources.requests.get(resource, '0')) for container in containers if container.resources and container.resources.requests]
-                    nodes_resource[node_name]["used_"+name] = nodes_resource[node_name].get("used_"+name,0)+sum(gpu)
-                    # print(pod.metadata.name,"used_"+name,sum(gpu))
-                nodes_resource[node_name]['used_gpu'] = nodes_resource[node_name].get('used_gpu', 0) + sum(vgpu)
-
+                gpu = [int(container.resources.requests.get(self.gpu_resource_name, '0')) for container in containers if container.resources and container.resources.requests]
+                nodes_resource[node_name]["used_gpu"] = nodes_resource[node_name].get("used_gpu", 0) + sum(gpu)
             for node_name in nodes_resource:
                 node_resource = nodes_resource[node_name]
                 # print(node_resource)
@@ -458,21 +435,11 @@ class K8s():
             for node in all_node:
                 try:
                     back_node = {}
-                    # 获取gpu异构资源占用
-                    ai_resource = {}
-                    for gpu_mfrs in self.gpu_resource:
-                        resource = self.gpu_resource[gpu_mfrs]
-                        ai_resource[gpu_mfrs] = int(node.status.allocatable.get(resource, '0'))
-
-                    for gpu_mfrs in self.vgpu_resource:
-                        resource = self.vgpu_resource[gpu_mfrs]
-                        ai_resource[gpu_mfrs] = int(node.status.allocatable.get(resource, '0'))
-
                     # print(node.status.conditions)
                     adresses = node.status.addresses
                     back_node['cpu'] = int(self.to_cpu(node.status.allocatable.get('cpu', '0')))
                     back_node['memory'] = int(self.to_memory_GB(node.status.allocatable.get('memory', '0')))
-                    # back_node['gpu'] = int(node.status.allocatable.get('nvidia.com/gpu', '0'))
+                    back_node['gpu'] = int(node.status.allocatable.get(self.gpu_resource_name, '0'))
                     back_node['labels'] = node.metadata.labels if node.metadata.labels else {}
                     back_node['annotations'] = node.metadata.annotations if node.metadata.annotations else {}
                     back_node['name'] = node.metadata.name
@@ -480,8 +447,6 @@ class K8s():
                     back_node['node_info'] = node.status.node_info.to_dict()
                     back_node['status'] = 'Ready' if [x.status for x in node.status.conditions if x.type=='Ready' and x.status=='True'] else 'Unknown'
                     # print(back_node['status'])
-                    back_node.update(ai_resource)
-
                     for address in adresses:
                         if address.type == 'InternalIP':
                             back_node['hostip'] = address.address
@@ -933,25 +898,6 @@ class K8s():
                             }
                         )
 
-                    if "(nfs)" in volume:
-                        ip_path = volume.replace('(nfs)', '').replace(' ', '')
-                        ip = ip_path.split('/')[0]
-                        path = ip_path.replace(ip,'')
-                        volumn_name = path.replace('_', '-').replace('/', '-').replace('.', '-').lower()[-60:].strip('-')
-                        k8s_volumes.append({
-                            "name": volumn_name,
-                            "nfs": {
-                                "server": ip,
-                                "path": path
-                            }
-                        })
-                        k8s_volume_mounts.append(
-                            {
-                                "name": volumn_name,
-                                "mountPath": mount,
-                            }
-                        )
-
                     # 外部挂载盘不挂载子目录
                     if "(storage)" in volume:
                         pvc_name = volume.replace('(storage)', '').replace(' ', '')
@@ -1068,7 +1014,7 @@ class K8s():
     # @pysnooper.snoop(watch_explode=())
     def make_container(self, name, command, args, volume_mount, working_dir, resource_memory, resource_cpu,
                        resource_gpu, image_pull_policy, image, env, privileged=False, username='', ports=None,
-                       health=None,hostPort=[],resource_rdma=0,security_context=None):
+                       health=None,hostPort=[],security_context=None):
 
         k8s_volumes, k8s_volume_mounts = self.get_volume_mounts(volume_mount, username)
 
@@ -1119,8 +1065,7 @@ class K8s():
 
         if 0==gpu_num:
             # 没要gpu的容器，就要加上可视gpu为空，不然gpu镜像能看到和使用所有gpu
-            for gpu_alias in conf.get('GPU_NONE',{}):
-                env_list.append(client.V1EnvVar(name=conf.get('GPU_NONE',{})[gpu_alias][0], value=conf.get('GPU_NONE',{})[gpu_alias][1]))
+            env_list.append(client.V1EnvVar(name='NVIDIA_VISIBLE_DEVICES', value='none'))
         DEFAULT_POD_RESOURCES = conf.get('DEFAULT_POD_RESOURCES',{})
         for resource_name in DEFAULT_POD_RESOURCES:
             if resource_name not in resources_limits:
@@ -1191,7 +1136,7 @@ class K8s():
     def make_pod(self, namespace, name, labels, command, args, volume_mount, working_dir, node_selector,
                  resource_memory, resource_cpu, resource_gpu, image_pull_policy, image_pull_secrets, image, hostAliases,
                  env, privileged, accounts, username, ports=None, restart_policy='OnFailure',
-                 scheduler_name='default-scheduler', node_name='', health=None, annotations={}, hostPort=[],resource_rdma=0,
+                 scheduler_name='default-scheduler', node_name='', health=None, annotations={}, hostPort=[],
                  sidecar=[],security_context=None):
         if not labels:
             labels={}
@@ -1255,7 +1200,6 @@ class K8s():
                                           ports=ports,
                                           health=health,
                                           hostPort=hostPort,
-                                          resource_rdma=resource_rdma,
                                           security_context=security_context
                                           )]
         if sidecar:
@@ -1283,7 +1227,7 @@ class K8s():
     def create_debug_pod(self, namespace, name, labels, command, args, volume_mount, working_dir, node_selector,
                          resource_memory, resource_cpu, resource_gpu, image_pull_policy, image_pull_secrets, image,
                          hostAliases, env, privileged, accounts, username, scheduler_name='default-scheduler',
-                         node_name='',annotations={},hostPort=[],resource_rdma=0,sidecar=[],health=None,security_context=None):
+                         node_name='',annotations={},hostPort=[],sidecar=[],health=None,security_context=None):
         try:
             self.v1.delete_namespaced_pod(name=name, namespace=namespace, grace_period_seconds=0)
             # time.sleep(1)
@@ -1319,7 +1263,6 @@ class K8s():
             scheduler_name=scheduler_name,
             node_name=node_name,
             hostPort=hostPort,
-            resource_rdma=resource_rdma,
             sidecar=sidecar,
             health=health,
             security_context=security_context
@@ -2161,17 +2104,16 @@ class K8s():
 
             gpu = 0
             for container in containers:
-                for gpu_resource_name in list(self.gpu_resource.values()):
-                    limits = container.resources.limits
-                    request = container.resources.requests
+                limits = container.resources.limits
+                request = container.resources.requests
+                container_gpu = 0
+                if limits:
+                    container_gpu = int(limits.get(self.gpu_resource_name, 0))
+                elif request:
+                    container_gpu = int(request.get(self.gpu_resource_name, 0))
+                if container_gpu < 0.01:
                     container_gpu = 0
-                    if limits:
-                        container_gpu = int(limits.get(gpu_resource_name, 0))
-                    elif request:
-                        container_gpu = int(request.get(gpu_resource_name, 0))
-                    if container_gpu < 0.01:
-                        container_gpu = 0
-                    gpu += container_gpu
+                gpu += container_gpu
             return name, user, gpu
 
         for namespace in namespaces:
@@ -2445,5 +2387,3 @@ if __name__=='__main__':
     k8s_client = K8s()
 
     k8s_client.get_all_node_allocated_resources()
-
-

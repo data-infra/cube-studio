@@ -10,9 +10,7 @@ from flask_appbuilder import AppBuilder, IndexView, SQLA
 from flask_appbuilder.baseviews import expose
 from flask_compress import Compress
 from flask_migrate import Migrate
-from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect
-from werkzeug.middleware.proxy_fix import ProxyFix
 import wtforms_json
 from myapp.security import MyappSecurityManager
 from myapp.utils.core import pessimistic_connection_handling, setup_cache
@@ -167,9 +165,6 @@ if conf.get("ENABLE_CORS"):
 
     CORS(app, **conf.get("CORS_OPTIONS"))
 
-if conf.get("ENABLE_PROXY_FIX"):
-    app.wsgi_app = ProxyFix(app.wsgi_app)
-
 if conf.get("ENABLE_CHUNK_ENCODING"):
 
     class ChunkedEncodingFix(object):
@@ -225,8 +220,7 @@ with app.app_context():
         base_template="myapp/base.html",
         indexview=MyIndexView,  # 首页
         security_manager_class=custom_sm,  # 自定义认证方式
-        # Run `myapp init` to update FAB's perms,设置为true就可以自动更新了，这样才能自动添加新建权限
-        update_perms=True,
+        update_perms=False,
     )
 
 security_manager = appbuilder.sm
@@ -256,10 +250,6 @@ def is_feature_enabled(feature):
 if conf.get("ENABLE_FLASK_COMPRESS"):
     Compress(app)
 
-if conf.get("TALISMAN_ENABLED"):
-    talisman_config = conf.get("TALISMAN_CONFIG")
-    Talisman(app, **talisman_config)
-
 # Hook that provides administrators a handle on the Flask APP
 # after initialization
 flask_app_mutator = conf.get("FLASK_APP_MUTATOR")
@@ -276,7 +266,7 @@ import jwt
 # @pysnooper.snoop()
 def check_login():
     # /static下面不少地方静态文件直接访问。所以不能加权限限制
-    static_urls = ['/static/', '/logout', '/login','/register', '/health', '/wechat','/wework', '/dingtalk','/proxy','/llm/api/','/message_modelview/api/']
+    static_urls = ['/static/', '/logout', '/login','/register', '/health', '/wechat','/wework', '/dingtalk','/proxy','/message_modelview/api/']
     for url in static_urls:
         if url in request.path:
             return
@@ -355,4 +345,3 @@ def page_not_found(e):
 
 # 引入视图
 from myapp import views
-

@@ -8,6 +8,3 @@ venv
 *.sublime*
 appbuilder1
 install/docker/kubeconfig
-
-
-/chatgpt-web/node_modules/

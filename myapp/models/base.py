@@ -42,7 +42,6 @@ class MyappModelBase():
         "resource_memory": _("内存申请"),
         "resource_cpu": _("cpu申请"),
         "resource_gpu": _("gpu申请"),
-        "resource_rdma": _("rdma申请"),
         "resource": _("资源"),
         "timeout": _("超时中断"),
         "retry": _("重试次数"),
@@ -320,12 +319,8 @@ class MyappModelBase():
 
         # 不使用用户的填写，完全平台决定
         gpu_num = core.get_gpu(resource_gpu)[0]
-        if type(gpu_num)==str and ',' in gpu_num:
-            node_selector = node_selector.replace('cpu=true', 'vgpu=true') + ";vgpu=true;%s=true" % model_type
-        elif gpu_num>=1 or gpu_num==-1:
+        if gpu_num>=1:
             node_selector = node_selector.replace('cpu=true', 'gpu=true') + ";gpu=true;%s=true"%model_type
-        elif 1>gpu_num>0:
-            node_selector = node_selector.replace('cpu=true', 'vgpu=true') + ";vgpu=true;%s=true" % model_type
         else:
             node_selector = node_selector.replace('gpu=true', 'cpu=true') + ";cpu=true;%s=true"%model_type
         if 'org' not in node_selector:
@@ -334,6 +329,4 @@ class MyappModelBase():
         node_selector = [selector.strip() for selector in node_selector if selector.strip()]
         node_selector = ';'.join(list(set(node_selector)))
         return node_selector
-
-
 

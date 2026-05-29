@@ -153,7 +153,7 @@ class Images_ModelView_Base():
     route_base = '/images_modelview/api'
     datamodel = SQLAInterface(Images)
 
-    list_columns = ['image_type','images_url', 'creator', 'modified']
+    list_columns = ['image_type_label','images_url', 'creator', 'modified']
     cols_width = {
         "images_url": {"type": "ellip2", "width": 500},
     }
@@ -163,7 +163,8 @@ class Images_ModelView_Base():
     add_columns = ['image_type','repository', 'name', 'describe', 'dockerfile', 'gitpath']
     edit_columns = add_columns
     spec_label_columns={
-        "image_type": _("镜像分类")
+        "image_type": _("镜像分类"),
+        "image_type_label": _("镜像分类")
     }
 
 
