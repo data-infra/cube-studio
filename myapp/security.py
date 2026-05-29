@@ -261,15 +261,29 @@ class MyappSecurityManager(SecurityManager):
         #     token = request.headers['token']
         if authorization_value:
             from myapp import conf
-            # 兼容无 header 的短 token：只有 payload.signature 两段时，补回固定的 HS256 header
-            HS256_HEADER = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
-            if authorization_value.count('.') == 1:
-                authorization_value = HS256_HEADER + '.' + authorization_value
-            encoded_jwt = authorization_value.encode('utf-8')
-            payload = jwt.decode(encoded_jwt, conf.get('JWT_PASSWORD','cube-studio'), algorithms=['HS256'])
-            user = self.find_user(payload['sub'])
-            g.user = user
-            return user
+            # username 免认证：AUTH_PLATFORM_ACCESS 全局开启，或通过 K8s 内部域名(kubeflow-dashboard)访问时放行
+            is_k8s_internal = 'kubeflow-dashboard.infra' in (request.host or '')
+            if len(authorization_value) < 40 and (conf.get('AUTH_PLATFORM_ACCESS', False) or is_k8s_internal):
+                username = authorization_value
+                if username:
+                    user = self.find_user(username)
+                    g.user = user
+                    return user
+            else:  # token 认证
+                # 兼容无 header 的短 token：只有 payload.signature 两段时，补回固定的 HS256 header
+                HS256_HEADER = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
+                if authorization_value.count('.') == 1:
+                    authorization_value = HS256_HEADER + '.' + authorization_value
+                encoded_jwt = authorization_value.encode('utf-8')
+                payload = jwt.decode(encoded_jwt, conf.get('JWT_PASSWORD', 'cube-studio'), algorithms=['HS256'])
+                # if payload['iat'] > time.time():
+                #     return
+                # elif payload['exp'] < time.time():
+                #     return
+                # else:
+                user = self.find_user(payload['sub'])
+                g.user = user
+                return user
 
     # 自定义登录用户
     def load_user(self, pk):
