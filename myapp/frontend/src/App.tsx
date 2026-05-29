@@ -7,21 +7,18 @@ import {
   RouteObject
 } from "react-router-dom";
 
-import { Drawer, Dropdown, Menu, Select, Spin, Tag } from 'antd';
+import { Drawer, Dropdown, Menu, Spin, Tag } from 'antd';
 import { IRouterConfigPlusItem } from './api/interface/baseInterface';
 import { formatRoute, getDefaultOpenKeys, routerConfigPlus } from './routerConfig';
 import SubMenu from 'antd/lib/menu/SubMenu';
 import { clearWaterNow, drawWater, drawWaterNow, getParam, obj2UrlParam, parseParam2Obj } from './util'
 import { getAppHeaderConfig, getAppMenu, getCustomDialog, userLogout } from './api/kubeflowApi';
 import { IAppHeaderItem, IAppMenuItem, ICustomDialog } from './api/interface/kubeflowInterface';
-import { AppstoreOutlined, DownOutlined, LeftOutlined, RightOutlined, TranslationOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, DownOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import Cookies from 'js-cookie'
 import { handleTips } from './api';
 import globalConfig from './global.config'
 import AiChatBot from './components/AiChatBot/AiChatBot'
-import i18nEn from './images/i18nEn.svg';
-
-import { useTranslation, Trans, } from 'react-i18next';
 const userName = Cookies.get('myapp_username')
 
 const RouterConfig = (config: RouteObject[]) => {
@@ -65,8 +62,6 @@ const AppWrapper = (props: IProps) => {
 
   const navigate = useNavigate();
   const location = useLocation()
-
-  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     getAppMenu().then(res => {
@@ -388,11 +383,11 @@ const AppWrapper = (props: IProps) => {
             <Dropdown overlay={<Menu>
               <Menu.Item onClick={() => {
                 navigate('/user')
-              }}>{t("用户中心")}</Menu.Item>
+              }}>{"用户中心"}</Menu.Item>
               <Menu.Item onClick={() => {
                 Cookies.remove('myapp_username');
                 handleTips.userlogout()
-              }}>{t("退出登录")}</Menu.Item>
+              }}>{"退出登录"}</Menu.Item>
             </Menu>
             }>
               <img className="mr8 cp" style={{ borderRadius: 200, height: 32 }} src={imgUrlProtraits} onError={() => {

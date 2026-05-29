@@ -73,7 +73,6 @@ import DynamicForm, {
   ILinkageConfig,
 } from "../components/DynamicForm/DynamicForm";
 import ChartOptionTempalte from "./ChartOptionTempalte";
-import { useTranslation } from "react-i18next";
 import "./ADUGTemplate.less";
 import TabsModal from "../components/TabsModal/TabsModal";
 
@@ -114,7 +113,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
     showSizeChanger: true,
     showQuickJumper: true,
     pageSizeOptions: [20, 50, 100, 500],
-    showTotal: (total) => `${t("共")}${total}${t("条")}`,
+    showTotal: (total) => `${"共"}${total}${"条"}`,
   };
   const [pageInfo, setPageInfo] = useState<TablePaginationConfig>(pageInfoInit);
   const [currentColumns, setCurrentColumns] = useState<ColumnsType<any>>([]);
@@ -218,7 +217,6 @@ export default function TaskListManager(props?: IAppMenuItem) {
     string | undefined
   >();
 
-  const { t, i18n } = useTranslation();
 
   const [scrollY, setScrollY] = useState("");
 
@@ -261,23 +259,23 @@ export default function TaskListManager(props?: IAppMenuItem) {
         .map((item: any) => {
           if (type === "select") {
             return item.type === "DataRequired"
-              ? { required: true, message: `${t("请选择")} ${label}` }
+              ? { required: true, message: `${"请选择"} ${label}` }
               : undefined;
           }
 
           switch (item.type) {
             case "DataRequired":
-              return { required: true, message: `${t("请输入")} ${label}` };
+              return { required: true, message: `${"请输入"} ${label}` };
             case "Regexp":
               return {
                 pattern: new RegExp(`${item.regex}`),
-                message: `${t("请按正确的规则输入")}`,
+                message: `${"请按正确的规则输入"}`,
               };
             case "Length":
               return {
                 min: item.min || 0,
                 max: item.max,
-                message: `${t("请输入正确的长度")}`,
+                message: `${"请输入正确的长度"}`,
               };
             default:
               return undefined;
@@ -678,7 +676,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
         );
 
         const tableAction: any = {
-          title: t("操作"),
+          title: "操作",
           width: actionwidth,
           dataIndex: "handle",
           key: "handle",
@@ -698,11 +696,11 @@ export default function TaskListManager(props?: IAppMenuItem) {
                               className="link"
                               onClick={() => {
                                 Modal.confirm({
-                                  title: t("收藏"),
+                                  title: "收藏",
                                   icon: <ExclamationCircleOutlined />,
-                                  content: `${t("确定收藏")}?`,
-                                  okText: t("确认收藏"),
-                                  cancelText: t("取消"),
+                                  content: `${"确定收藏"}?`,
+                                  okText: "确认收藏",
+                                  cancelText: "取消",
                                   onOk() {
                                     return new Promise((resolve, reject) => {
                                       actionADUGTemplateFavorite(
@@ -716,7 +714,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                         });
                                     })
                                       .then((res) => {
-                                        message.success(t("收藏成功"));
+                                        message.success("收藏成功");
                                         fetchData({
                                           ...fetchDataParams,
                                           pageConf: pageInfo,
@@ -725,14 +723,14 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                         });
                                       })
                                       .catch(() => {
-                                        message.error(t("收藏失败"));
+                                        message.error("收藏失败");
                                       });
                                   },
                                   onCancel() {},
                                 });
                               }}
                             >
-                              {t("收藏")}
+                              {"收藏"}
                             </div>
                           </Menu.Item>
                         ) : null}
@@ -743,11 +741,11 @@ export default function TaskListManager(props?: IAppMenuItem) {
                               className="link"
                               onClick={() => {
                                 Modal.confirm({
-                                  title: t("取消收藏"),
+                                  title: "取消收藏",
                                   icon: <ExclamationCircleOutlined />,
-                                  content: `${t("确定取消收藏")}?`,
-                                  okText: t("确认取消收藏"),
-                                  cancelText: t("取消"),
+                                  content: `${"确定取消收藏"}?`,
+                                  okText: "确认取消收藏",
+                                  cancelText: "取消",
                                   onOk() {
                                     return new Promise((resolve, reject) => {
                                       actionADUGTemplateCancelFavorite(
@@ -761,7 +759,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                         });
                                     })
                                       .then((res) => {
-                                        message.success(t("操作成功"));
+                                        message.success("操作成功");
                                         fetchData({
                                           ...fetchDataParams,
                                           pageConf: pageInfo,
@@ -770,14 +768,14 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                         });
                                       })
                                       .catch(() => {
-                                        message.error(t("操作失败"));
+                                        message.error("操作失败");
                                       });
                                   },
                                   onCancel() {},
                                 });
                               }}
                             >
-                              {t("取消收藏")}
+                              {"取消收藏"}
                             </div>
                           </Menu.Item>
                         ) : null}
@@ -790,7 +788,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                 fetchDataDetail(record[primary_key]);
                               }}
                             >
-                              {t("详情")}
+                              {"详情"}
                             </div>
                           </Menu.Item>
                         ) : null}
@@ -865,11 +863,11 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                     fetchDataDetail(record[primary_key]);
                                   })
                                   .catch(() => {
-                                    message.warn(t("用户没有修改权限"));
+                                    message.warn("用户没有修改权限");
                                   });
                               }}
                             >
-                              {t("修改")}
+                              {"修改"}
                             </div>
                           </Menu.Item>
                         ) : null}
@@ -879,11 +877,11 @@ export default function TaskListManager(props?: IAppMenuItem) {
                               className="c-fail cp"
                               onClick={() => {
                                 Modal.confirm({
-                                  title: t("删除"),
+                                  title: "删除",
                                   icon: <ExclamationCircleOutlined />,
-                                  content: `${t("确定删除")}?`,
-                                  okText: t("确认删除"),
-                                  cancelText: t("取消"),
+                                  content: `${"确定删除"}?`,
+                                  okText: "确认删除",
+                                  cancelText: "取消",
                                   okButtonProps: { danger: true },
                                   onOk() {
                                     return new Promise((resolve, reject) => {
@@ -898,7 +896,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                         });
                                     })
                                       .then((res) => {
-                                        message.success(t("删除成功"));
+                                        message.success("删除成功");
                                         fetchData({
                                           ...fetchDataParams,
                                           pageConf: pageInfo,
@@ -907,14 +905,14 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                         });
                                       })
                                       .catch(() => {
-                                        message.error(t("删除失败"));
+                                        message.error("删除失败");
                                       });
                                   },
                                   onCancel() {},
                                 });
                               }}
                             >
-                              {t("删除")}
+                              {"删除"}
                             </div>
                           </Menu.Item>
                         ) : null}
@@ -956,8 +954,8 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                           title: action.confirmation,
                                           icon: <ExclamationCircleOutlined />,
                                           content: "",
-                                          okText: t("确认"),
-                                          cancelText: t("取消"),
+                                          okText: "确认",
+                                          cancelText: "取消",
                                           onOk() {
                                             return new Promise(
                                               (resolve, reject) => {
@@ -973,7 +971,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                               },
                                             )
                                               .then((res: any) => {
-                                                message.success(t("操作成功"));
+                                                message.success("操作成功");
 
                                                 if (res.data.result.link) {
                                                   window.open(
@@ -990,7 +988,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                                 });
                                               })
                                               .catch(() => {
-                                                message.error(t("操作失败"));
+                                                message.error("操作失败");
                                               });
                                           },
                                           onCancel() {},
@@ -1006,7 +1004,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                     }
                   >
                     <div className="link">
-                      {t("更多")}
+                      {"更多"}
                       <DownOutlined />
                     </div>
                   </Dropdown>
@@ -1092,7 +1090,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                 }
               })
               .catch((err) => {
-                message.error(t("字段切换错误"));
+                message.error("字段切换错误");
               })
               .finally(() => {
                 setLoadingAdd(false);
@@ -1193,7 +1191,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
           try {
             urlFilter = JSON.parse(getParam("filter") || "[]");
           } catch (error) {
-            message.error(t("filter解析异常"));
+            message.error("filter解析异常");
           }
         }
         const localFilter = urlFilter || localCacheFilter;
@@ -1370,8 +1368,8 @@ export default function TaskListManager(props?: IAppMenuItem) {
         title: action.confirmation,
         icon: <ExclamationCircleOutlined />,
         content: "",
-        okText: t("确认"),
-        cancelText: t("取消"),
+        okText: "确认",
+        cancelText: "取消",
         onOk() {
           return new Promise((resolve, reject) => {
             actionADUGTemplateMuliple(
@@ -1390,7 +1388,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
               });
           })
             .then((res) => {
-              message.success(t("操作成功"));
+              message.success("操作成功");
               fetchData({
                 ...fetchDataParams,
                 pageConf: pageInfo,
@@ -1400,13 +1398,13 @@ export default function TaskListManager(props?: IAppMenuItem) {
               });
             })
             .catch(() => {
-              message.error(t("操作失败"));
+              message.error("操作失败");
             });
         },
         onCancel() {},
       });
     } else {
-      message.warn(t("请先选择"));
+      message.warn("请先选择");
     }
   };
 
@@ -1432,12 +1430,12 @@ export default function TaskListManager(props?: IAppMenuItem) {
     onChange(info) {
       if (info.file.status === "done") {
         notification["success"]({
-          message: t("导入成功"),
+          message: "导入成功",
           description: JSON.stringify(info.file.response),
         });
       } else if (info.file.status === "error") {
         notification["error"]({
-          message: t("导入失败"),
+          message: "导入失败",
           description: JSON.stringify(info.file.response),
         });
       }
@@ -1448,7 +1446,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
     <div className="fade-in h100 d-f fd-c">
       {/* 添加 */}
       <ModalForm
-        title={`${t("添加")} ${labelTitle}`}
+        title={`${"添加"} ${labelTitle}`}
         // width={1000}
         formData={dynamicFormDataAdd}
         loading={loadingAdd}
@@ -1474,7 +1472,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
           }
           actionADUGTemplateAdd(baseUrlRef.current, values)
             .then((res: any) => {
-              message.success(`${t("添加")} ${labelTitle} ${t("成功")}`);
+              message.success(`${"添加"} ${labelTitle} ${"成功"}`);
               form.resetFields();
               setVisableAdd(false);
               fetchData({
@@ -1486,7 +1484,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
               });
             })
             .catch((err) => {
-              message.error(`${t("添加")} ${labelTitle} ${t("失败")}`);
+              message.error(`${"添加"} ${labelTitle} ${"失败"}`);
             })
             .finally(() => {
               setLoadingAdd(false);
@@ -1556,7 +1554,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                   setDynamicFormGroupConfigAdd(formGroupConfigAdd);
                 })
                 .catch((err) => {
-                  message.error(t("字段切换错误"));
+                  message.error("字段切换错误");
                 })
                 .finally(() => {
                   setLoadingAdd(false);
@@ -1571,7 +1569,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
       </ModalForm>
       {/* 修改 */}
       <ModalForm
-        title={`${t("修改")} ${labelTitle}`}
+        title={`${"修改"} ${labelTitle}`}
         // width={1500}
         formData={dataDetail.reduce((pre, next) => {
           if ((updateColumnsMap[next.key] || {})["ui-type"] === "select") {
@@ -1654,7 +1652,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
             values,
           )
             .then((res) => {
-              message.success(`${t("更新")} ${labelTitle} ${t("成功")}`);
+              message.success(`${"更新"} ${labelTitle} ${"成功"}`);
               setVisableUpdate(false);
               fetchData({
                 ...fetchDataParams,
@@ -1665,7 +1663,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
               });
             })
             .catch((err) => {
-              message.error(`${t("更新")} ${labelTitle} ${t("失败")}`);
+              message.error(`${"更新"} ${labelTitle} ${"失败"}`);
             })
             .finally(() => {
               setLoadingUpdate(false);
@@ -1684,7 +1682,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
       </ModalForm>
       {/* 详情 */}
       <Modal
-        title={`${labelTitle} ${t("详情")}`}
+        title={`${labelTitle} ${"详情"}`}
         visible={visableDetail}
         footer={null}
         width={800}
@@ -1779,7 +1777,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                 }}
               >
                 <RollbackOutlined />
-                {t("返回")}
+                {"返回"}
               </Button>
             ) : null}
             <span>{labelTitle}</span>
@@ -1804,7 +1802,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                 window.open(helpUrl, "blank");
               }}
             >
-              {t("帮助链接")}
+              {"帮助链接"}
             </span>
             <QuestionCircleOutlined />
           </div>
@@ -1847,8 +1845,8 @@ export default function TaskListManager(props?: IAppMenuItem) {
                       <div className="pb2">
                         <Switch
                           checked={isAllDataList}
-                          checkedChildren={t("全部")}
-                          unCheckedChildren={t("我的收藏")}
+                          checkedChildren={"全部"}
+                          unCheckedChildren={"我的收藏"}
                           defaultChecked
                           onChange={(checked) => {
                             setIsAllDataList(checked);
@@ -1891,7 +1889,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                       type="primary"
                       onClick={() => setVisableAdd(true)}
                     >
-                      {t("添加")}
+                      {"添加"}
                       {labelTitle}
                       <PlusOutlined />
                     </Button>
@@ -1908,7 +1906,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                     className="link"
                                     onClick={() => handleMultiRecord(action)}
                                   >
-                                    {`${t("批量")} ${action.text}`}
+                                    {`${"批量"} ${action.text}`}
                                   </span>
                                 </Menu.Item>
                               );
@@ -1917,7 +1915,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                         }
                       >
                         <Button>
-                          {t("批量操作")} <DownOutlined />
+                          {"批量操作"} <DownOutlined />
                         </Button>
                       </Dropdown>
                     </div>
@@ -1928,8 +1926,8 @@ export default function TaskListManager(props?: IAppMenuItem) {
                         color="#fff"
                         title={
                           <span className="tips-content-b">
-                            <div>{t("注意：csv逗号分隔")}，</div>
-                            <div>{t("第一行为列的英文名")}</div>{" "}
+                            <div>{"注意：csv逗号分隔"}，</div>
+                            <div>{"第一行为列的英文名"}</div>{" "}
                             <div
                               className="link"
                               onClick={() => {
@@ -1938,7 +1936,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                                 );
                               }}
                             >
-                              {t("下载导入模板")}
+                              {"下载导入模板"}
                             </div>
                           </span>
                         }
@@ -1946,7 +1944,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
                       >
                         <Upload {...uploadConfig}>
                           <Button className="" icon={<UploadOutlined />}>
-                            {t("批量导入数据")}
+                            {"批量导入数据"}
                           </Button>
                         </Upload>
                       </Tooltip>
@@ -1957,11 +1955,11 @@ export default function TaskListManager(props?: IAppMenuItem) {
                       className="ml16"
                       onClick={() => {
                         Modal.confirm({
-                          title: t("导出数据"),
+                          title: "导出数据",
                           icon: <ExclamationCircleOutlined />,
                           content: "",
-                          okText: t("确认导出数据"),
-                          cancelText: t("取消"),
+                          okText: "确认导出数据",
+                          cancelText: "取消",
                           onOk() {
                             const formatData = formatFilterParams(
                               filterValues,
@@ -1971,13 +1969,13 @@ export default function TaskListManager(props?: IAppMenuItem) {
                             window.open(
                               `${window.location.origin}${baseUrlRef.current}download?form_data=${form_data}`,
                             );
-                            message.success(t("导出成功"));
+                            message.success("导出成功");
                           },
                           onCancel() {},
                         });
                       }}
                     >
-                      {t("批量导出")} <ExportOutlined />
+                      {"批量导出"} <ExportOutlined />
                     </Button>
                   ) : null}
                 </div>
@@ -2020,7 +2018,7 @@ export default function TaskListManager(props?: IAppMenuItem) {
           ) : (
             <div className="bg-w p16">
               {/*{*/}
-              {/*    permissions.includes('can_add') ? <Button className="mr16" type="primary" onClick={() => setVisableAdd(true)}>{t('添加')}{labelTitle}<PlusOutlined /></Button> : null*/}
+              {/*    permissions.includes('can_add') ? <Button className="mr16" type="primary" onClick={() => setVisableAdd(true)}>{'添加'}{labelTitle}<PlusOutlined /></Button> : null*/}
               {/*}*/}
               <div className="d-f fw">
                 {dataList.map((row, rowIndex) => {

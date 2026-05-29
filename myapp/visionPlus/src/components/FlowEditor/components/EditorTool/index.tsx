@@ -17,7 +17,6 @@ import { toggle } from '@src/models/template';
 import { Button, message } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { isNode, removeElements } from 'react-flow-renderer';
-import { useTranslation } from 'react-i18next';
 import style from './style';
 
 const { Item } = Stack;
@@ -31,7 +30,6 @@ const EditorTool: React.FC = () => {
   const taskList = useAppSelector(selectTaskList);
   const isEditing = useAppSelector(selectEditing);
   const selectedElements = useAppSelector(selectSelected);
-  const { t, i18n } = useTranslation();
 
   const [commandList, setCommandList] = useState<any[]>([])
 
@@ -65,18 +63,18 @@ const EditorTool: React.FC = () => {
       <div className={style.commandBarStyleCustom}>
         <Button className={style.commandButtonStyle} type="text" icon={<AppstoreOutlined className={style.commonIcon}/>} onClick={() => {
           dispatch(toggle());
-        }}>{t('展开/关闭菜单')}</Button>
+        }}>{'展开/关闭菜单'}</Button>
         <Button className={style.commandButtonStyle} type="text" icon={<SaveOutlined className={style.commonIcon}/>} onClick={() => {
-          message.success(t('保存成功'))
+          message.success('保存成功')
           dispatch(savePipeline());
-        }}>{t('保存')}</Button>
+        }}>{'保存'}</Button>
         <Button className={style.commandButtonStyle} type="text" icon={<DeleteOutlined className={style.commonIcon}/>} onClick={() => {
           if (isNode(selectedElements[0])) {
             dispatch(savePipeline());
           }
           dispatch(updateEditing(true));
           dispatch(updateElements(removeElements(selectedElements, elements)));
-        }}>{t('删除节点')}</Button>
+        }}>{'删除节点'}</Button>
         {commandList}
       </div>
       <Stack
@@ -93,7 +91,7 @@ const EditorTool: React.FC = () => {
               iconName={isEditing ? 'AlertSolid' : 'SkypeCircleCheck'}
               styles={{ root: { color: isEditing ? '#e95f39' : '#8cb93c', marginRight: 5 } }}
             />
-            {isEditing ? t('未保存') : t('已保存')}
+            {isEditing ? '未保存' : '已保存'}
           </>
         ) : (
             <>
@@ -105,7 +103,7 @@ const EditorTool: React.FC = () => {
                 }}
                 size={SpinnerSize.small}
               ></Spinner>
-            {t('保存中')}
+            {'保存中'}
           </>
           )}
       </Stack>

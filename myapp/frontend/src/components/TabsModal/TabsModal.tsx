@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { ITabDetailItem, ITabsModalData} from '../../api/interface/tabsModalInterface';
 import TabsDetail from './TabsDetail';
 import { Button, Modal, Spin } from "antd";
-import { t } from "i18next";
 import { actionTabsModal, actionTabsModalInfo } from "../../api/kubeflowApi";
 interface IProps {
 	visible: boolean;
@@ -79,7 +78,7 @@ export default function TabsModal(props: IProps) {
             }
         >
             <Spin spinning={loading}>
-                {data ? <TabsDetail data={data.content || []} /> : <div>{t('No data available')}</div>}
+                {data ? <TabsDetail data={data.content || []} /> : <div>{'No data available'}</div>}
             </Spin>
         </Modal>
     );

@@ -1,6 +1,5 @@
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { Modal, Form, Spin, Input, FormInstance } from 'antd';
-import { useTranslation } from 'react-i18next';
 
 interface ModalFormProps {
 	visible: boolean;
@@ -15,7 +14,6 @@ interface ModalFormProps {
 }
 
 const ModalForm = (props: ModalFormProps): JSX.Element => {
-	const { t, i18n } = useTranslation();
 	const [form] = Form.useForm();
 	const [, updateState] = useState<any>();
 	const forceUpdate = React.useCallback(() => updateState({}), []);
@@ -44,8 +42,8 @@ const ModalForm = (props: ModalFormProps): JSX.Element => {
 			width={props.width || 680}
 			visible={props.visible}
 			title={props.title}
-			okText={t('确定')}
-			cancelText={t('取消')}
+			okText={'确定'}
+			cancelText={'取消'}
 			onCancel={() => {
 				form.resetFields();
 				props.onCancel();

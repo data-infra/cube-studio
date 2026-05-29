@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import CodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { EditorView } from '@codemirror/view';
-import { useTranslation } from 'react-i18next';
 import { Button } from 'antd';
 
 interface IProps extends ReactCodeMirrorProps {
@@ -12,7 +11,6 @@ interface IProps extends ReactCodeMirrorProps {
 }
 
 export default function JsonEditor(props: IProps) {
-  const { t } = useTranslation();
   const [isValidJson, setIsValidJson] = useState(true);
   const [rawValue, setRawValue] = useState(props.value || '{}');
   const [editorHeight, setEditorHeight] = useState('auto');
@@ -121,12 +119,12 @@ export default function JsonEditor(props: IProps) {
           onClick={handleFormatClick}
           disabled={!isValidJson}
         >
-          {t("格式化")}
+          {"格式化"}
         </Button>
       </div>
       {!isValidJson && (
         <div style={{ color: 'red', marginTop: '10px' }}>
-          {t("json格式错误")}
+          {"json格式错误"}
         </div>
       )}
     </div>

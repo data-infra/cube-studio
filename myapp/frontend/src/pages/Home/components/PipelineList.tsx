@@ -8,7 +8,6 @@ import {
 } from "../../../api/home";
 import dayjs from "dayjs";
 import { DeleteOutlined } from "@ant-design/icons";
-import { useTranslation } from "react-i18next";
 
 const { TabPane } = Tabs;
 
@@ -27,7 +26,6 @@ interface Project {
 }
 
 const PipelineList: React.FC = () => {
-  const { t } = useTranslation();
   const [pipelineList, setPipelineList] = useState<Pipeline[]>([]);
   const [projectList, setProjectList] = useState<Record<number, Project>>({});
   const [activeTab, setActiveTab] = useState("my");
@@ -88,14 +86,14 @@ const PipelineList: React.FC = () => {
         },
       },
       {
-        title: t('描述'),
+        title: '描述',
         dataIndex: "describe",
         key: "describe",
         ellipsis: true,
         render: (text: string) => (text ? t(text) : "-"),
       },
       {
-        title: t('修改时间'),
+        title: '修改时间',
         dataIndex: "changed_on",
         key: "changed_on",
         width: 220,
@@ -104,7 +102,7 @@ const PipelineList: React.FC = () => {
         },
       },
       {
-        title: t('项目组'),
+        title: '项目组',
         key: "project",
         width: 150,
         render: (_, record: any) => {
@@ -125,7 +123,7 @@ const PipelineList: React.FC = () => {
     // 只在"我的"标签显示删除操作
     if (activeTab === "my") {
       baseColumns.push({
-        title: t('操作'),
+        title: '操作',
         key: "action",
         width: 120,
         align: "center",
@@ -135,7 +133,7 @@ const PipelineList: React.FC = () => {
             type="link"
             onClick={() => handleDeletePipeline(record)}
           >
-            <DeleteOutlined /> {t('删除')}
+            <DeleteOutlined /> {'删除'}
           </Button>
         ),
       });
@@ -246,7 +244,7 @@ const PipelineList: React.FC = () => {
   return (
     <Card>
       <Tabs activeKey={activeTab} onChange={handleTabChange}>
-        <TabPane tab={t('我的')} key="my">
+        <TabPane tab={'我的'} key="my">
           <Table
             columns={getColumns()}
             dataSource={pipelineList}
@@ -259,12 +257,12 @@ const PipelineList: React.FC = () => {
               showSizeChanger: true,
               showQuickJumper: true,
               pageSizeOptions: ["10", "20", "50", "100"],
-              showTotal: (total) => `${t('共')} ${total} ${t('条')}`,
+              showTotal: (total) => `${'共'} ${total} ${'条'}`,
             }}
             onChange={handleTableChange}
           />
         </TabPane>
-        <TabPane tab={t('协作')} key="all">
+        <TabPane tab={'协作'} key="all">
           <Table
             columns={getColumns()}
             dataSource={pipelineList}

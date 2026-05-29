@@ -19,7 +19,6 @@ export interface ITaskEdit {
   node_selector?: string;
   resource_cpu?: string;
   resource_gpu?: string;
-  resource_rdma?: string;
   resource_memory?: string;
   retry?: string;
   timeout?: string;

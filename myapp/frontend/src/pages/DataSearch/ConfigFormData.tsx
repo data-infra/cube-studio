@@ -1,7 +1,6 @@
 import { Form } from 'antd'
 import Select, { LabeledValue } from 'antd/lib/select';
 import React, { useEffect, useImperativeHandle, useState } from 'react'
-import { useTranslation } from 'react-i18next';
 import { IIdexFormConfigItem } from '../../api/dataSearchApi'
 import InputSearch from '../../components/InputSearch/InputSearch';
 import './ConfigFormData.less';
@@ -18,7 +17,6 @@ export interface IProps {
 }
 
 const ConfigFormData = React.forwardRef((props: IProps, ref) => {
-    const { t, i18n } = useTranslation();
     const [form] = Form.useForm();
     const [, updateState] = useState<any>();
 
@@ -56,7 +54,7 @@ const ConfigFormData = React.forwardRef((props: IProps, ref) => {
             rules={[
                 {
                     required: true,
-                    message: `${t('请选择')}${config.label}`,
+                    message: `${'请选择'}${config.label}`,
                 },
             ]}
             initialValue={config.defaultValue}
@@ -69,7 +67,7 @@ const ConfigFormData = React.forwardRef((props: IProps, ref) => {
                 showSearch
                 disabled={config.disable}
                 optionFilterProp="label"
-                placeholder={config.placeHolder || `${t('请选择')} ${config.label}`}
+                placeholder={config.placeHolder || `${'请选择'} ${config.label}`}
                 options={options}
                 onChange={(value, rowOption: any) => {
                     if (rowOption.relate) {
@@ -99,7 +97,7 @@ const ConfigFormData = React.forwardRef((props: IProps, ref) => {
             rules={[
                 {
                     required: true,
-                    message: `${t('请选择')}${config.label}`,
+                    message: `${'请选择'}${config.label}`,
                 },
             ]}
             initialValue={config.defaultValue}

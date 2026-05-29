@@ -8,7 +8,6 @@ import { saveTaskList } from '@src/models/task';
 import { toggle } from '@src/models/setting';
 import api from '@src/api';
 import style from './style';
-import { useTranslation } from 'react-i18next';
 const { Item } = Stack;
 
 const EditorHead: React.FC = () => {
@@ -17,13 +16,12 @@ const EditorHead: React.FC = () => {
   const info = useAppSelector(selectInfo);
   const userName = useAppSelector(selectUserName);
 
-  const { t, i18n } = useTranslation();
 
   // 新建流水线
   const handleNewPipeline = () => {
     api
       .pipeline_modelview_add({
-        describe: `${t('新建流水线')}-${Date.now()}`,
+        describe: `${'新建流水线'}-${Date.now()}`,
         name: `${userName}-pipeline-${Date.now()}`,
         node_selector: 'cpu=true,train=true',
         schedule_type: 'once',
@@ -84,12 +82,12 @@ const EditorHead: React.FC = () => {
                   }}
                   onClick={handleNewPipeline}
                 >
-                  {(t('新建流水线'))}
+                  {('新建流水线')}
                 </PrimaryButton>
               )}
             </Item>
             <Item className={info.name ? '' : style.hidden}>
-              <TooltipHost content={t('设置')}>
+              <TooltipHost content={'设置'}>
                 <IconButton
                   iconProps={{ iconName: 'Settings' }}
                   onClick={() => {
@@ -106,10 +104,10 @@ const EditorHead: React.FC = () => {
         <Item className={info.name ? '' : style.hidden}>
           <Stack horizontal>
             <Item styles={style.buttonItemStyle}>
-              <PrimaryButton onClick={handleSubmit}>{t('运行')}</PrimaryButton>
+              <PrimaryButton onClick={handleSubmit}>{'运行'}</PrimaryButton>
             </Item>
             <Item styles={style.buttonItemStyle}>
-                <PrimaryButton onClick={handleCopy}>{t('复制')}</PrimaryButton>
+                <PrimaryButton onClick={handleCopy}>{'复制'}</PrimaryButton>
             </Item>
 
           </Stack>

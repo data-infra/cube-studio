@@ -24,7 +24,6 @@ import { updateLoading, selectLoading } from '@src/models/task';
 import Setting from './components/Setting';
 import NodeType from './components/NodeType';
 import style from './style';
-import { useTranslation } from 'react-i18next';
 
 const { Item } = Stack;
 
@@ -38,7 +37,6 @@ const EditorBody: React.FC = () => {
   const taskLoading = useAppSelector(selectLoading);
   const reactFlowWrapper = useRef<any>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-  const { t, i18n } = useTranslation();
 
   // 加载
   const onLoad = (_reactFlowInstance: OnLoadParams) => {
@@ -90,7 +88,7 @@ const EditorBody: React.FC = () => {
         position,
         data: {
           name: `${modelInfo.name}-${(new Date()).valueOf()}`,
-          label: `${t('新建')} ${modelInfo.name} ${t('任务')}`,
+          label: `${'新建'} ${modelInfo.name} ${'任务'}`,
           args: {},
           info: modelInfo,
           config: {

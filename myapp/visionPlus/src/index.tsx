@@ -8,9 +8,6 @@ import { Provider } from 'react-redux';
 import './app.less';
 import "antd/lib/button/style/index.css";
 import "antd/lib/message/style/index.css";
-import './locales/i18n';
-// import i18n from './locales/i18n'
-// i18n.changeLanguage('en')
 
 const isDev = process.env.NODE_ENV === 'development' ? true : false
 const assetsUrl = isDev ? '/assets' : '/static/appbuilder/assets'

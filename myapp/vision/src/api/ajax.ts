@@ -3,9 +3,7 @@ import cookie from 'cookie';
 
 const { myapp_username, t_uid, km_uid } = cookie.parse(document.cookie);
 const Authorization = myapp_username || t_uid || km_uid || '';
-import { getI18n } from 'react-i18next';
 
-// console.log(getI18n())
 
 // axios.defaults.baseURL =
 // process.env.NODE_ENV === 'development' ? 'http://localhost' || process.env.REACT_APP_API_HOST : window.location.origin;
@@ -34,7 +32,6 @@ const Ajax = {
         responseType: 'json',
         headers: {
           'Content-Type': 'application/json',
-          'language': getI18n().language
         }
       };
 
@@ -58,7 +55,6 @@ const Ajax = {
         responseType: 'json',
         headers: {
           'Content-Type': 'application/json',
-          'language': getI18n().language
         }
       };
 
@@ -81,7 +77,6 @@ const Ajax = {
         responseType: 'json',
         headers: {
           'Content-Type': 'application/json',
-          'language': getI18n().language
         }
       };
 
@@ -106,7 +101,6 @@ const Ajax = {
         responseType: 'json',
         headers: {
           'Content-Type': 'application/json',
-          'language': getI18n().language
         }
       };
 

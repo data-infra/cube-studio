@@ -28,7 +28,6 @@ import { useAppDispatch, useAppSelector } from '@src/models/hooks';
 import { updateTaskList, updateTaskId, selectTaskId } from '@src/models/task';
 import style from './style';
 import { Switch, Tooltip } from 'antd';
-import { useTranslation } from 'react-i18next';
 import { marked } from 'marked'
 import './editorbody.less';
 
@@ -110,7 +109,6 @@ const Model: React.FC<ModelProps> = props => {
   const [jobTemplate, setJobTemplate] = useState<any>({});
   const [templateArgs, setTemplateArgs] = useState<any>({});
   const [taskArgs, setTaskArgs] = useState<any>({});
-  const { t, i18n } = useTranslation();
   const [message, setMessage] = useState('clear');
   const _overflowItems: ICommandBarItemProps[] = [
     {
@@ -291,7 +289,7 @@ const Model: React.FC<ModelProps> = props => {
             }}
           />
           <TextField
-            label={t('任务模板')}
+            label={'任务模板'}
             value={jobTemplate?.name || ''}
             disabled
             readOnly
@@ -308,7 +306,7 @@ const Model: React.FC<ModelProps> = props => {
                 <div className={style.templateConfig}>
                   {help_url ? (
                     <a href={help_url} target="_blank" rel="noreferrer">
-                      {t('配置文档')}
+                      {'配置文档'}
                     </a>
                   ) : null}
                 </div>
@@ -317,11 +315,11 @@ const Model: React.FC<ModelProps> = props => {
           />
           <div className={style.splitLine}></div>
           <Tooltip title={jobTemplate?.describe || ''} className="mr8" placement="bottom">
-            <span><TextField label={t('模板描述')} value={jobTemplate?.describe || ''} disabled readOnly style={{ pointerEvents: 'none' }} /></span>
+            <span><TextField label={'模板描述'} value={jobTemplate?.describe || ''} disabled readOnly style={{ pointerEvents: 'none' }} /></span>
           </Tooltip>
           <div className={style.splitLine}></div>
           <TextField
-            label={t('名称')}
+            label={'名称'}
             onChange={(event: FormEvent, value?: string) => {
               handleOnChange('name', value ? value : '');
             }}
@@ -330,8 +328,8 @@ const Model: React.FC<ModelProps> = props => {
           />
           <div className={style.splitLine}></div>
           <TextField
-            label={t('标签')}
-            description={t('节点标签')}
+            label={'标签'}
+            description={'节点标签'}
             required
             onChange={(event: FormEvent, value?: string) => {
               handleOnChange('label', value ? value : '');
@@ -340,9 +338,9 @@ const Model: React.FC<ModelProps> = props => {
           />
           <div className={style.splitLine}></div>
           <RegexValidatedTextField
-            label={t('内存申请')}
+            label={'内存申请'}
             regex={/^[0-9]*G$/}
-            description={t('内存的资源使用配置，示例1G，10G， 最大100G，如需更多联系管理员')}
+            description={'内存的资源使用配置，示例1G，10G， 最大100G，如需更多联系管理员'}
             onChange={(event: FormEvent, value?: string) => {
               handleOnChange('resource_memory', value ? value : '');
             }}
@@ -351,9 +349,9 @@ const Model: React.FC<ModelProps> = props => {
           />
           <div className={style.splitLine}></div>
           <RegexValidatedTextField
-            label={t('CPU申请')}
+            label={'CPU申请'}
             regex={/^[0-9]*$/}
-            description={t('CPU的资源使用配置(单位核)，示例 0.4，10，最大50核，如需更多联系管理员')}
+            description={'CPU的资源使用配置(单位核)，示例 0.4，10，最大50核，如需更多联系管理员'}
             onChange={(event: FormEvent, value?: string) => {
               handleOnChange('resource_cpu', value ? value : '');
             }}
@@ -362,9 +360,9 @@ const Model: React.FC<ModelProps> = props => {
           />
           <div className={style.splitLine}></div>
           <RegexValidatedTextField
-            label={t('GPU申请')}
-            regex={/^[\-\.0-9,a-zA-Z\(\)]*$/}
-            description={t('gpu的资源使用配置(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)')}
+            label={'GPU申请'}
+            regex={/^[0-9a-zA-Z\-\(\)（）]*$/}
+            description={'gpu的资源使用配置(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100)'}
             onChange={(event: FormEvent, value?: string) => {
               handleOnChange('resource_gpu', value ? value : '');
             }}
@@ -372,20 +370,9 @@ const Model: React.FC<ModelProps> = props => {
           />
           <div className={style.splitLine}></div>
           <RegexValidatedTextField
-            label={t('RDMA申请')}
+            label={'超时中断'}
             regex={/^[0-9]*$/}
-            description={t('RDMA的资源使用配置，示例 0，1，10，填写方式咨询管理员')}
-            onChange={(event: FormEvent, value?: string) => {
-              handleOnChange('resource_rdma', value ? value : '');
-            }}
-            value={task?.resource_rdma || ''}
-            required
-          />
-          <div className={style.splitLine}></div>
-          <RegexValidatedTextField
-            label={t('超时中断')}
-            regex={/^[0-9]*$/}
-            description={t('task运行时长限制，为0表示不限制(单位s)')}
+            description={'task运行时长限制，为0表示不限制(单位s)'}
             onChange={(event: FormEvent, value?: string) => {
               handleOnChange('timeout', value ? value : '');
             }}
@@ -393,9 +380,9 @@ const Model: React.FC<ModelProps> = props => {
           />
           <div className={style.splitLine}></div>
           <RegexValidatedTextField
-            label={t('重试次数')}
+            label={'重试次数'}
             regex={/^[0-9]*$/}
-            description={t('task重试次数')}
+            description={'task重试次数'}
             onChange={(event: FormEvent, value?: string) => {
               handleOnChange('retry', value ? value : '');
             }}
@@ -403,9 +390,9 @@ const Model: React.FC<ModelProps> = props => {
           />
           <div className={style.splitLine}></div>
 
-          <div style={{ fontWeight: 600, padding: '5px 0px' }}>{t('是否跳过')}</div>
+          <div style={{ fontWeight: 600, padding: '5px 0px' }}>{'是否跳过'}</div>
 
-          <Switch checkedChildren={t('是')} unCheckedChildren={t('否')} checked={!!task?.skip} onChange={(checked) => {
+          <Switch checkedChildren={'是'} unCheckedChildren={'否'} checked={!!task?.skip} onChange={(checked) => {
             handleOnChange('skip', checked);
           }} />
 
@@ -420,7 +407,7 @@ const Model: React.FC<ModelProps> = props => {
                 <Tooltip overlayClassName={style.tipStyle}
                          // placement="bottom"
                          title={<span className="cube-tip" dangerouslySetInnerHTML={{__html: tip}}></span>}>
-                  <span style={{fontWeight: 'bold', color: '#0078d4', marginLeft: '10px'}}>{t('详情')}</span>
+                  <span style={{fontWeight: 'bold', color: '#0078d4', marginLeft: '10px'}}>{'详情'}</span>
                 </Tooltip>
               )
 
@@ -685,19 +672,19 @@ const Model: React.FC<ModelProps> = props => {
                                     dispatch(updateShowEditor(true));
                                   }}
                                 >
-                                  {t('编辑')}
+                                  {'编辑'}
                                 </ActionButton>
                               ) : (args.item_type || 'str') === 'workdir' ? (
                                 <ActionButton
                                   iconProps={{ iconName: 'FabricFolder' }}
                                   onClick={() => {window.open('/notebook_modelview/api/entry/jupyter?file_path='+keyValue, '_blank')}}>
-                                  {t('打开目录')}
+                                  {'打开目录'}
                                 </ActionButton>
                               ):(args.item_type || 'str') === 'image' ? (
                                 <ActionButton
                                   iconProps={{ iconName: 'Bug' }}
                                   onClick={() => {window.open('/docker_modelview/api/entry/docker?image='+keyValue, '_blank')}}>
-                                  {t('调试镜像')}
+                                  {'调试镜像'}
                                 </ActionButton>
                               ):null}
                             </div>
@@ -730,7 +717,7 @@ const Model: React.FC<ModelProps> = props => {
             acc.push(
               (
                 <React.Fragment key={cur}>
-                  <Label>{t('参数')} {cur}</Label>
+                  <Label>{'参数'} {cur}</Label>
                   {mapCurrent.flat()}
                   <div className={style.splitLine}></div>
                 </React.Fragment>

@@ -10,7 +10,6 @@ import ModuleDetail from './components/ModuleDetail';
 import ModuleItem from './components/ModuleItem';
 import SearchItem from './components/SearchItem';
 import style from './style';
-import { useTranslation } from 'react-i18next';
 
 const { Item } = Stack;
 
@@ -49,7 +48,6 @@ const ModuleTree: React.FC = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchResult, setSearchResult] = useState(new Map());
 
-  const { t, i18n } = useTranslation();
 
   const handleTemplateData = (res: any) => {
     const dataSet = new Map();
@@ -130,7 +128,7 @@ const ModuleTree: React.FC = () => {
           {/* 模板搜索 */}
           <Stack horizontal horizontalAlign="space-between">
             <SearchBox
-              placeholder={t('搜索模板名称或描述')}
+              placeholder={'搜索模板名称或描述'}
               role="search"
               className={style.searchBoxStyle}
               onChange={debounce((event, newValue) => {
@@ -180,7 +178,7 @@ const ModuleTree: React.FC = () => {
                       textAlign: 'center',
                     }}
                   >
-                    {t('暂无匹配')}
+                    {'暂无匹配'}
                   </div>
                 ) : (
                     ''

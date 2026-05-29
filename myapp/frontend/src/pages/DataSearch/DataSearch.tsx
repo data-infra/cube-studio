@@ -14,7 +14,6 @@ import { data2Time } from '../../util';
 import LoadingStar from '../../components/LoadingStar/LoadingStar';
 import cookies from 'js-cookie';
 import ConfigFormData, { IConfigFormDataOptionItem } from './ConfigFormData';
-import { useTranslation } from 'react-i18next';
 const userName = cookies.get('myapp_username')
 
 const createId = () => {
@@ -78,11 +77,10 @@ const sqlMap: Record<string, string> = {
 }
 
 export default function DataSearch() {
-    const { t, i18n } = useTranslation();
     const initId = createId()
     const initCurrentEditorData: IEditorItem = {
         tabId: initId,
-        title: `${t('新查询')} 1`,
+        title: `${'新查询'} 1`,
         status: 'init',
         smartShow: false,
         smartContent: '',
@@ -275,10 +273,10 @@ export default function DataSearch() {
 
         const currentIndex = ++newTabIndex.current
         if (currentIndex > 10) {
-            message.warn(t('标签数目达到限制'))
+            message.warn('标签数目达到限制')
         } else {
             const newActiveKey = createId();
-            const title = `${t('新查询')} ${currentIndex}`
+            const title = `${'新查询'} ${currentIndex}`
             const newPanes = [...panes];
             const initState: IEditorItem = {
                 title,
@@ -372,7 +370,7 @@ export default function DataSearch() {
             }
         }).catch(() => {
             clearTaskTimer(activeKey, task_id)
-            message.error(t('查询结果失败，尝试重新运行'))
+            message.error('查询结果失败，尝试重新运行')
             setEditorState({
                 status: 'failure',
                 taskMap: {
@@ -399,7 +397,7 @@ export default function DataSearch() {
                     reqId: task_id,
                     status: 'init',
                     content: editorStore[activeKey].content,
-                    name: `${t('任务')}${task_id}`,
+                    name: `${'任务'}${task_id}`,
                     step: 'start',
                     startTime: moment().format('YYYY-MM-DD HH:mm:ss'),
                     database: editorStore[activeKey].database,
@@ -426,11 +424,11 @@ export default function DataSearch() {
                     status: 'failure',
                 })
                 Modal.error({
-                    title: t('运行失败'),
+                    title: '运行失败',
                     icon: <ExclamationCircleOutlined />,
                     width: 1000,
                     content: err_msg,
-                    okText: t('关闭'),
+                    okText: '关闭',
                     // maskClosable: true
                 });
             } else if (task_id) {
@@ -446,7 +444,7 @@ export default function DataSearch() {
             <div className="flex1 ptb16 pl16">
                 <Tabs type="editable-card" onChange={onChange} activeKey={activeKey} onEdit={onEdit}>
                     {panes.map((pane, index) => (
-                        <Tabs.TabPane tab={`${t('新查询')} ${index + 1}`} key={pane.tabId} closable={index !== 0}>
+                        <Tabs.TabPane tab={`${'新查询'} ${index + 1}`} key={pane.tabId} closable={index !== 0}>
                             <div className="d-f fd-c h100">
                                 <div className="flex2 s0 ov-a">
                                     {
@@ -454,7 +452,7 @@ export default function DataSearch() {
                                             <div className="d-f jc ac fd-c">
                                                 <LoadingStar />
                                                 <div>
-                                                    {t('结果生成中')}
+                                                    {'结果生成中'}
                                                 </div>
                                             </div>
                                         </div> : null
@@ -488,8 +486,8 @@ export default function DataSearch() {
                                         <div className="d-f ac">
                                             <Switch className="mr8"
                                                 checked={editorStore[activeKey].smartShow}
-                                                unCheckedChildren={t('正常模式')}
-                                                checkedChildren={t('智能模式')} onChange={(checked) => {
+                                                unCheckedChildren={'正常模式'}
+                                                checkedChildren={'智能模式'} onChange={(checked) => {
                                                     setEditorState({ smartShow: checked })
                                                 }} />
                                             {
@@ -534,7 +532,7 @@ export default function DataSearch() {
                                                     }}
                                                     options={[
                                                         'test',
-                                                    ]} placeholder={t('AI智能生成')} width={'240px'} /> : null
+                                                    ]} placeholder={'AI智能生成'} width={'240px'} /> : null
                                             }
                                         </div>
                                         <div className="d-f ac">
@@ -555,13 +553,13 @@ export default function DataSearch() {
                                                 configDataComponentRefs.current.onSubmit().then((res: any) => {
                                                     runTask()
                                                 })
-                                            }}>{t('运行')}<RightCircleOutlined /></Button>
+                                            }}>{'运行'}<RightCircleOutlined /></Button>
                                         </div>
                                     </div>
                                     <div className="flex1 bor b-side s0 bg-w p-r ov-a" style={{ height: 'calc(100% - 80px)' }}>
                                         <div className="pt8">
                                             <div className="tag-result bg-theme c-text-w mr16">
-                                                {t('结果')}
+                                                {'结果'}
                                             </div>
                                         </div>
                                         <div className="plr16 pt8">
@@ -569,11 +567,11 @@ export default function DataSearch() {
                                                 option={editorStore[activeKey].taskMap}
                                                 onDelete={(id) => {
                                                     Modal.confirm({
-                                                        title: t('删除'),
+                                                        title: '删除',
                                                         icon: <ExclamationCircleOutlined />,
-                                                        content: `${t('确定删除')}?`,
-                                                        okText: t('确认删除'),
-                                                        cancelText: t('取消'),
+                                                        content: `${'确定删除'}?`,
+                                                        okText: '确认删除',
+                                                        cancelText: '取消',
                                                         okButtonProps: { danger: true },
                                                         onOk() {
                                                             let taskMap = editorStore[activeKey].taskMap

@@ -10,7 +10,6 @@ import VideoCard from "./components/VideoCard";
 import PipelineList from "./components/PipelineList";
 import api from "../../api/index";
 import "./Home.less";
-import { useTranslation } from "react-i18next";
 
 const { Title } = Typography;
 
@@ -21,7 +20,6 @@ interface VideoItem {
 }
 
 const Home: React.FC = () => {
-  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [videoList, setVideoList] = useState<VideoItem[]>([]);
 
@@ -37,13 +35,13 @@ const Home: React.FC = () => {
       // 设置视频列表
       setVideoList([
         {
-          name: t('新人制作一个pipeline'),
+          name: '新人制作一个pipeline',
           img: "/static/assets/images/ad/video-cover1-thumb.png",
           video:
             "https://cube-studio.oss-cn-hangzhou.aliyuncs.com/cube-studio.mp4",
         },
         {
-          name: t('自定义任务模板'),
+          name: '自定义任务模板',
           img: "/static/assets/images/ad/video-cover2-thumb.png",
           video:
             "https://cube-studio.oss-cn-hangzhou.aliyuncs.com/job-template.mp4",
@@ -59,7 +57,7 @@ const Home: React.FC = () => {
   if (loading) {
     return (
       <div className="home-loading">
-        <Spin size="large" tip={t('加载中')} />
+        <Spin size="large" tip={'加载中'} />
       </div>
     );
   }
@@ -71,7 +69,7 @@ const Home: React.FC = () => {
         <section className="home-section">
           <div className="section-header">
             <Title level={5}>
-              <DeploymentUnitOutlined /> {t('平台主要功能')}
+              <DeploymentUnitOutlined /> {'平台主要功能'}
             </Title>
           </div>
           <FeatureCard />
@@ -82,7 +80,7 @@ const Home: React.FC = () => {
           <section className="home-section">
             <div className="section-header">
               <Title level={5}>
-                <PlayCircleOutlined /> {t('新手视频')}
+                <PlayCircleOutlined /> {'新手视频'}
               </Title>
             </div>
             <Row gutter={[12, 12]}>
@@ -99,7 +97,7 @@ const Home: React.FC = () => {
         <section className="home-section">
           <div className="section-header">
             <Title level={5}>
-              <FileTextOutlined /> {t('流水线')}
+              <FileTextOutlined /> {'流水线'}
             </Title>
           </div>
           <PipelineList />

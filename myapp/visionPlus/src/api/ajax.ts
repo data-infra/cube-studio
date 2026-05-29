@@ -1,6 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import cookie from 'cookie';
-import { getI18n } from 'react-i18next';
 
 const { myapp_username, t_uid, km_uid } = cookie.parse(document.cookie);
 const Authorization = myapp_username || t_uid || km_uid || '';
@@ -37,7 +36,6 @@ const Ajax = {
         headers: {
           'Content-Type': 'application/json',
           Authorization,
-          'language': getI18n().language
         }
       };
 
@@ -64,7 +62,6 @@ const Ajax = {
         headers: {
           'Content-Type': 'application/json',
           Authorization,
-          'language': getI18n().language
         }
       };
 
@@ -88,7 +85,6 @@ const Ajax = {
         headers: {
           'Content-Type': 'application/json',
           Authorization,
-          'language': getI18n().language
         }
       };
 
@@ -113,7 +109,6 @@ const Ajax = {
         headers: {
           'Content-Type': 'application/json',
           Authorization,
-          'language': getI18n().language
         }
       };
 

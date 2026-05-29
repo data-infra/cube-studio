@@ -3,7 +3,6 @@ import { Card, Row, Col, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import "./FeatureCard.less";
 import { getDemoList, createPipeline } from "../../../api/home";
-import { useTranslation } from "react-i18next";
 
 interface FeatureItem {
   name: string;
@@ -15,7 +14,6 @@ interface FeatureItem {
 const FeatureCard: React.FC = () => {
   const [featureList, setFeatureList] = useState<FeatureItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const { t } = useTranslation();
 
   useEffect(() => {
     loadFeatureList();
@@ -114,7 +112,7 @@ const FeatureCard: React.FC = () => {
         >
           <div className="card-content">
             <PlusOutlined className="create-icon" />
-            <div className="card-title">{t('创建流水线')}</div>
+            <div className="card-title">{'创建流水线'}</div>
           </div>
         </Card>
       </Col>

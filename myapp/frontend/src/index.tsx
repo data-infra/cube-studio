@@ -4,11 +4,8 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import './index.less';
 import zhCN from 'antd/lib/locale/zh_CN';
-import en from 'antd/lib/locale/en_US';
 import { ConfigProvider, Spin } from 'antd';
-import { getI18n } from 'react-i18next';
 import './store/index'
-import './locales/i18n'
 
 import {
   BrowserRouter, HashRouter
@@ -34,7 +31,7 @@ if (!!userName) {
 
 ReactDOM.render(
   isLogin ?
-    <ConfigProvider locale={getI18n().language === 'zh-CN' ? zhCN : en}>
+    <ConfigProvider locale={zhCN}>
       <BrowserRouter basename={process.env.REACT_APP_BASE_ROUTER || '/'}>
         <App />
       </BrowserRouter>

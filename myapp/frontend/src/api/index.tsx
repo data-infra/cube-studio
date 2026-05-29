@@ -1,7 +1,6 @@
 import Axios, { AxiosResponse } from 'axios';
 import { notification } from 'antd';
 import cookies from 'js-cookie';
-import { getI18n } from 'react-i18next';
 const baseApi = process.env.REACT_APP_BASE_URL || 'http://localhost/'
 
 export type AxiosResFormat<T> = Promise<AxiosResponse<ResponseFormat<T>>>;
@@ -12,7 +11,6 @@ export interface ResponseFormat<T = any> {
     status: number
 }
 
-// console.log(getI18n())
 
 const axios = Axios.create({
     timeout: 600000,
@@ -70,7 +68,6 @@ export const handleTips = new HandleTips();
 // 请求拦截器
 axios.interceptors.request.use(
     (config) => {
-        config.headers.set('language', getI18n().language)
         if (!!cookies.get('myapp_username')) {
             let logConfig = config
             return logConfig;

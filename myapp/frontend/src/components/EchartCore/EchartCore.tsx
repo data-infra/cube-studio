@@ -37,7 +37,6 @@ import { CanvasRenderer } from 'echarts/renderers';
 import './EchartCore.less';
 import { Spin } from 'antd';
 import { FieldNumberOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
 
 export type ECOption = echarts.EChartsOption
 // 通过 ComposeOption 来组合出一个只有必须组件和图表的 Option 类型
@@ -96,7 +95,6 @@ const defaultChartStyle: React.CSSProperties = {
 export default function EchartCore(props: IProps) {
     const [chartInstance, setChartInstance] = useState<echarts.ECharts>()
     const id = Math.random().toString(36).substring(2);
-    const { t, i18n } = useTranslation();
 
     const option = {}
 
@@ -118,7 +116,7 @@ export default function EchartCore(props: IProps) {
                 <div id={id} style={{ ...defaultChartStyle, ...props.style }}></div>
                 {
                     props.isNoData ? <div className="chart-nodata">
-                        <div>{t('暂无数据')}</div>
+                        <div>{'暂无数据'}</div>
                     </div> : null
                 }
             </div>

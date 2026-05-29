@@ -17,13 +17,12 @@ import {
   IUserinfoColumnInfo,
   IUserinfoValidator,
 } from "../../api/userinfoApi";
-import { useTranslation } from "react-i18next";
 import "./UserCenter.less";
 
 const { Title, Text } = Typography;
 
 function getEmptyPlaceholder(t: (key: string) => string): string {
-  return t("空描述") || "—";
+  return "空描述" || "—";
 }
 
 function displayValue(v: unknown, emptyStr: string): string {
@@ -73,7 +72,6 @@ function validateField(
 }
 
 const UserCenter: React.FC = () => {
-  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -114,7 +112,7 @@ const UserCenter: React.FC = () => {
       });
       setFormValues(initial);
     } catch (e) {
-      message.error(t("加载用户信息失败") || "加载用户信息失败");
+      message.error("加载用户信息失败" || "加载用户信息失败");
     } finally {
       setLoading(false);
     }
@@ -134,7 +132,7 @@ const UserCenter: React.FC = () => {
       });
       setFormValues(initial);
     } catch (e) {
-      message.error(t("加载用户信息失败") || "加载用户信息失败");
+      message.error("加载用户信息失败" || "加载用户信息失败");
     }
   };
 
@@ -188,11 +186,11 @@ const UserCenter: React.FC = () => {
     setSaving(true);
     try {
       await updateCurrentUserinfo(payload as Partial<IUserInfo> & { password?: string });
-      message.success(t("保存成功") || "保存成功");
+      message.success("保存成功" || "保存成功");
       setIsEditMode(false);
       loadUserinfo();
     } catch (e) {
-      message.error(t("保存失败") || "保存失败");
+      message.error("保存失败" || "保存失败");
     } finally {
       setSaving(false);
     }
@@ -288,7 +286,7 @@ const UserCenter: React.FC = () => {
     return (
       <div className="user-center">
         <div className="user-center-inner user-center-loading">
-          <Spin size="large" tip={t("加载中") || "加载中"} />
+          <Spin size="large" tip={"加载中" || "加载中"} />
         </div>
       </div>
     );
@@ -342,7 +340,7 @@ const UserCenter: React.FC = () => {
 
   // 编辑用户信息表单（按 edit_columns 可编辑列 渲染，标签用 label_columns 列的中文名，描述用 description_columns 列的描述）
   if (isEditMode) {
-    const editTitle = infoConfig.edit_title || t("编辑用户信息") || "编辑用户信息";
+    const editTitle = infoConfig.edit_title || "编辑用户信息" || "编辑用户信息";
     return (
       <div className="user-center">
         <div className="user-center-inner">
@@ -374,7 +372,7 @@ const UserCenter: React.FC = () => {
                       <Input.Password
                         value={formValues[name] ?? ""}
                         onChange={(e) => setFormValue(name, e.target.value)}
-                        placeholder={t("留空则不修改密码") || "留空则不修改密码"}
+                        placeholder={"留空则不修改密码" || "留空则不修改密码"}
                         autoComplete="new-password"
                         disabled={disabled}
                         allowClear
@@ -410,7 +408,7 @@ const UserCenter: React.FC = () => {
           <div className="btn-row">
             <Space>
               <Button icon={<ArrowLeftOutlined />} onClick={handleCancelEdit}>
-                {t("返回") || "返回"}
+                {"返回" || "返回"}
               </Button>
               <Button
                 type="primary"
@@ -418,7 +416,7 @@ const UserCenter: React.FC = () => {
                 onClick={handleSaveEdit}
                 loading={saving}
               >
-                {saving ? t("保存中") || "保存中" : t("保存") || "保存"}
+                {saving ? "保存中" || "保存中" : "保存" || "保存"}
               </Button>
             </Space>
           </div>
@@ -428,7 +426,7 @@ const UserCenter: React.FC = () => {
   }
 
   // 用户信息展示（按 show_columns 查看的列 渲染，标签用 label_columns 列的中文名）
-  const showTitle = infoConfig.show_title || t("用户信息") || "用户信息";
+  const showTitle = infoConfig.show_title || "用户信息" || "用户信息";
   return (
     <div className="user-center">
       <div className="user-center-inner">
@@ -456,7 +454,7 @@ const UserCenter: React.FC = () => {
               setIsEditMode(true);
             }}
           >
-            {t("编辑用户") || "编辑用户"}
+            {"编辑用户" || "编辑用户"}
           </Button>
         </div>
       </div>

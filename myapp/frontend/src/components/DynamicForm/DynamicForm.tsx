@@ -7,7 +7,6 @@ import { MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined, SyncOutlined
 import InputSearch from '../InputSearch/InputSearch';
 import 'moment/locale/zh-cn';
 import locale from 'antd/es/date-picker/locale/zh_CN';
-import { useTranslation } from 'react-i18next';
 import FileUploadPlus from '../FileUploadPlus/FileUploadPlus';
 import JsonEditor from '../JsonEditor/JsonEditor';
 
@@ -75,7 +74,6 @@ export function calculateId(strList: string[]): number {
 
 export default function DynamicForm(props: IProps) {
     const { dataOptions } = props;
-    const { t, i18n } = useTranslation();
     const [current, setCurrent] = useState(0);
     const [currentConfig, _setCurrentConfig] = useState(props.config)
     const currentConfigRef = useRef(props.config);
@@ -219,14 +217,14 @@ export default function DynamicForm(props: IProps) {
                 >
                     <div className="cp d-il">
                         <QuestionCircleOutlined style={{ color: '#1672fa' }} />
-                        <span className="pl4 c-theme">{t('详情')}</span>
+                        <span className="pl4 c-theme">{'详情'}</span>
                     </div>
                 </Tooltip> : null}
                 {config.description ? <span dangerouslySetInnerHTML={{ __html: config.description }}></span> : null}
             </>}
             {...itemProps}
         >
-            <Input disabled={config.disable} placeholder={config.placeHolder || `${t('请选择')}${config.label}`} />
+            <Input disabled={config.disable} placeholder={config.placeHolder || `${'请选择'}${config.label}`} />
         </Form.Item>
     }
 
@@ -269,7 +267,7 @@ export default function DynamicForm(props: IProps) {
                             >
                                 <div className="cp d-il">
                                     <QuestionCircleOutlined style={{ color: '#1672fa' }} />
-                                    <span className="pl4 c-theme">{t('详情')}</span>
+                                    <span className="pl4 c-theme">{'详情'}</span>
                                 </div>
                             </Tooltip> : null}
                             {config.description ? <span dangerouslySetInnerHTML={{ __html: config.description }}></span> : null}
@@ -284,9 +282,7 @@ export default function DynamicForm(props: IProps) {
     }
 
     const renderInputSelect = (config: IDynamicFormConfigItem, itemProps: Record<string, any>) => {
-        // const rules = [
-        //     { required: config.required, message: `${t('请选择')}${config.label}` },
-        // ]
+
         const options: string[] = (config.options || []).map(item => item.label as string)
         return <Form.Item
             key={`dynamicForm_${config.name}`}
@@ -302,7 +298,7 @@ export default function DynamicForm(props: IProps) {
                 >
                     <div className="cp d-il">
                         <QuestionCircleOutlined style={{ color: '#1672fa' }} />
-                        <span className="pl4 c-theme">{t('详情')}</span>
+                        <span className="pl4 c-theme">{'详情'}</span>
                     </div>
                 </Tooltip> : null}
                 {config.description ? <span dangerouslySetInnerHTML={{ __html: config.description }}></span> : null}
@@ -315,7 +311,7 @@ export default function DynamicForm(props: IProps) {
                 }}
                 isOpenSearchMatch={true}
                 disabled={config.disable}
-                placeholder={`${t('请选择')}${config.label}`}
+                placeholder={`${'请选择'}${config.label}`}
                 options={options} />
         </Form.Item>
     }
@@ -335,14 +331,14 @@ export default function DynamicForm(props: IProps) {
                 >
                     <div className="cp d-il">
                         <QuestionCircleOutlined style={{ color: '#1672fa' }} />
-                        <span className="pl4 c-theme">{t('详情')}</span>
+                        <span className="pl4 c-theme">{'详情'}</span>
                     </div>
                 </Tooltip> : null}
                 {config.description ? <span dangerouslySetInnerHTML={{ __html: config.description }}></span> : null}
             </>}
             {...itemProps}
         >
-            <Input.TextArea autoSize={{ minRows: 4 }} disabled={config.disable} placeholder={config.placeHolder || `${t('请选择')}${config.label}`} />
+            <Input.TextArea autoSize={{ minRows: 4 }} disabled={config.disable} placeholder={config.placeHolder || `${'请选择'}${config.label}`} />
         </Form.Item>
     }
     const renderJsonEditor = (config: IDynamicFormConfigItem, itemProps: Record<string, any>) => {
@@ -360,19 +356,19 @@ export default function DynamicForm(props: IProps) {
                 >
                     <div className="cp d-il">
                         <QuestionCircleOutlined style={{ color: '#1672fa' }} />
-                        <span className="pl4 c-theme">{t('详情')}</span>
+                        <span className="pl4 c-theme">{'详情'}</span>
                     </div>
                 </Tooltip> : null}
                 {config.description ? <span dangerouslySetInnerHTML={{ __html: config.description }}></span> : null}
             </>}
             {...itemProps}
         >
-            <JsonEditor rows={config.rows} readOnly={config.disable} placeholder={config.placeHolder || `${t('请选择')}${config.label}`} />
+            <JsonEditor rows={config.rows} readOnly={config.disable} placeholder={config.placeHolder || `${'请选择'}${config.label}`} />
         </Form.Item>
     }
     const renderSelect = (config: IDynamicFormConfigItem, itemProps: Record<string, any>) => {
         // const rules = [
-        //     { required: config.required, message: `${t('请选择')}${config.label}` },
+        //     { required: config.required, message: `${'请选择'}${config.label}` },
         // ]
         const options: LabeledValue[] = config.options || []
         return <Form.Item
@@ -389,7 +385,7 @@ export default function DynamicForm(props: IProps) {
                 >
                     <div className="cp d-il">
                         <QuestionCircleOutlined style={{ color: '#1672fa' }} />
-                        <span className="pl4 c-theme">{t('详情')}</span>
+                        <span className="pl4 c-theme">{'详情'}</span>
                     </div>
                 </Tooltip> : null}
                 {config.description ? <span className="pr4" dangerouslySetInnerHTML={{ __html: config.description }}></span> : null}
@@ -398,7 +394,7 @@ export default function DynamicForm(props: IProps) {
                         props.onRetryInfoChange && props.onRetryInfoChange()
                     }}>
                         <SyncOutlined style={{ color: '#1672fa' }} />
-                        <span className="pl4 c-theme">{t('刷新列表')}</span>
+                        <span className="pl4 c-theme">{'刷新列表'}</span>
                     </div> : null
                 }
             </>}
@@ -413,13 +409,13 @@ export default function DynamicForm(props: IProps) {
                 showSearch
                 disabled={config.disable}
                 optionFilterProp="label"
-                placeholder={config.placeHolder || `${t('请选择')}${config.label}`}
+                placeholder={config.placeHolder || `${'请选择'}${config.label}`}
                 options={options} />
         </Form.Item>
     }
     const renderRadio = (config: IDynamicFormConfigItem, itemProps: Record<string, any>) => {
         // const rules = [
-        //     { required: config.required, message: `${t('请选择')}${config.label}` },
+        //     { required: config.required, message: `${'请选择'}${config.label}` },
         // ]
         const options = config.options || []
         return <Form.Item
@@ -436,7 +432,7 @@ export default function DynamicForm(props: IProps) {
                 >
                     <div className="cp d-il">
                         <QuestionCircleOutlined style={{ color: '#1672fa' }} />
-                        <span className="pl4 c-theme">{t('详情')}</span>
+                        <span className="pl4 c-theme">{'详情'}</span>
                     </div>
                 </Tooltip> : null}
                 {config.description ? <span dangerouslySetInnerHTML={{ __html: config.description }}></span> : null}
@@ -452,7 +448,7 @@ export default function DynamicForm(props: IProps) {
             label={config.label}
             name={config.name}
             initialValue={config.defaultValue ? moment(config.defaultValue) : undefined}
-            rules={[{ required: true, message: t('请选择时间') }]}
+            rules={[{ required: true, message: '请选择时间' }]}
             extra={<>
                 {config.data.tips ? <Tooltip
                     className="mr8"
@@ -461,7 +457,7 @@ export default function DynamicForm(props: IProps) {
                 >
                     <div className="cp d-il">
                         <QuestionCircleOutlined style={{ color: '#1672fa' }} />
-                        <span className="pl4 c-theme">{t('详情')}</span>
+                        <span className="pl4 c-theme">{'详情'}</span>
                     </div>
                 </Tooltip> : null}
                 {config.description ? <span dangerouslySetInnerHTML={{ __html: config.description }}></span> : null}
@@ -476,7 +472,7 @@ export default function DynamicForm(props: IProps) {
             key={`dynamicForm_${config.name}`}
             label={config.label}
             name={config.name}
-            rules={[{ required: true, message: t('请选择时间范围') }]}
+            rules={[{ required: true, message: '请选择时间范围' }]}
             extra={<>
                 {config.data.tips ? <Tooltip
                     className="mr8"
@@ -485,7 +481,7 @@ export default function DynamicForm(props: IProps) {
                 >
                     <div className="cp d-il">
                         <QuestionCircleOutlined style={{ color: '#1672fa' }} />
-                        <span className="pl4 c-theme">{t('详情')}</span>
+                        <span className="pl4 c-theme">{'详情'}</span>
                     </div>
                 </Tooltip> : null}
                 {config.description ? <span dangerouslySetInnerHTML={{ __html: config.description }}></span> : null}
@@ -515,7 +511,7 @@ export default function DynamicForm(props: IProps) {
                 >
                     <div className="cp d-il">
                         <QuestionCircleOutlined style={{ color: '#1672fa' }} />
-                        <span className="pl4 c-theme">{t('详情')}</span>
+                        <span className="pl4 c-theme">{'详情'}</span>
                     </div>
                 </Tooltip> : null}
                 {config.description ? <span dangerouslySetInnerHTML={{ __html: config.description }}></span> : null}
@@ -597,14 +593,14 @@ export default function DynamicForm(props: IProps) {
                                     {/* <MinusCircleOutlined onClick={() => remove(name)} /> */}
                                     <Form.Item >
                                         <Button danger onClick={() => remove(name)} block icon={<MinusCircleOutlined />} style={{ width: 120 }}>
-                                            {t('删除该项')}
+                                            {'删除该项'}
                                         </Button>
                                     </Form.Item>
                                 </div>
                             ))}
                             <Form.Item noStyle className="w100" label="">
                                 <Button type="dashed" className="w100" onClick={() => add()} block icon={<PlusOutlined />}>
-                                    {t('增加一项')}
+                                    {'增加一项'}
                                 </Button>
                             </Form.Item>
                         </>
@@ -651,7 +647,7 @@ export default function DynamicForm(props: IProps) {
                     <div className="ta-c pt32">
                         {current > 0 && (
                             <Button onClick={() => prev()}>
-                                {t('上一步')}
+                                {'上一步'}
                             </Button>
                         )}
                         {current < (currentConfigGroup || []).length - 1 && (
@@ -667,12 +663,12 @@ export default function DynamicForm(props: IProps) {
                                     next()
                                 }
                             }}>
-                                {t('下一步')}
+                                {'下一步'}
                             </Button>
                         )}
                         <div>
                             {current === (currentConfigGroup || []).length - 1 && (
-                                <div className="pt8 c-hint-b">{t('点击确定完成提交')}</div>
+                                <div className="pt8 c-hint-b">{'点击确定完成提交'}</div>
                             )}
                         </div>
                     </div>

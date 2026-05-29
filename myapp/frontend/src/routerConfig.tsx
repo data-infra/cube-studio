@@ -1,12 +1,9 @@
-import { SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { UserOutlined } from '@ant-design/icons';
 import React from 'react';
 import { IRouterConfigPlusItem } from './api/interface/baseInterface';
 import { IAppMenuItem } from './api/interface/kubeflowInterface';
 import Page404 from './pages/Page404';
-import Cookies from 'js-cookie'
 import LoadingStar from './components/LoadingStar/LoadingStar';
-const userName = Cookies.get('myapp_username')
-const isAdmin = userName === 'admin'
 
 const LoadingComponent = () => {
     return <div className="d-f ac jc w100 h100">
@@ -23,67 +20,6 @@ const lazy2Compont = (factory: () => Promise<{
         <Component {...props} />
     </React.Suspense>
 }
-
-export const securitySettingConfig: IRouterConfigPlusItem[] = [
-    {
-        path: '/security',
-        name: 'security',
-        title: '安全设置',
-        isLocalMenu: true,
-        icon: <SettingOutlined style={{ fontSize: 18 }} />,
-        children: [
-            {
-                path: '/security/userList',
-                title: '用户列表',
-                menu_type: 'iframe',
-                icon: <SettingOutlined style={{ marginRight: 8 }} />,
-                element: lazy2Compont(() => import("./pages/IframeTemplate"), { url: '/users/list/?_flt_2_username=' })
-            },
-            {
-                path: '/security/roleList',
-                title: '角色列表',
-                menu_type: 'iframe',
-                icon: <SettingOutlined style={{ marginRight: 8 }} />,
-                element: lazy2Compont(() => import("./pages/IframeTemplate"), { url: '/roles/list/?_flt_2_name=' })
-            },
-            {
-                path: '/security/statistics',
-                title: '用户统计',
-                menu_type: 'iframe',
-                icon: <SettingOutlined style={{ marginRight: 8 }} />,
-                element: lazy2Compont(() => import("./pages/IframeTemplate"), { url: '/userstatschartview/chart/' })
-            },
-            {
-                path: '/security/permissions',
-                title: '权限列表',
-                menu_type: 'iframe',
-                icon: <SettingOutlined style={{ marginRight: 8 }} />,
-                element: lazy2Compont(() => import("./pages/IframeTemplate"), { url: 'permissions/list/' })
-            },
-            {
-                path: '/security/view',
-                title: '视图列表',
-                menu_type: 'iframe',
-                icon: <SettingOutlined style={{ marginRight: 8 }} />,
-                element: lazy2Compont(() => import("./pages/IframeTemplate"), { url: '/viewmenus/list/' })
-            },
-            {
-                path: '/security/permissionsOnView',
-                title: '权限视图关系',
-                menu_type: 'iframe',
-                icon: <SettingOutlined style={{ marginRight: 8 }} />,
-                element: lazy2Compont(() => import("./pages/IframeTemplate"), { url: '/permissionviews/list/' })
-            },
-            {
-                path: '/security/log',
-                title: '日志列表',
-                menu_type: 'iframe',
-                icon: <SettingOutlined style={{ marginRight: 8 }} />,
-                element: lazy2Compont(() => import("./pages/IframeTemplate"), { url: '/log_modelview/api/' })
-            },
-        ]
-    },
-]
 
 export const innerDynamicRouterConfig: IRouterConfigPlusItem[] = [
     {
@@ -131,10 +67,6 @@ export const routerConfigPlus: IRouterConfigPlusItem[] = [
     },
     { path: '*', element: <Page404 /> },
 ]
-
-// if (isAdmin) {
-//     routerConfigPlus.push(...securitySettingConfig)
-// }
 
 export const formatRoute = (data: IAppMenuItem[]): IRouterConfigPlusItem[] => {
     // console.log(data)

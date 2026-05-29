@@ -11,7 +11,6 @@ import { updateLoading } from '@src/models/task';
 import api from '@src/api';
 import { selectElements, updateElements } from '@src/models/element';
 import { updateErrMsg } from '@src/models/app';
-import { useTranslation } from 'react-i18next';
 
 const DataSet: React.FC<NodeProps> = props => {
   const [visible, setVisible] = useState(false)
@@ -22,16 +21,15 @@ const DataSet: React.FC<NodeProps> = props => {
   const pipelineId = useAppSelector(selectPipelineId);
   const elements = useAppSelector(selectElements);
   const dispatch = useAppDispatch();
-  const { t, i18n } = useTranslation();
 
   return (
     <>
-      <Modal title={t('智能推荐下游节点')} visible={visible} onCancel={() => {
+      <Modal title={'智能推荐下游节点'} visible={visible} onCancel={() => {
         setCurrentRecommend(undefined)
         setVisible(false)
       }} onOk={() => {
         if (!currentRecommend) {
-          message.warn(t('请先选择推荐节点'))
+          message.warn('请先选择推荐节点')
           return
         }
 

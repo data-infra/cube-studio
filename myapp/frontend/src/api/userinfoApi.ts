@@ -7,9 +7,7 @@ export interface IUserInfo {
   roles: string;
   active: boolean;
   org: string;
-  quota?: string;
   secret?: string;
-  balance?: string;
   created_on?: string;
 
   changed_on?: string;
