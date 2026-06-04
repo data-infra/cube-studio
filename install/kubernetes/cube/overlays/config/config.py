@@ -23,7 +23,7 @@ else:
 
 APP_THEME = "readable.css"
 
-FAB_UPDATE_PERMS=False
+FAB_UPDATE_PERMS=True
 FAB_STATIC_FOLDER = BASE_DIR + "/static/appbuilder/"
 
 MYAPP_WORKERS = 2  # deprecated
@@ -544,7 +544,7 @@ class CeleryConfig(object):
 DOCUMENTATION_URL='https://github.com/data-infra/cube-studio/wiki'
 BUG_REPORT_URL = 'https://github.com/data-infra/cube-studio/issues/new'
 GIT_URL = 'https://github.com/data-infra/cube-studio/tree/main'
-
+AI_ASSISTANT_URL=''
 
 ROBOT_PERMISSION_ROLES=[]   # 角色黑名单
 

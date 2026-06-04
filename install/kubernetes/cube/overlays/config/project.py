@@ -138,7 +138,7 @@ class Myauthdbview(AuthDBView):
                     # flash('未发现%s用户，联系管理员创建' % form.username.data, "warning")
                     # return redirect(self.appbuilder.get_url_for_login)
                     # 没有用户的时候自动注册用户
-                    user = self.appbuilder.sm.add_db_org_user(username=username, org_name='', password=password)   # hashed_password=password可以密文存储
+                    user = self.appbuilder.sm.auth_user_remote_org_user(username=username, org_name='', password=password)   # hashed_password=password可以密文存储
                     flash('发现用户%s不存在，已自动注册' % username, "warning")
                     # # 如果不想让用户自动登录可以使用这里
                     # user.active = False
@@ -152,8 +152,8 @@ class Myauthdbview(AuthDBView):
             from myapp import event_logger
             event_logger.log(user_id=user.id,action='login',duration_ms=10)
             # 添加到public项目组
-            from myapp.security import MyUserDBModelView_Base
-            user_view = MyUserDBModelView_Base()
+            from myapp.security import MyUserRemoteUserModelView_Base
+            user_view = MyUserRemoteUserModelView_Base()
             user_view.post_add(user)
 
             # 拷贝示例数据
