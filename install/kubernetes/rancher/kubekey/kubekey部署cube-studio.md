@@ -66,8 +66,6 @@ free -m
 如果下载不成功，可以多执行几次
 ```shell
 # 离线安装
-# arm64版本
-# wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubekey-v3.1.10-linux-arm64 -O /usr/bin/kk
 # amd64版本
 # wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubekey-v3.1.10-linux-amd64 -O /usr/bin/kk
 # chmod +x /usr/bin/kk

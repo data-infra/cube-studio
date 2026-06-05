@@ -398,7 +398,7 @@ spec:
     spec:
       containers:
         - name: kubernetes-dashboard-user1
-          image: ccr.ccs.tencentyun.com/cube-studio/k8s-dashboard:v2.6.1   # ccr.ccs.tencentyun.com/cube-studio/k8s-dashboard:v2.6.1-arm64   kubernetesui/dashboard:v2.6.1
+          image: ccr.ccs.tencentyun.com/cube-studio/k8s-dashboard:v2.6.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9090

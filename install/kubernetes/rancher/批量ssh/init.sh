@@ -11,7 +11,7 @@ rm -rf /etc/apt/keyrings/docker.gpg
 rm -rf /etc/apt/sources.list.d/docker.list
 
 curl -fsSL http://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | apt-key add -
-arch=amd64    # 或者arm64
+arch=amd64
 sudo add-apt-repository  -y "deb [arch=${arch}] http://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
 
 apt install -y docker-ce=5:27.0.3-1~ubuntu.22.04~jammy

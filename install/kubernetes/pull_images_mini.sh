@@ -22,7 +22,7 @@ docker pull volcanosh/vc-webhook-manager:v1.14.0 &
 docker pull quay.io/prometheus-operator/prometheus-operator:v0.46.0 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/kube-rbac-proxy:0.14.1 &
 docker pull kubernetesui/dashboard:v2.6.1 &
-docker pull ccr.ccs.tencentyun.com/cube-studio/k8s-dashboard:v2.6.1 &
+docker pull ccr.ccs.tencentyun.com/cube-studio/k8s-dashboard:v2.6.0 &
 docker pull python:3.9 &
 docker pull istio/proxyv2:1.15.0 &
 docker pull minio/minio:RELEASE.2023-04-20T17-56-55Z &

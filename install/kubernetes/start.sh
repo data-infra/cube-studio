@@ -10,11 +10,7 @@ mkdir -p kubeconfig && echo "" > kubeconfig/dev-kubeconfig
 
 ARCH=$(uname -m)
 
-if [ "$ARCH" = "x86_64" ]; then
-  wget -O kubectl https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl-amd64-1.28 && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
-elif [ "$ARCH" = "aarch64" ]; then
-  wget -O kubectl https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl-arm64-1.28 && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
-fi
+wget -O kubectl https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl-amd64-1.28 && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
 
 version=`kubectl version --short | awk '/Server Version:/ {print $3}'`
 echo "kubernets versison" $version

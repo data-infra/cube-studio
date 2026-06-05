@@ -17,8 +17,6 @@ sudo rm -rf /var/lib/containerd /etc/containerd/
 curl -fsSL http://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | apt-key add -
 # amd64机器
 sudo add-apt-repository "deb [arch=amd64] http://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
-# arm机器
-sudo add-apt-repository "deb [arch=arm64] http://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
 
 # 更新源
 sudo apt-get update
@@ -65,7 +63,7 @@ systemctl status containerd
 
 使用nerdctl full，参考：https://github.com/containerd/nerdctl/releases
 ```bash
-arch=arm64
+arch=amd64
 rm -rf nerdctl-full-1.7.7-linux-${arch}.tar.gz
 wget https://githubfast.com/containerd/nerdctl/releases/download/v1.7.7/nerdctl-full-1.7.7-linux-${arch}.tar.gz
 tar xf nerdctl-full-1.7.7-linux-${arch}.tar.gz -C /usr/local 
@@ -147,13 +145,9 @@ systemctl restart containerd
 ```
 version=1.7.6
 
-# amd64版本
 wget https://githubfast.com/containerd/nerdctl/releases/download/v${version}/nerdctl-${version}-linux-amd64.tar.gz
 tar zxvf nerdctl-${version}-linux-amd64.tar.gz -C /usr/local/bin
 
-# arm64版本
-wget https://githubfast.com/containerd/nerdctl/releases/download/v${version}/nerdctl-${version}-linux-arm64.tar.gz
-tar zxvf nerdctl-${version}-linux-arm64.tar.gz -C /usr/local/bin
 ```
 
 也可以直接在页面上找到相应版本，直接复制链接。
@@ -179,11 +173,6 @@ version=v0.15.1
 # amd64版本
 wget https://githubfast.com/moby/buildkit/releases/download/${version}/buildkit-${version}.linux-amd64.tar.gz
 tar zxvf buildkit-${version}.linux-amd64.tar.gz -C /usr/local/
-
-# arm64版本
-wget https://githubfast.com/moby/buildkit/releases/download/${version}/buildkit-${version}.linux-arm64.tar.gz
-tar zxvf buildkit-${version}.linux-arm64.tar.gz -C /usr/local/
-
 
 vi /etc/systemd/system/buildkit.service 
 
@@ -216,11 +205,6 @@ mkdir -p /opt/cni/bin /etc/cni/net.d/
 wget https://githubfast.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz
 # wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/containerd/cni-plugins-linux-amd64-v1.1.1.tgz
 tar -C /opt/cni/bin -xzvf cni-plugins-linux-amd64-v1.1.1.tgz
-
-# 下载 CNI 插件 arm
-wget https://githubfast.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-arm64-v1.1.1.tgz
-tar -C /opt/cni/bin -xzvf cni-plugins-linux-arm64-v1.1.1.tgz
-
 
 修正containerd 的配置
 vi /etc/containerd/config.toml

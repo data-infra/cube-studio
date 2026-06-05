@@ -33,7 +33,7 @@ rm -rf /etc/apt/sources.list.d/docker.list
 
 ### 国内使用阿里源
 curl -fsSL http://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | apt-key add -
-arch=amd64    # 或者arm64
+arch=amd64   
 sudo add-apt-repository  -y "deb [arch=${arch}] http://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
 
 ### 安装docker
@@ -64,7 +64,6 @@ apt install -y docker-compose
 ```bash
 
 wget https://download.docker.com/linux/static/stable/x86_64/docker-24.0.6.tgz
-# arm64 下载 wget https://download.docker.com/linux/static/stable/aarch64/docker-24.0.6.tgz
 tar -zxvf docker-24.0.6.tgz
 sudo cp docker/* /usr/bin/
 vim /etc/systemd/system/docker.service
@@ -103,7 +102,6 @@ systemctl start docker
 离线安装docker-compose
 ```bash
 wget https://githubfast.com/docker/compose/releases/download/v5.0.2/docker-compose-linux-x86_64
-#arm64下载：wget https://githubfast.com/docker/compose/releases/download/v5.0.2/docker-compose-linux-aarch64
 mv docker-compose-linux-x86_64 /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose 
 

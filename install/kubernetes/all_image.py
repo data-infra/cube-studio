@@ -11,7 +11,7 @@ kubeflow = [
 
 kubernetes_dashboard = [
     'kubernetesui/dashboard:v2.6.1',  # k8s dashboard
-    'ccr.ccs.tencentyun.com/cube-studio/k8s-dashboard:v2.6.1',
+    'ccr.ccs.tencentyun.com/cube-studio/k8s-dashboard:v2.6.0',
     'kubernetesui/metrics-scraper:v1.0.8',  # k8s dashboard 上的指标监控
 ]
 
@@ -63,7 +63,7 @@ cube_studio = [
     'ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-machinelearning',
     'ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-deeplearning',
     # 超参搜索的镜像
-    'ccr.ccs.tencentyun.com/cube-studio/nni:20240501',
+    'ccr.ccs.tencentyun.com/cube-studio/nni:20250601',
     # 内部服务镜像
     "phpmyadmin:5.2.1",
     # "ccr.ccs.tencentyun.com/cube-studio/patrikx3:latest",

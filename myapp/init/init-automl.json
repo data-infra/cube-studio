@@ -14,7 +14,7 @@
     "parameters": "{\n    \"batch_size\": {\n        \"_type\": \"choice\",\n        \"_value\": [16,32,64,128]\n    },\n    \"momentum\": {\n        \"_type\": \"uniform\",\n        \"_value\": [0,1]\n    }\n}",
     "job_json": {
     },
-    "job_worker_image": "ccr.ccs.tencentyun.com/cube-studio/nni:20240501",
+    "job_worker_image": "ccr.ccs.tencentyun.com/cube-studio/nni:20250601",
     "working_dir": "/mnt/admin/pipeline/example/nni/",
     "job_worker_command": "python demo.py",
     "resource_memory": "1G",

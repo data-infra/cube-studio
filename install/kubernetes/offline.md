@@ -18,9 +18,6 @@ cd offline
 # amd64版本
 wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl
 wget https://githubfast.com/goharbor/harbor/releases/download/v2.11.1/harbor-offline-installer-v2.11.1.tgz
-# arm64版本
-wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl-arm64 && mv kubectl-arm64 kubectl
-wget https://githubfast.com/wise2c-devops/build-harbor-aarch64/releases/download/v2.13.0/harbor-offline-installer-aarch64-v2.13.0.tgz
 
 # 下载模型
 wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/inference/resnet50.onnx
@@ -91,11 +88,8 @@ cp -r offline /data/k8s/kubeflow/pipeline/workspace/admin/
 ```bash
 ARCH=$(uname -m)
 
-if [ "$ARCH" = "x86_64" ]; then
-  wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
-elif [ "$ARCH" = "aarch64" ]; then
-  wget -O kubectl https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl-arm64 && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
-fi
+wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
+
 ```
 3、修改cube-studio镜像为内网镜像。
 ```bash
