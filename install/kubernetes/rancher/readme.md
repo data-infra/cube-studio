@@ -277,8 +277,104 @@ services部分的示例（注意缩进对齐）
 
 ![在这里插入图片描述](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/1f0f669880ee4b3bb166bcf35ca7f6a5.png)
 
+## 机器重启 rancher 无法打开的 问题
 
-## 5.1 配置认证过期问题
+```bash
+docker exec -it myrancher bash 
+kubectl get pod -A   # 看K3S容器是否都正常，如果都正常，可以打开rancher平台
+
+```
+如果报错 镜像拉取失败，可以describe查看详情。  
+
+如果报错Failed to pull image "rancher/shell:v0.3.1": rpc error: code = DeadlineExceeded desc = failed to pull and unpack image "docker.io/rancher/shell:v0.3.1": failed to resolve reference "docker.io/rancher/shell:v0.3.1": failed to do request: Head "https://registry-1.docker.io/v2/rancher/shell/manifests/v0.3.1": dial tcp 108.160.170.39:443: i/o timeout
+
+说明 k3s 内部 containerd 访问 Docker Hub 超时。
+
+修复方式
+
+```bash
+
+sudo docker exec myrancher sh -lc 'set -e
+cat > /etc/rancher/k3s/registries.yaml <<EOF
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://docker.m.daocloud.io"
+      - "https://docker.1ms.run"
+      - "https://hub.rat.dev"
+configs:
+  "docker.m.daocloud.io":
+    tls:
+      insecure_skip_verify: true
+  "docker.1ms.run":
+    tls:
+      insecure_skip_verify: true
+  "hub.rat.dev":
+    tls:
+      insecure_skip_verify: true
+EOF
+'
+
+sudo docker restart myrancher
+
+sudo docker exec myrancher kubectl get node
+sudo docker exec myrancher kubectl get pod -A
+```
+
+
+### 最后清理历史失败的 helm-operation Pod
+
+镜像拉取修复后，之前失败的 `helm-operation-*` Pod 会残留为 `Error`，可以清理：
+
+```bash
+sudo docker exec myrancher sh -lc \
+  'kubectl get pod -n cattle-system --no-headers |
+   awk '"'"'/^helm-operation-/ && $3 == "Error" {print $1}'"'"' |
+   xargs -r kubectl delete pod -n cattle-system'
+```
+## 大量Up Less than a second
+
+如果重启后 kube-apiserver 报 `service account token is not valid yet`、`docker ps` 控制面容器显示 `Up Less than a second`、大量 Pod 异常，这是时间回拨问题，参考 [rancher-rke-time-skew-recovery.md](rancher-rke-time-skew-recovery.md)。
+
+## api-server报错问题
+
+```bash
+# 打开rancher平台 查看K8S集群报错，unavailable可能是webhook失效了
+docker ps -a | grep webhook   # 找到自己集群k8s webhook
+docker restart webhookxxxxxx
+重启完webhook还要等几分钟，因为webhook要创建证书啥的
+```
+
+![image.png](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/43568bbaabe5059f49d0439597ac33bb.png)
+
+![image.png](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/16dd1fed7936f7a797c99f443a7e07f8.png)
+
+api-server报错 webhook不可用导致Kubernetes Service 的 Endpoint 丢失
+
+1 authentication.go:73\] "Unable to authenticate the request"
+err="\[invalid bearer token, service account token has expired, Post
+\\<http://127.0.0.1:6440/v1/authenticate?timeout=30s>\\: dial tcp
+127.0.0.1:6440: connect: connection refused\]"
+
+然后就是令牌失效
+
+这个令牌连接的是rancher agent节点上 webhook的令牌
+
+docker ps -a \| grep webhook
+
+docker restart 集群webhook
+
+kubectl get
+validatingwebhookconfigurations,mutatingwebhookconfigurations
+
+![image.png](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/d3ef103b643d896c97029eab92638492.png)
+
+k3s内部容器需要先稳定打开平台
+
+创建这些容器前，operator先要成功启动
+
+
+## 配置认证过期问题
 
 因为rancher server的证书有效期是一年，在一年后，rancher server会报证书过期。因此，可以通过下面的方式，创建新的证书。
 
