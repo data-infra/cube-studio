@@ -107,7 +107,7 @@ sh pull_rancher_images.sh
 如果拉取中碰到拉取失败的问题，配置好docker加速器后尝试通过“systemctl restart docker”重启docker，再次执行拉取脚本就可以了。
 
 echo "127.0.0.1 localhost" >> /etc/hosts
-
+sudo timedatectl set-local-rtc 1
 # 部署rancher server
 export RANCHER_CONTAINER_TAG=v2.10.3
 export PASSWORD=cube-studio
