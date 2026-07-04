@@ -1,4 +1,6 @@
-# Cube Studio
+# CubeStudio
+
+> CubeStudio is independently developed by the CubeStudio startup team. It is built on top of [cube-studio](https://github.com/tencentmusic/cube-studio) (MIT-licensed; originally open-sourced by the author while at Tencent Music) and is **not** an enterprise edition produced by Tencent Music. Original open-source repository (MIT, original author): https://github.com/tencentmusic/cube-studio
 
 English | [简体中文](README_CN.md)
 
@@ -6,7 +8,7 @@ English | [简体中文](README_CN.md)
 
 <img width="1442" alt="image" src="https://user-images.githubusercontent.com/20157705/182568155-f0d06046-8bfc-49dd-b283-720db0e556bc.png">
 
-cube-studio is a one-stop cloud-native machine learning platform open sourced by Tencent Music, Currently mainly includes the following functions
+CubeStudio is a one-stop cloud-native machine learning platform, independently developed by the CubeStudio startup team. It is built on top of MIT-licensed cube-studio (originally open-sourced by the author while at Tencent Music) and is not an enterprise edition produced by Tencent Music. It currently mainly includes the following functions
  - 1、data management: feature store, online and offline features; dataset management, structure data and media data, data label platform
  - 2、develop: notebook(vscode/jupyter); docker image management; image build online
  - 3、train: pipeline drag and drop online; open template market; distributed computing/training tasks, example tf/pytorch/mxnet/spark/ray/horovod/kaldi/volcano; batch priority scheduling; resource monitoring/alarm/balancing; cron scheduling

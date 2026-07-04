@@ -72,7 +72,7 @@ cp -r offline /data/k8s/kubeflow/pipeline/workspace/admin/
 
 使用rancher相同方法可在内网部署k8s
 
-## 转移cube-studio基础镜像
+## 转移CubeStudio基础镜像
 
 修改all_image.py中内网仓库地址，运行导出推送和拉取脚本.
 
@@ -80,7 +80,7 @@ cp -r offline /data/k8s/kubeflow/pipeline/workspace/admin/
 
 不能联网机器上运行，每台机器运行 pull_harbor.sh 从内网仓库中拉取镜像 或 image_load.sh 从压缩文件中导入镜像
 
-## 内网部署cube-studio
+## 内网部署CubeStudio
 
 1、修改init_node.sh中pull_images.sh 修改为pull_harbor.sh，表示从内网拉取镜像，每台机器都要执行。
 
@@ -91,13 +91,13 @@ ARCH=$(uname -m)
 wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
 
 ```
-3、修改cube-studio镜像为内网镜像。
+3、修改CubeStudio镜像为内网镜像。
 ```bash
 vi install/kubernetes/cube/overlays/kustomization.yml
 修改最底部的newName和newTag
 ```
 
-4、修改cube-studio的配置文件
+4、修改CubeStudio的配置文件
 
 ```bash
 vi install/kubernetes/cube/overlays/config/config.py
@@ -110,7 +110,7 @@ SERVICE_EXTERNAL_IP 添加内网ip
 DEFAULT_GPU_RESOURCE_NAME 修改为默认的k8s资源名
 ```
 
-6、复制k8s的config文件，部署cube-studio，部署方式通外网，参考：部署/单机部署
+6、复制k8s的config文件，部署CubeStudio，部署方式通外网，参考：部署/单机部署
 
 ## web界面的部分内网修正
 

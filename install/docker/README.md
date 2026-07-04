@@ -97,7 +97,7 @@ docker-compose -f docker-compose.yml  up
 
 2）本地连接k8s开发集群
 
-需要先在k8s开发集群部署一遍cube-studio，然后才能在本地连接并调度
+需要先在k8s开发集群部署一遍CubeStudio，然后才能在本地连接并调度
 
 ![k8s配置](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/image/localk8s.jpg)
 

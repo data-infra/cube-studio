@@ -13,11 +13,11 @@
 
 | 命名空间           | 组件名                               | 组件说明                              |
 |:---------------|:----------------------------------|:----------------------------------|
-| infra          | kubeflow-dashboard-frontend       | cube-studio平台的web前端               |
-| infra          | kubeflow-dashboard                | cube-studio平台的web后端               |
-| infra          | kubeflow-dashboard-schedule       | 用来调度cube-studio系统自带的调度任务，比如定时清理   |
-| infra          | kubeflow-dashboard-worker         | 用来执行cube-studio系统自带的调度任务，比如定时清理   |
-| infra          | 	kubeflow-watch                   | 用来监控cube-studio平台中的任务，发起通知和信息更新   |
+| infra          | kubeflow-dashboard-frontend       | CubeStudio平台的web前端               |
+| infra          | kubeflow-dashboard                | CubeStudio平台的web后端               |
+| infra          | kubeflow-dashboard-schedule       | 用来调度CubeStudio系统自带的调度任务，比如定时清理   |
+| infra          | kubeflow-dashboard-worker         | 用来执行CubeStudio系统自带的调度任务，比如定时清理   |
+| infra          | 	kubeflow-watch                   | 用来监控CubeStudio平台中的任务，发起通知和信息更新   |
 | infra          | 	mysql                            | 平台元数据的存储                          |
 | infra          | 	redis                            | 平台缓存，和异步任务对接                      |
 | kube-system    | kubernetes-dashboard-cluster      | k8s中pod的管理界面                      |
@@ -48,7 +48,7 @@
  - docker >= 1.19.x docker 存储目录>1T
  - kubernetes = 1.25~1.31，建议1.28
  - nfs/ceph等共享文件系统： 挂载到每台机器的 /data/k8s/，共享文件系统按需扩容，起步建议SSD 5T （单机可忽略）
- - 数据库接口地址： mysql，没有可忽略使用cube-studio自带的
+ - 数据库接口地址： mysql，没有可忽略使用CubeStudio自带的
  - 控制端机器：cpu>=16 mem>=32G，至少1台。生产配置：32核64G*2
  - 任务端cpu/gpu机器：
    - 根据需要自行配置,gpu安装对应厂商的要求安装好机器驱动，机器数量按需扩容

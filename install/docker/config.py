@@ -63,7 +63,7 @@ SHOW_STACKTRACE = True
 # GLOBALS FOR APP Builder
 # ------------------------------
 # 应用名
-APP_NAME = "Cube-Studio"
+APP_NAME = "CubeStudio"
 
 # 图标
 APP_ICON = "/static/assets/images/myapp-logo.png"
@@ -738,7 +738,7 @@ STORE_CONFIG = {
 
 K8S_DASHBOARD_CLUSTER = '/k8s/dashboard/cluster/'  #
 K8S_DASHBOARD_USER = '/k8s/dashboard/user1/'  #
-BLACK_PORT = [10250]   # 黑名单端口，cube-studio将不会占用这些端口，10250是kubelet的端口。
+BLACK_PORT = [10250]   # 黑名单端口，CubeStudio将不会占用这些端口，10250是kubelet的端口。
 
 K8S_NETWORK_MODE = 'iptables'   # iptables ipvs
 NOTEBOOK_EXCLUSIVE = False   # notebook 启动是否独占资源

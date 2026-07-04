@@ -12,7 +12,7 @@ docker build -t  $hubhost/notebook:jupyter-ubuntu-deeplearning -f Dockerfile .
 docker push $hubhost/notebook:jupyter-ubuntu-deeplearning
 ```
 
-### 1.3 上线自己的notebook镜像到cube-studio
+### 1.3 上线自己的notebook镜像到CubeStudio
 
 config.py中 NOTEBOOK_IMAGES 变量为notebook可选镜像，更新此变量即可。
 

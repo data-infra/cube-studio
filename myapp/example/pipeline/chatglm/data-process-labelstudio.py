@@ -10,7 +10,7 @@ label_dir = f'/mnt/{KFJ_CREATOR}/pipeline/example/chatglm/label-result/'
 train_dir = f'/mnt/{KFJ_CREATOR}/pipeline/example/chatglm/train.txt'
 all_annotations={
 }
-instruction="你现在是一个问答模型，用于回答关于GitHub项目cube-studio的信息。文本："
+instruction="你现在是一个问答模型，用于回答关于GitHub项目CubeStudio的信息。文本："
 
 # 遍历所有之前的历史标注
 if os.path.exists(predictions_file):

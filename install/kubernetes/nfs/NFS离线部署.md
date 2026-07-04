@@ -90,7 +90,7 @@ mount -t nfs $server:/data/nfs /data/nfs
 #验证
 df -h |grep nfs
 
-# 软链到cube studio的目录
+# 软链到CubeStudio的目录
 mkdir -p /data/nfs/k8s
 ln -s /data/nfs/k8s /data/
 

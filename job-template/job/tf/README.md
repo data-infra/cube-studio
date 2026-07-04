@@ -35,7 +35,7 @@
 
 ## 2. 在任务模板中注册配置
 
-在 Cube Studio 中：**训练 → 任务模板 → 添加**，按下面方式配置即可将本模板注册到平台。
+在 CubeStudio 中：**训练 → 任务模板 → 添加**，按下面方式配置即可将本模板注册到平台。
 
 ### 2.1 基本信息
 
@@ -153,7 +153,7 @@ TASK_RESOURCE_GPU=0
 ### 3.2 镜像要求
 
 - **`--image`** 中的镜像需包含 TensorFlow 及你训练脚本所需的依赖。
-- 可使用 [Cube Studio 基础镜像](https://github.com/data-infra/cube-studio/tree/main/images) 或官方 TensorFlow 镜像，或基于其制作自定义镜像。
+- 可使用 [CubeStudio 基础镜像](https://github.com/data-infra/cube-studio/tree/main/images) 或官方 TensorFlow 镜像，或基于其制作自定义镜像。
 
 ### 3.3 使用步骤
 

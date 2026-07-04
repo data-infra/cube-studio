@@ -112,7 +112,7 @@ kk create cluster -f config-cluster.yaml
 会自己安装 containerd，kubectl，kubeadm kubecni，helm 等
 ```
 
-# 部署cube-studio(主节点)
+# 部署CubeStudio(主节点)
 
 2、如果使用containerd运行时，替换脚本中的docker命令
 ```bash

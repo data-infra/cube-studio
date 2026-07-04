@@ -1,6 +1,6 @@
 # 服务部署任务模板
 
-服务部署任务模板用于在 Cube Studio 平台 pipeline中**一键创建或更新推理服务**，并自动发布上线。任务通过调用平台推理服务 API，根据「模型名 + 模型版本」判断是新建服务还是更新已有服务，完成后会触发生产环境部署。
+服务部署任务模板用于在 CubeStudio 平台 pipeline中**一键创建或更新推理服务**，并自动发布上线。任务通过调用平台推理服务 API，根据「模型名 + 模型版本」判断是新建服务还是更新已有服务，完成后会触发生产环境部署。
 
 ## 前置条件
 
@@ -71,7 +71,7 @@
 | 变量 | 说明 |
 |------|------|
 | `KFJ_CREATOR` | 请求使用的创建者标识，默认 `admin`，用于 API 鉴权。 |
-| `HOST` 或 `KFJ_MODEL_REPO_API_URL` | Cube Studio Dashboard 的 API 地址（不要末尾斜杠），例如 `http://kubeflow-dashboard.infra`。 |
+| `HOST` 或 `KFJ_MODEL_REPO_API_URL` | CubeStudio Dashboard 的 API 地址（不要末尾斜杠），例如 `http://kubeflow-dashboard.infra`。 |
 
 **让任务自动使用当前访问地址**：若希望运行该模板时自动发布到当前浏览器访问的地址，可在模板的环境变量中配置 `HOST=http://xx.xx.xx.xx`，这样任务会使用该地址调用平台 API。
 

@@ -39,7 +39,7 @@ docker push $hubhost/notebook:jupyter-ubuntu-bigdata
 ```
 注意：镜像名需要包含bigdata，这样才能会被识别为bigdata组件
 
-### 2.4 上线自己的notebook镜像到cube-studio
+### 2.4 上线自己的notebook镜像到CubeStudio
 
 config.py中 NOTEBOOK_IMAGES 变量为notebook可选镜像，更新此变量即可。
 

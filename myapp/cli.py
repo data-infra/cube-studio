@@ -697,7 +697,7 @@ def init():
                             chat.icon = data.get('icon', '')
                             chat.session_num = int(data.get('session_num', '0'))
                             chat.chat_type = data.get('chat_type', 'text')
-                            chat.hello = data.get('hello', '这里是cube-studio开源社区，请问有什么可以帮你的么？')
+                            chat.hello = data.get('hello', '这里是CubeStudio开源社区，请问有什么可以帮你的么？')
                             chat.tips = data.get('tips', '')
                             chat.prompt = data.get('prompt', '')
                             chat.knowledge = knowledge
