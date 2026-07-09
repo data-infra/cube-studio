@@ -1,6 +1,6 @@
 # CubeStudio
 
-> CubeStudio 由 CubeStudio 创业团队独立开发，是在 MIT 协议开源的 [cube-studio](https://github.com/tencentmusic/cube-studio)（原作者曾在腾讯音乐开源）基础上构建的产品，并非腾讯音乐出品的企业版。原始开源仓库（MIT，原作者）：https://github.com/tencentmusic/cube-studio 。
+> CubeStudio 由 CubeStudio 创业团队独立开发，是在 MIT 协议开源的 [cube-studio](https://github.com/tencentmusic/cube-studio) 基础上构建的产品，并非腾讯音乐出品的商业版。原始开源仓库（MIT，原作者）：https://github.com/tencentmusic/cube-studio 。
 
 ### 整体架构
 

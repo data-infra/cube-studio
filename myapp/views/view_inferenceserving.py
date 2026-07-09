@@ -94,18 +94,18 @@ INFERNENCE_HEALTH={
 
 sidecars={
     "istio":"流量监控",
-    "rate_limit":'限速(企业版)',
-    "jwt": 'token认证(企业版)',
-    'monitor':'token统计(企业版)',
-    'whitelist':'黑白名单(企业版)',
-    'quotalimit':'额度限制(企业版)',
-    'security':'内容安全(企业版)',
-    'search':'联网查询(企业版)',
-    "retry":'失败重试(企业版)',
-    'desensitization':'数据脱敏(企业版)',
-    'prompt':'提示词模板(企业版)',
-    'value_map':'参数值映射(企业版)',
-    "value_fixed":'参数值固定(企业版)'
+    "rate_limit":'限速(商业版)',
+    "jwt": 'token认证(商业版)',
+    'monitor':'token统计(商业版)',
+    'whitelist':'黑白名单(商业版)',
+    'quotalimit':'额度限制(商业版)',
+    'security':'内容安全(商业版)',
+    'search':'联网查询(商业版)',
+    "retry":'失败重试(商业版)',
+    'desensitization':'数据脱敏(商业版)',
+    'prompt':'提示词模板(商业版)',
+    'value_map':'参数值映射(商业版)',
+    "value_fixed":'参数值固定(商业版)'
 }
 
 class InferenceService_Filter(MyappFilter):
@@ -172,7 +172,7 @@ class InferenceService_ModelView_base():
 
     base_filters = [["id", InferenceService_Filter, lambda: []]]
 
-    service_type_choices = ['serving', 'tfserving', 'torch-server', 'triton-server','ml-server(企业版)',  'vllm(企业版)', 'vllm-distributed(企业版)', 'ollama(企业版)']
+    service_type_choices = ['serving', 'tfserving', 'torch-server', 'triton-server','ml-server(商业版)',  'vllm(商业版)', 'vllm-distributed(商业版)', 'ollama(商业版)']
     spec_label_columns = {
         "inference_host_url": _("域名:需要泛域名支持，调试时域名(debug.xx.xx.xx.xx)")
     }
