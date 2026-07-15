@@ -12,9 +12,6 @@ ARCH=$(uname -m)
 
 wget -O kubectl https://cube-studio.oss-cn-hangzhou.aliyuncs.com/install/kubectl-amd64-1.28 && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
 
-version=`kubectl version --short | awk '/Server Version:/ {print $3}'`
-echo "kubernets versison" $version
-
 node=`kubectl  get node -o wide |grep $1 |awk '{print $1}'| head -n 1`
 
 kubectl label node $node train=true cpu=true notebook=true service=true org=public istio=true kubeflow=true kubeflow-dashboard=true mysql=true redis=true monitoring=true logging=true --overwrite
