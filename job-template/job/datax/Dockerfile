@@ -36,7 +36,7 @@ RUN apt install -y openjdk-8-jdk maven
 ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-${TARGETARCH}
 
 # 安装datax
-RUN wget https://datax-opensource.oss-cn-hangzhou.aliyuncs.com/202308/datax.tar.gz && tar -zxvf datax.tar.gz -C /usr/local/ && rm -rf datax.tar.gz
+RUN wget https://datax-opensource.oss-cn-hangzhou.aliyuncs.com/202309/datax.tar.gz && tar -zxvf datax.tar.gz -C /usr/local/ && rm -rf datax.tar.gz
 
 # 下载一些修复包，修复hive
 # RUN wget -P /usr/local/datax/lib/ https://repo1.maven.org/maven2/com/alibaba/fastjson2/fastjson2/2.0.45/fastjson2-2.0.45.jar && rm /usr/local/datax/lib/fastjson2-2.0.23.jar

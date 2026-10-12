@@ -87,7 +87,7 @@ def run_shell(shell):
     # 实时输出
     while True:
         line = cmd.stdout.readline()
-        status = subprocess.Popen.poll(cmd)
+        status = cmd.poll()
         if status:
             print(status,line,end='', flush=True)
         else:
