@@ -1,4 +1,4 @@
-# docker build -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2026.06.01 -f install/docker/Dockerfile .
+# docker build -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2026.09.01 -f install/docker/Dockerfile .
 
 FROM ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:base-python3.9-20260501
 
