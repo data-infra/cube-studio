@@ -78,6 +78,10 @@ conda install --file requirements.txt
 
 docker-compose.yaml文件在install/docker目录下，这里提供了mac和linux版本的docker-compose.yaml。
 
+本地开发的配置文件为`myapp/config.py`（平台配置）和`myapp/project.py`（消息推送、登录等可定制逻辑）。docker-compose已经把整个`myapp`目录挂载进容器的`/home/myapp/myapp/`，所以直接在本机ide中修改这两个文件即可生效，不需要单独挂载。
+
+注意：线上k8s部署使用的是`install/kubernetes/cube/overlays/config/`下的config.py和project.py（通过kubeflow-dashboard-config这个configmap挂载覆盖容器内的同名文件），本地调试的配置修改不会影响线上，需要线上生效时记得同步修改。
+
 1) debug backend
 ```
 STAGE: 'dev'
@@ -103,7 +107,7 @@ docker-compose -f docker-compose.yml  up
 
 3) 修改minio地址
 
-将远端k8s上的kubeflow命名空间下的minio服务改为nodeport类型，然后修改install/docker/config.py中的MINIO_HOST为minio服务的ip:nodeport
+将远端k8s上的kubeflow命名空间下的minio服务改为nodeport类型，然后修改myapp/config.py中的MINIO_HOST为minio服务的ip:nodeport
 
 #### 前端页面本机开发和构建
 

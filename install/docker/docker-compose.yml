@@ -64,8 +64,6 @@ services:
       - ../../job-template/:/cube-studio/job-template/
       - ./file:/data/k8s/kubeflow
       - ./entrypoint.sh:/entrypoint.sh
-      - ./config.py:/home/myapp/myapp/config.py
-      - ./project.py:/home/myapp/myapp/project.py
       - ./kubeconfig:/home/myapp/kubeconfig
 
 #
@@ -86,7 +84,6 @@ services:
 #      - ../../myapp/:/home/myapp/myapp/
 #      - ./file:/pvc
 #      - ./entrypoint.sh:/entrypoint.sh
-#      - ./config.py:/home/myapp/myapp/config.py
 #      - ./kubeconfig:/home/myapp/kubeconfig
 ##
 #
@@ -107,7 +104,6 @@ services:
 #      - ../../myapp/:/home/myapp/myapp/
 #      - ./file:/data/k8s/kubeflow
 #      - ./entrypoint.sh:/entrypoint.sh
-#      - ./config.py:/home/myapp/myapp/config.py
 #      - ./kubeconfig:/home/myapp/kubeconfig
 
 #  watch:
@@ -125,5 +121,4 @@ services:
 #      - ../../myapp/:/home/myapp/myapp/
 #      - ./file:/data/k8s/kubeflow
 #      - ./entrypoint.sh:/entrypoint.sh
-#      - ./config.py:/home/myapp/myapp/config.py
 #      - ./kubeconfig:/home/myapp/kubeconfig

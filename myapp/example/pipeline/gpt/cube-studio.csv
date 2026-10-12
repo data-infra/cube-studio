@@ -102,7 +102,7 @@ rancher/自定义集群导入/CubeStudio启动都完成，没有报错，但访�
 部署最后的cube组件时，kubernetes-config配置是否必须？报错找不到kubernetes-config,start脚本最开始会创建kubeconfig目录，会将改目录的内容创建为configmap，虽然configmap的内容为空，但是kubeconfig目录是必须存在的
 "metadata-grpc-deployment报错：Non-OK-status: status status: Internal: mysql_real_connect failed: errno: 2005, error: Unknown MySQL server host 'mysql-service.infra' (-3)MetadataStore cannot be created with the given connection config.",新版本已不再使用metadata-grpc服务，建议升级到新版本
 如何配置内网运行时镜像拉取不使用always，而是使用IfNotPresent,平台通过配置文件中的IMAGE_PULL_POLICY参数控制调度任务容器时是否拉取，可以修改配置文件的这个参数，可以参考github wiki中的“自定义配置文件”
-配置文件在哪里，如何修改，并在生产上生效？,配置文件在install/docker/config.py（本地开发）和install/kubernetes/cube/overlays/config/config.py（线上配置），线上也可以直接修改infra命名空间下的kubeflow-dashboard-config这个configmap
+配置文件在哪里，如何修改，并在生产上生效？,配置文件在myapp/config.py（本地开发）和install/kubernetes/cube/overlays/config/config.py（线上配置），线上也可以直接修改infra命名空间下的kubeflow-dashboard-config这个configmap
 安装cube后访问web端返回301？,301为重定向，一般是因为用户没有登录，所以重定向到登录地址上
 拉去rancher依赖镜像，很多都失败了，需要更换源吗？,不需要，rancher镜像是dockerhub官网的镜像，拉取失败主要是因为docker hub官网做了限频，可以先本地login登录，再多试几次
 镜像太大传不上docker hub怎么办？,可以自己部署内网harbor，或者尝试将镜像的每一层减小一些

@@ -40,6 +40,5 @@ compile.py
 /myapp/static/appbuilder/visonPlus/
 /myapp/static/appbuilder/frontend/
 /.superpowers/
-myapp/config.py
 **/LC_MESSAGES/*.mo
 /images/ai-doc/
