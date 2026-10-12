@@ -281,9 +281,9 @@ class AuditMixinNullable(AuditMixin):
     Allows creating objects programmatically outside of CRUD
     """
 
-    created_on = sa.Column(sa.DateTime, default=datetime.datetime.now, nullable=True)
+    created_on = sa.Column(sa.DateTime, default=datetime.datetime.now, nullable=True, comment='创建时间')
     changed_on = sa.Column(
-        sa.DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, nullable=True
+        sa.DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, nullable=True, comment='更新时间'
     )
 
     @declared_attr
@@ -312,6 +312,7 @@ class AuditMixinNullable(AuditMixin):
             sa.ForeignKey("ab_user.id"),
             default=self.get_user_id,
             nullable=True,
+            comment='创建人',
         )
 
     @declared_attr
@@ -322,6 +323,7 @@ class AuditMixinNullable(AuditMixin):
             default=self.get_user_id,
             onupdate=self.get_user_id,
             nullable=True,
+            comment='更新人',
         )
 
 

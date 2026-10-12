@@ -28,7 +28,7 @@ class Chat(Model,MyappModelBase):
     tips = Column(String(4000), nullable=True, default='',comment='提示词数组')
     knowledge = Column(Text, nullable=True, default='',comment='加载问题前面的先验知识')   #
     prompt = Column(Text, nullable=True, default='{{prompt}}',comment='提示词模板')  #
-    service_type = Column(String(200), nullable=True, default='',comment=' 推理服务的类型   [chatgpt,gptglm]')  #
+    service_type = Column(String(200), nullable=True, default='',comment=' 推理服务的类型   [chat,agent]')  #
     service_config = Column(Text, nullable=True, default='{}',comment='推理服务的配置，url  header  json等')  #
     owner = Column(String(2000), nullable=True, default='*',comment='可访问用户，* 表示所有用户')  #
 

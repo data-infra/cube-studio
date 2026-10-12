@@ -19,10 +19,6 @@ from myapp.security import MyUser
 
 config = app.config
 custom_password_store = config.get("SQLALCHEMY_CUSTOM_PASSWORD_STORE")
-stats_logger = config.get("STATS_LOGGER")
-
-PASSWORD_MASK = "X" * 10
-
 
 class Log(Model,MyappModelBase):
 

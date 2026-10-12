@@ -536,6 +536,42 @@ class Myapp(BaseMyappView):
                         ]
                     },
                     {
+                        "name": 'token_rental',
+                        "title": __('TOKEN租赁'),
+                        "isMenu": True,
+                        "isExpand": True,
+                        "children": [
+                            {
+                                # 模型广场：普通用户浏览已上架模型、看价格、买 Key
+                                # 注意 name 用 token_model_market，避免与 AIHub 的 model_market 菜单重名
+                                "name": 'token_model_market',
+                                "icon": '<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="200" height="200"><path d="M512 96 128 288v448l384 192 384-192V288L512 96z m0 96 272 136-272 136-272-136 272-136zM192 400l288 144v302L192 702V400z m352 446V544l288-144v302L544 846z"></path></svg>',
+                                "title": __('模型广场'),
+                                "menu_type": "innerRoute",
+                                "url": "/modelMarket",
+                                "disable": True
+                            },
+                            {
+                                # 我的 Key：创建/吊销 sk-key，查看统一调用地址与用量
+                                "name": 'my_token_key',
+                                "icon": '<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="200" height="200"><path d="M672 128a224 224 0 0 0-217.6 277.6L128 732v164h164l48-48v-72h72l48-48v-72h72l86.4-86.4A224 224 0 1 0 672 128z m64 224a64 64 0 1 1 0-128 64 64 0 0 1 0 128z"></path></svg>',
+                                "title": __('我的Key'),
+                                "menu_type": "innerRoute",
+                                "url": "/myTokenKey",
+                                "disable": True
+                            },
+                            # 模型管理仅为管理员生成，普通用户不显示此子菜单。
+                            *([{
+                                "name": 'token_model_manage',
+                                "icon": '<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="200" height="200"><path d="M512 128 128 320v384l384 192 384-192V320L512 128z m0 90.5L780 352 512 485.5 244 352 512 218.5zM192 404l288 144v300L192 704V404z m352 444V548l288-144v300L544 848z"></path></svg>',
+                                "title": __('模型管理'),
+                                "menu_type": "innerRoute",
+                                "url": "/tokenModelManage",
+                                "disable": True
+                            }] if is_admin else [])
+                        ]
+                    },
+                    {
                         "name": 'cost',
                         "title": __('费用'),
                         "isMenu": True,

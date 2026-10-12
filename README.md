@@ -77,7 +77,7 @@ https://github.com/data-infra/cube-studio/wiki
 | 大模型 | 支持大模型推理aihub形式 | <li><u>(需购买aihub)：支持openjourney/gpt3/yuan/sd-v2/sd-v1.5/Stable Cascade/Stable Diffusion XL/部署</u></li> |
 | 大模型 | 支持大模型推理 | <li><u>支持vllm大模型推理，支持推理加速+流式openai接口</u></li><br><li><u>支持分布式多机多卡vllm大模型推理</u></li><br><li><u>deepseek，qwen2，chatglm4等模型推理示例</u></li><br><li><u>支持llm大模型服务对话测试</u></li><br><li><u>支持mindie昇腾大模型推理服务 支持 910b和310p算力</u></li><br><li><u>支持mindie分布式推理</u></li><br><li><u>支持昇腾/海光/沐曦/寒武纪/摩尔线程/昆仑芯适配的大模型推理</u></li><br><li><u>支持大模型网关，支持统一入口，秘钥设定，qps/tps限速，黑白名单，token限额，有效期设定，多类型秘钥认证，重试，提示词模板，参数值映射，参数值固化，</u></li><br><li><u>流量监控：qps、失败率/tps/输入token量/输出token量/e2e/ttft/tpos指标监控</u></li> |
 | 大模型 | 支持大模型微调 | <li><u>支持deepseek/chatglm4/qwen2/llama3 lora微调, mindformers微调模型，支持llama-factory 大模型sft/奖励模型/强化学习，支持npu适配的llama-factory，支持dcu适配llama-factory，支持沐曦适配llama-factory</u></li> |
-| 大模型 | 支持大模型量化评估剪枝 | <li><u>支持大模型量化功能，支持llamafactory大模型评估，支持opencompass大模型评估，支持大模型剪枝</u></li> |
+| 大模型 | 支持大模型量化评估剪枝 | <li><u>支持大模型量化功能，支持opencompass大模型评估，支持大模型剪枝</u></li> |
 | 大模型 | 智能对话 | <li><u>提供支持多场景对话，支持责任人权限，提示词模板构建，推理接口配置，llm问答，tips等设置</u></li> |
 | 大模型 | 智能对话 | <li><u>支持清空，修改问题，删除问答对，答案重试，反馈，上传图片多模态问答，切换模型，修改系统提示词，用户提示词模板，修改对话超参数、多窗口对话等，支持问答复制，代码答案下载</u></li><br><li><u>支持展示检索知识库记录</u></li><br><li><u>支持安全问答检测</u></li> |
 | 大模型 | 智能对话 | <li><u>支持aihub应用接口模式</u></li> |
@@ -217,13 +217,13 @@ cube-studio 是开源的云原生一站式机器学习 / 深度学习 / 大模�
 
 cubestudio 支持多集群调度，可同时管控多个训练或推理集群。单集群内既能隔离一个项目组的在线开发、训练、推理，也能隔离同一 k8s 集群下多个项目组的算力；不同项目组算力间具备动态均衡能力，可在公共算力池与私有化算力池间共享，做到成本最低化。
 
-![输入图片说明](https://foruda.gitee.com/images/1700638883899604064/594984a3_13742231.png "屏幕截图")
+![输入图片说明](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/72ce5caad1d3f1cae20f3278acc38b03.png)
 
 ### 分布式存储
 
 cubestudio 自动为用户挂载个人目录，同一用户在平台任意位置启动的容器，其个人子目录均为 /mnt/$username；可将 pvc/hostpath/memory/configmap 挂载为容器目录，并在项目组中配置默认挂载，实现组内共享同一目录等功能。
 
-![输入图片说明](https://foruda.gitee.com/images/1700638909994130903/21509b52_13742231.png "屏幕截图")
+![输入图片说明](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/0f2a33ae3153bf888a7d0573c408c4c6.png)
 
 ## 三、在线开发
 
@@ -294,7 +294,7 @@ cubestudio 自动为用户挂载个人目录，同一用户在平台任意位置
 | **模型处理与服务化** 🟢 | 模型注册、离线处理、部署。模型评估、模型格式转换。 |
 | **分布式多机多卡训练** | MPI / Colossal-AI / DeepSpeed / Horovod / Megatron / MindFormer / MXNet / PaddleJob / MindSpore 分布式训练加速框架。 |
 | **大模型微调** | DeepSeek/ChatGLM/Qwen/LLaMA LoRA 微调、MindFormers 微调；LLaMA-Factory 大模型 SFT/奖励模型/强化学习；NPU/DCU/沐曦适配的 LLaMA-Factory。 |
-| **量化 / 评估 / 剪枝** | 大模型量化；LLaMA-Factory、OpenCompass 大模型评估；大模型剪枝。 |
+| **量化 / 评估 / 剪枝** | 大模型量化；OpenCompass 大模型评估；大模型剪枝。 |
 
 - **场景覆盖**：营销场景、金融风控、用户推荐、广告场景、搜索场景、目标识别、视频跟踪、OCR、命名实体识别、翻译、语音识别、语音合成、多模态、生成式 LLM、对话式 LLM、文生图、RAG、Embedding 等，支持自定义算子扩展。
 
@@ -403,7 +403,7 @@ parser.add_argument('--batch_size', type=int)
 ![alt text](https://cube-studio.oss-cn-hangzhou.aliyuncs.com/docs/csdn_image/ae4620efe7600078c436166131a9dd1b.png)
 
 - 支持 DeepSeek / ChatGLM / Qwen 等 full/LoRA 微调，支持 LLaMA-Factory 100+ LLMs。
-- 支持大模型量化，大模型 SFT / 奖励模型 / 强化学习训练、大模型评估（LLaMA-Factory、OpenCompass）、大模型剪枝。
+- 支持大模型量化，大模型 SFT / 奖励模型 / 强化学习训练、大模型评估（OpenCompass）、大模型剪枝。
 - 支持 RDMA，支持 IB/RoCE 底层，支持国产 GPU 卡，不同 GPU 厂商 / 卡型选择。
 
 ### 推理部署

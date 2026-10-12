@@ -42,6 +42,7 @@ class MyappModelBase():
         "resource_memory": _("内存申请"),
         "resource_cpu": _("cpu申请"),
         "resource_gpu": _("gpu申请"),
+        "resource_rdma": _("rdma申请"),
         "resource": _("资源"),
         "timeout": _("超时中断"),
         "retry": _("重试次数"),
