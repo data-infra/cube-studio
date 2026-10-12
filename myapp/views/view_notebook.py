@@ -631,7 +631,7 @@ class Notebook_ModelView_Base():
 
 
         elif notebook.ide_type=='theia':
-            command = ["bash",'-c','%s node /home/theia/src-gen/backend/main.js /home/project --hostname=0.0.0.0 --port=%s'%(pre_command,port)]
+            command = ["bash",'-c','%s node /home/theia/applications/browser/src-gen/backend/main.js /home/project --hostname=0.0.0.0 --port=%s'%(pre_command,port)]
             workingDir = '/home/theia'
 
 
