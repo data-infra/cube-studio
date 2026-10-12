@@ -554,6 +554,46 @@
       }
     }
   },
+  "datax-import": {
+    "project_name": "数据导入导出",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/datax",
+    "image_describe": "datax mysql postgresql 数据导入",
+    "job_template_name": "datax-import",
+    "job_template_describe": "datax mysql postgresql 数据导入(商业版)",
+    "job_template_command": "python start.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 1,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/datax",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "label-studio": {
+    "project_name": "数据导入导出",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/label-studio-import",
+    "image_describe": "标注数据导入",
+    "job_template_name": "label-studio",
+    "job_template_describe": "标注数据导入(商业版)",
+    "job_template_command": "python3 launcher.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 4,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/label-studio-import",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
   "dataset": {
     "project_name": "数据导入导出",
     "image_name": "ccr.ccs.tencentyun.com/cube-studio/dataset:20250301",
@@ -926,6 +966,26 @@
           "regex": "^[0-9]*$"
         }
       }
+    }
+  },
+  "sklearn": {
+    "project_name": "机器学习框架",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/sklearn",
+    "image_describe": "sklearn训练模型",
+    "job_template_name": "sklearn",
+    "job_template_describe": "sklearn框架模型训练(商业版)",
+    "job_template_command": "python3 launcher-sklearn.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 1,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/sklearn",
+      "enterprise": true
+    },
+    "job_template_args": {
     }
   },
   "ray-sklearn": {
@@ -1568,6 +1628,26 @@
     "job_template_args": {
     }
   },
+  "mindformers": {
+    "project_name": "深度学习",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/deep-learning-framework",
+    "image_describe": "mindformers分布式训练",
+    "job_template_name": "mindformers",
+    "job_template_describe": "mindformers 分布式训练(商业版)",
+    "job_template_command": "python3 launcher-mindformers.py",
+    "job_template_volume": "",
+    "job_template_account": "kubeflow-pipeline",
+    "job_template_env": "NO_RESOURCE_CHECK=true\nTASK_RESOURCE_CPU=2\nTASK_RESOURCE_MEMORY=4G\nTASK_RESOURCE_GPU=0\nTASK_RESOURCE_RDMA=0",
+    "job_template_expand": {
+      "index": 6,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/deep-learning-framework/README-mindformers.md",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
   "mxnet": {
     "project_name": "深度学习",
     "image_name": "python:3.9",
@@ -2194,6 +2274,46 @@
       }
     }
   },
+  "aihub-register": {
+    "project_name": "模型服务化",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/aihub",
+    "image_describe": "注册到aihub应用市场",
+    "job_template_name": "aihub-register",
+    "job_template_describe": "注册到aihub应用市场(商业版)",
+    "job_template_command": "python3 launcher.py",
+    "job_template_volume": "/data/k8s/kubeflow/global/cube-studio(hostpath):/data/k8s/kubeflow/global/cube-studio",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 4,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/aihub",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "aihub-inference": {
+    "project_name": "模型服务化",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/aihub",
+    "image_describe": "aihub模型调用数据处理",
+    "job_template_name": "aihub-inference",
+    "job_template_describe": "aihub模型调用数据处理(商业版)",
+    "job_template_command": "python3 client.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 5,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/aihub",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
   "media-download": {
     "project_name": "视频处理",
     "image_name": "ccr.ccs.tencentyun.com/cube-studio/video-audio:20250301",
@@ -2457,6 +2577,93 @@
       }
     }
   },
+  "yolo26": {
+    "project_name": "机器视觉",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/yolo26",
+    "image_describe": "yolo目标识别",
+    "job_template_name": "yolo26",
+    "job_template_describe": "yolo目标识别(商业版)",
+    "job_template_workdir": "/yolo26",
+    "job_template_command": "python train.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 4,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/yolo26",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "paddleocr": {
+    "project_name": "机器视觉",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/paddleocr-train",
+    "image_describe": "paddleocr-train",
+    "job_template_name": "paddleocr",
+    "job_template_describe": "paddleocr训练与评估(商业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python train.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 0,
+      "help_url": "https://github.com/data-infra/cube-studio/wiki",
+      "rec_job_template": "自定义镜像",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "vit": {
+    "project_name": "机器视觉",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/vit-train",
+    "image_describe": "vit-train",
+    "job_template_name": "vit",
+    "job_template_describe": "vit训练和评估(商业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python train.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 0,
+      "help_url": "https://github.com/data-infra/cube-studio/wiki",
+      "rec_job_template": "自定义镜像",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "swinb": {
+    "project_name": "机器视觉",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/swinb-train",
+    "image_describe": "swinb-train",
+    "job_template_name": "swinb",
+    "job_template_describe": "swinb训练和评估(商业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python train.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 0,
+      "help_url": "https://github.com/data-infra/cube-studio/wiki",
+      "rec_job_template": "自定义镜像",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
   "paddleocr-vl": {
     "project_name": "文本处理",
     "image_name": "python3.9",
@@ -2564,6 +2771,28 @@
     "job_template_args":{
     }
   },
+  "structbert": {
+    "project_name": "文本处理",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/structbert-train",
+    "image_describe": "structbert-train",
+    "job_template_name": "structbert",
+    "job_template_describe": "structbert训练和评估(商业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python train.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 0,
+      "help_url": "https://github.com/data-infra/cube-studio/wiki",
+      "rec_job_template": "自定义镜像",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
   "question-generation": {
     "project_name": "文本处理",
     "image_name": "python:3.9",
@@ -2623,6 +2852,50 @@
       "index": 7,
       "rec_job_template": "自定义镜像",
       "help_url": "/job-template/job/nlp-process"
+    },
+    "job_template_args": {
+    }
+  },
+  "markdown-to-qa": {
+    "project_name": "文本处理",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/nlp-process",
+    "image_describe": "markdown转问答对",
+    "job_template_name": "markdown-to-qa",
+    "job_template_describe": "markdown转问答对(商业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python markdown-to-data.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 2,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/nlp-process",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "expand-qa": {
+    "project_name": "文本处理",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/nlp-process",
+    "image_describe": "扩展问答对数据集",
+    "job_template_name": "expand-qa",
+    "job_template_describe": "扩展问答对数据集(商业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python expand-dataset.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 3,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/nlp-process",
+      "enterprise": true
     },
     "job_template_args": {
     }
@@ -2852,6 +3125,28 @@
     "job_template_args": {
     }
   },
+  "paddlespeech": {
+    "project_name": "音频处理",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/paddlespeech-train",
+    "image_describe": "paddlespeech-train",
+    "job_template_name": "paddlespeech",
+    "job_template_describe": "paddlespeech训练评估(商业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python train.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "",
+    "job_template_expand": {
+      "index": 0,
+      "help_url": "https://github.com/data-infra/cube-studio/wiki",
+      "rec_job_template": "自定义镜像",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
   "deepseek": {
     "project_name": "大模型",
     "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
@@ -3005,6 +3300,28 @@
     "job_template_args": {
     }
   },
+  "llm-evaluation": {
+    "project_name": "大模型",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/llm-evaluation",
+    "image_describe": "大模型自动评测和报告",
+    "job_template_name": "llm-evaluation",
+    "job_template_describe": "大模型自动评测和报告(商业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
+    "job_template_expand": {
+      "index": 9,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/llm-evaluation",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
   "llm-safety-eval": {
     "project_name": "大模型",
     "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
@@ -3100,6 +3417,28 @@
       "index": 12,
       "rec_job_template": "自定义镜像",
       "help_url": "/job-template/job/llm-prune",
+      "enterprise": true
+    },
+    "job_template_args": {
+    }
+  },
+  "llm-distillation": {
+    "project_name": "大模型",
+    "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
+    "gitpath": "/job-template/job/llm-distillation",
+    "image_describe": "大模型数据蒸馏、知识蒸馏与自动质量评测",
+    "job_template_name": "llm-distillation",
+    "job_template_describe": "数据蒸馏和知识蒸馏(商业版)",
+    "job_template_version": "Release",
+    "job_template_workdir": "/app",
+    "job_template_command": "python start.py",
+    "job_template_volume": "",
+    "job_template_account": "",
+    "job_template_env": "HF_ENDPOINT=https://hf-mirror.com",
+    "job_template_expand": {
+      "index": 14,
+      "rec_job_template": "自定义镜像",
+      "help_url": "/job-template/job/llm-distillation",
       "enterprise": true
     },
     "job_template_args": {
