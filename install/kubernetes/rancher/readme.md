@@ -143,6 +143,12 @@ sudo docker run -d --privileged --restart=unless-stopped -p 443:443 --name=myran
         sudo sysctl -w fs.inotify.max_user_watches=2099999999
         sudo sysctl -w fs.inotify.max_user_instances=2099999999
         sudo sysctl -w fs.inotify.max_queued_events=2099999999
+        
+        echo "fs.inotify.max_user_instances = 2099999999" | sudo tee -a /etc/sysctl.conf
+        echo "fs.inotify.max_user_instances = 2099999999" | sudo tee -a /etc/sysctl.conf
+        echo "fs.inotify.max_queued_events = 2099999999" | sudo tee -a /etc/sysctl.conf
+        
+        sysctl -p
   ```
 
 
