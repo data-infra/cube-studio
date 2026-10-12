@@ -1255,12 +1255,12 @@
     "job_template_args": {
     }
   },
-  "hyperparam-search-ray": {
+  "hyperparameter-search-ray": {
     "project_name": "机器学习算法",
     "image_name": "python:3.9",
     "gitpath": "/job-template/job/hyperparameter-search-ray",
     "image_describe": "超参搜索算法",
-    "job_template_name": "hyperparam-search",
+    "job_template_name": "hyperparameter-search-ray",
     "job_template_describe": "超参搜索算法(商业版)",
     "job_template_command": "python launcher.py",
     "job_template_volume": "",
@@ -1274,12 +1274,12 @@
     "job_template_args": {
     }
   },
-  "hyperparam-search-nni": {
+  "hyperparameter-search-nni": {
     "project_name": "机器学习算法",
     "image_name": "python:3.9",
     "gitpath": "/job-template/job/hyperparameter-search-nni",
     "image_describe": "nni超参搜索算法",
-    "job_template_name": "hyperparam-search-nni",
+    "job_template_name": "hyperparameter-search-nni",
     "job_template_describe": "超参搜索算法(商业版)",
     "job_template_workdir": "/app",
     "job_template_command": "python launcher.py",
@@ -1295,21 +1295,21 @@
     "job_template_args": {
     }
   },
-  "kmean": {
+  "kmeans": {
     "project_name": "机器学习算法",
     "image_name": "python:3.9",
-    "gitpath": "/job-template/job/kmean",
-    "image_describe": "kmean算法",
-    "job_template_name": "kmean",
-    "job_template_describe": "kmean算法(商业版)",
-    "job_template_command": "python3 launcher.py",
+    "gitpath": "/job-template/job/sklearn",
+    "image_describe": "kmeans算法",
+    "job_template_name": "kmeans",
+    "job_template_describe": "kmeans算法(商业版)",
+    "job_template_command": "python3 launcher-kmeans.py",
     "job_template_volume": "",
     "job_template_account": "",
     "job_template_env": "",
     "job_template_expand": {
       "index": 2,
       "rec_job_template": "自定义镜像",
-      "help_url": "/job-template/job/kmean"
+      "help_url": "/job-template/job/sklearn"
     },
     "job_template_args": {
     }
@@ -2772,7 +2772,7 @@
     }
   },
   "structbert": {
-    "project_name": "文本处理",
+    "project_name": "自然语言",
     "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
     "gitpath": "/job-template/job/structbert-train",
     "image_describe": "structbert-train",
@@ -3126,7 +3126,7 @@
     }
   },
   "paddlespeech": {
-    "project_name": "音频处理",
+    "project_name": "听觉",
     "image_name": "ccr.ccs.tencentyun.com/cube-studio/python:3.9",
     "gitpath": "/job-template/job/paddlespeech-train",
     "image_describe": "paddlespeech-train",

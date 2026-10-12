@@ -656,7 +656,7 @@ HELP_URL={}
 CUSTOMIZE_JOB='自定义镜像' if BABEL_DEFAULT_LOCALE=='zh' else 'customize'
 LOGICAL_JOB = 'logical'
 PYTHON_JOB = 'python'
-USER_CUSTOMIZE_IMAGES=[CUSTOMIZE_JOB,'hyperparam-search-nni']  # 使用用户自定义的镜像而不使用模板的镜像，工作目录和启动命令，需要这些模板有images，command，workdir参数
+USER_CUSTOMIZE_IMAGES=[CUSTOMIZE_JOB,'hyperparameter-search-nni']  # 使用用户自定义的镜像而不使用模板的镜像，工作目录和启动命令，需要这些模板有images，command，workdir参数
 
 # admin管理员用户
 ADMIN_USER='admin'
@@ -684,7 +684,7 @@ REPOSITORY_ORG='ccr.ccs.tencentyun.com/cube-studio/'
 PUSH_REPOSITORY_ORG='ccr.ccs.tencentyun.com/cube-studio/'
 
 # 用户常用默认镜像
-USER_IMAGE = 'ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9'
+USER_IMAGE = 'ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda12.6-cudnn9-python3.9'
 # notebook每个pod使用的用户账号
 JUPYTER_ACCOUNTS=''
 HUBSECRET_NAMESPACE=[PIPELINE_NAMESPACE,AUTOML_NAMESPACE,NOTEBOOK_NAMESPACE,SERVICE_NAMESPACE,AIHUB_NAMESPACE]

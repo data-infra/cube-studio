@@ -656,7 +656,7 @@ HELP_URL={}
 CUSTOMIZE_JOB='自定义镜像' if BABEL_DEFAULT_LOCALE=='zh' else 'customize'
 LOGICAL_JOB = 'logical'
 PYTHON_JOB = 'python'
-USER_CUSTOMIZE_IMAGES=[CUSTOMIZE_JOB,'hyperparam-search-nni']  # 使用用户自定义的镜像而不使用模板的镜像，工作目录和启动命令，需要这些模板有images，command，workdir参数
+USER_CUSTOMIZE_IMAGES=[CUSTOMIZE_JOB,'hyperparameter-search-nni']  # 使用用户自定义的镜像而不使用模板的镜像，工作目录和启动命令，需要这些模板有images，command，workdir参数
 
 # admin管理员用户
 ADMIN_USER='admin'
