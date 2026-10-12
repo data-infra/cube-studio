@@ -31,7 +31,7 @@
         "label": "下载处理标注数据",
         "volume_mount": "kubeflow-user-workspace(pvc):/mnt/",
         "args": {
-          "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9",
+          "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda12.6-cudnn9-python3.9",
           "workdir": "/mnt/{{creator}}/",
           "command": "rm -rf coco.zip && wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/pipeline/coco.zip --no-check-certificate && unzip -o coco.zip && cd  coco_data_sample && bash reset_file.sh"
         }
@@ -345,7 +345,7 @@
         "resource_cpu": "2",
         "resource_gpu": "0",
         "args": {
-          "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9",
+          "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda12.6-cudnn9-python3.9",
           "workdir": "/mnt/{{creator}}/pipeline/example/ml/",
           "command": "sh fix.sh"
         }
@@ -524,7 +524,7 @@
         "resource_cpu": "2",
         "resource_gpu": "0",
         "args": {
-          "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9",
+          "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda12.6-cudnn9-python3.9",
           "workdir": "/mnt/{{creator}}/pipeline/example/deepseek/",
           "command": "python data-process-identiy.py"
         }
@@ -679,7 +679,7 @@
                 "resource_cpu": "2",
                 "resource_gpu": "0",
                 "args": {
-                    "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9",
+                    "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda12.6-cudnn9-python3.9",
                     "workdir": "/mnt/{{creator}}/pipeline/example/yolo/electric-bicycle",
                     "command": "python yolo-data-process.py"
                 }
@@ -742,7 +742,7 @@
                 "resource_cpu": "2",
                 "resource_gpu": "0",
                 "args": {
-                    "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9",
+                    "images": "ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda12.6-cudnn9-python3.9",
                     "workdir": "/mnt/{{creator}}/pipeline/example/yolo/",
                     "command": "rm -rf electric-bicycle.zip && wget https://cube-studio.oss-cn-hangzhou.aliyuncs.com/pipeline/electric-bicycle/electric-bicycle.zip --no-check-certificate && unzip -n electric-bicycle.zip && cd electric-bicycle && sh reset.sh"
                 }

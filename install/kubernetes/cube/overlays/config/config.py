@@ -684,7 +684,7 @@ REPOSITORY_ORG='ccr.ccs.tencentyun.com/cube-studio/'
 PUSH_REPOSITORY_ORG='ccr.ccs.tencentyun.com/cube-studio/'
 
 # 用户常用默认镜像
-USER_IMAGE = 'ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9'
+USER_IMAGE = 'ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda12.6-cudnn9-python3.9'
 # notebook每个pod使用的用户账号
 JUPYTER_ACCOUNTS=''
 HUBSECRET_NAMESPACE=[PIPELINE_NAMESPACE,AUTOML_NAMESPACE,NOTEBOOK_NAMESPACE,SERVICE_NAMESPACE,AIHUB_NAMESPACE]

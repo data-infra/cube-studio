@@ -115,7 +115,7 @@ user_image = [
     'docker:23.0.4',
 
     # 用户可能使用的基础镜像
-    'ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9',
+    'ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda12.6-cudnn9-python3.9',
 
 ]
 

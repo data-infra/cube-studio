@@ -115,5 +115,5 @@ systemctl restart containerd
 ```bash
 docker run --name test --gpus all -it nvidia/cuda:11.8.0-devel-ubuntu22.04 bash
 
-docker run --name test --gpus all -it ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9  bash
+docker run --name test --gpus all -it ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda12.6-cudnn9-python3.9  bash
 ```
