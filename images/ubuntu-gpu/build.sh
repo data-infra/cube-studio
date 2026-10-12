@@ -1,28 +1,24 @@
+#!/usr/bin/env bash
 set -ex
-TARGETARCH=amd64
+
 hubhost=ccr.ccs.tencentyun.com/cube-studio
+# Ubuntu 22.04 支持现有 Python 3.9 PPA，官方 CUDA 12.6 镜像使用 cuDNN 9。
+base_image=nvidia/cuda:12.6.3-cudnn-devel-ubuntu22.04
+cuda_image=$hubhost/ubuntu-gpu:cuda12.6.3-cudnn9
+python_image=$hubhost/ubuntu-gpu:cuda12.6.3-cudnn9-python3.9
 
-base_image=nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
+# 使用当前构建器，环境需支持多架构输出及两种架构的执行（原生节点或模拟器）。
+# 先推送 CUDA 层的多架构标签，供下一步按目标架构拉取基础镜像。
+docker buildx build --platform linux/amd64,linux/arm64 \
+    --network=host --allow=network.host \
+    -t "$cuda_image" \
+    --build-arg FROM_IMAGES="$base_image" \
+    -f cuda/Dockerfile --push .
 
-docker build --network=host -t $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8-$TARGETARCH --build-arg FROM_IMAGES=$base_image -f cuda/Dockerfile .
-docker build --network=host -t $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9-$TARGETARCH --build-arg FROM_IMAGES=$hubhost/ubuntu-gpu:cuda11.8.0-cudnn8-$TARGETARCH --build-arg PYTHON_VERSION=python3.9 -f cuda/python/Dockerfile .
-
-docker push $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8-$TARGETARCH
-docker push $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9-$TARGETARCH
-
-# docker manifest rm $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8 && docker manifest create $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8 $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8-amd64 $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8-arm64 && docker manifest push $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8
-# docker manifest rm $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9 && docker manifest create $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9 $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9-amd64 $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9-arm64 && docker manifest push $hubhost/ubuntu-gpu:cuda11.8.0-cudnn8-python3.9
-
-base_image=nvidia/cuda:12.1.0-cudnn8-devel-ubuntu20.04
-
-docker build --network=host -t $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8-$TARGETARCH --build-arg FROM_IMAGES=$base_image -f cuda/Dockerfile .
-docker build --network=host -t $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8-python3.9-$TARGETARCH --build-arg FROM_IMAGES=$hubhost/ubuntu-gpu:cuda12.1.0-cudnn8-$TARGETARCH --build-arg PYTHON_VERSION=python3.9 -f cuda/python/Dockerfile .
-
-docker push $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8-$TARGETARCH
-docker push $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8-python3.9-$TARGETARCH
-
-# docker manifest rm $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8 && docker manifest create $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8 $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8-amd64 $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8-arm64 && docker manifest push $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8
-# docker manifest rm $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8-python3.9 && docker manifest create $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8-python3.9 $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8-python3.9-amd64 $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8-python3.9-arm64 && docker manifest push $hubhost/ubuntu-gpu:cuda12.1.0-cudnn8-python3.9
-
-
-
+# Buildx 自动发布包含两种架构的统一标签，无需手动创建 manifest。
+docker buildx build --platform linux/amd64,linux/arm64 \
+    --network=host --allow=network.host \
+    -t "$python_image" \
+    --build-arg FROM_IMAGES="$cuda_image" \
+    --build-arg PYTHON_VERSION=python3.9 \
+    -f cuda/python/Dockerfile --push .
